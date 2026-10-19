@@ -1,76 +1,199 @@
 # Put Home Study on Cloudflare — Beginner Guide
 
-You do **not** need to understand servers, databases, DNS, or command lines to begin. This guide separates what **you must click** from what **I can finish after each step**.
+This is a self-contained setup guide. It does not assume that a developer or chat assistant is waiting for a reply.
 
-Nothing is live yet. The deployment button is manual, so an ordinary code push cannot accidentally publish the site.
+The instructions explain what to click, what command to run, what result to expect, and what to do when the expected result does not appear.
 
-## What we are creating
-
-Cloudflare will hold three private pieces:
-
-1. **Worker** — runs the website.
-2. **D1 database** — stores accounts, questions, assignments, and progress.
-3. **R2 buckets** — store photographs of rough work. These remain private.
-
-The final address will be:
+The final website address will be:
 
 ```text
 https://study.saneax.in
 ```
 
-## Before starting
+## Current setup status
 
-You need:
+At the time this guide was updated:
 
-- Access to the Cloudflare account that manages `saneax.in`.
-- Access to the GitHub repository `Incorpify-LLC/home_study`.
-- About 15–20 minutes.
+- `saneax.in` is present in Cloudflare and its status is **Active**.
+- The source code is in `Incorpify-LLC/home_study` on GitHub.
+- Production deployment is manual; a normal push to GitHub does not deploy the website.
+- The D1 database and R2 buckets may still need to be created.
+- Email reports and student logins are not enabled yet.
 
-**Safety rule:** Never send me a password, Cloudflare token, GitHub secret, one-time login code, or recovery code in chat. Secret entry should happen only in the relevant website’s masked field.
+If the Cloudflare account or domain status changes later, use the decision path in Part A.
 
 ---
 
-# Part A — Your first Cloudflare check
+# What Cloudflare will contain
 
-## Step 1: Sign in and find the domain
+The application uses three Cloudflare services:
+
+1. **Worker** — runs the website and its API.
+2. **D1 database** — stores users, questions, assignments, answers, and progress.
+3. **R2 buckets** — privately store photographs of rough work.
+
+The setup creates these resources:
+
+```text
+Worker:      home-study
+D1 database: home-study
+R2 bucket:   home-study-rough-work
+R2 preview:  home-study-rough-work-preview
+Domain:      study.saneax.in
+```
+
+## Safety rules
+
+- Never place passwords, API tokens, one-time login codes, or recovery codes in this repository, an issue, a screenshot, or chat.
+- Do not make either R2 bucket public.
+- Do not enable an `r2.dev` public address for either bucket.
+- Do not point `study.saneax.in` to a home IP address or another server.
+- Do not enable progress-report email until its content and recipient have been approved.
+
+---
+
+# Part A — Check the Cloudflare domain
+
+## Step A1: Find `saneax.in`
 
 1. Open [dash.cloudflare.com](https://dash.cloudflare.com/).
-2. Sign in.
-3. On the first page, look for **saneax.in** in the list of websites/domains.
-4. Click **saneax.in**.
+2. Sign in to the Cloudflare account that should host the application.
+3. Open **Websites** or **Domains**.
+4. Look for `saneax.in`.
 
-### Stop here and tell me one of these
+## Step A2: Follow the matching path
 
-- **“I can see saneax.in and it says Active.”**
-- **“I can see saneax.in, but it does not say Active.”**
-- **“I cannot see saneax.in.”**
+### Path 1 — `saneax.in` is visible and says **Active**
 
-Do not change DNS yet. Do not create `study.saneax.in` manually.
+The prerequisite is satisfied. Continue to **Part B — Connect Wrangler to Cloudflare**.
+
+This is the current known state for this project.
+
+### Path 2 — `saneax.in` is visible but is not **Active**
+
+1. Click `saneax.in`.
+2. Read the status message shown by Cloudflare.
+3. If Cloudflare says that the nameservers are incorrect or pending:
+   - open the website where the domain was purchased;
+   - replace the domain’s nameservers with the two nameservers displayed by Cloudflare;
+   - save the change;
+   - return to Cloudflare and wait for activation.
+4. Nameserver changes may take time to propagate.
+5. Do not continue to deployment until the domain status becomes **Active**.
+
+If the registrar screen is unfamiliar, stop before changing anything and obtain help from the person who manages the domain registration. Copy the nameservers exactly; do not change individual DNS records as a substitute.
+
+### Path 3 — `saneax.in` is not visible
+
+First check the account name shown in the top-right corner of Cloudflare.
+
+- If another Cloudflare account owns the domain, sign out and sign in to that account.
+- If the domain has never been added to Cloudflare:
+  1. click **Add a domain** or **Onboard a domain**;
+  2. enter `saneax.in`—not `study.saneax.in`;
+  3. select the Free plan unless a paid feature is intentionally required;
+  4. review the imported DNS records carefully;
+  5. follow Cloudflare’s nameserver instructions at the domain registrar;
+  6. wait until the domain becomes **Active**.
+
+Do not continue until `saneax.in` appears as **Active**.
 
 ---
 
-# Part B — Connect this computer to Cloudflare
+# Part B — Connect Wrangler to Cloudflare
 
-Do this only after Step 1 is confirmed.
+Wrangler is Cloudflare’s command-line program. It is included in this project through npm.
 
-## Step 2: Start the safe Cloudflare login
+## Step B1: Open a terminal on pi09
 
-I can run the following command on pi09 for you:
+Change to the project directory:
 
 ```bash
 cd ~/workspace/personal/family/home_study
+```
+
+Confirm that this is the correct repository:
+
+```bash
+git remote -v
+```
+
+The output should mention:
+
+```text
+git@github.com:Incorpify-LLC/home_study.git
+```
+
+If it shows another repository, stop and change to the correct directory.
+
+## Step B2: Start Cloudflare login
+
+Run:
+
+```bash
 npx wrangler login
 ```
 
-Cloudflare will show a browser authorization page. **You** review the permissions and click **Allow**. No password or code needs to be pasted into chat.
+Wrangler displays a Cloudflare authorization link and may try to open it automatically.
 
-After you say **“saneax.in is Active; start Cloudflare login”**, I can begin this step and continue after you approve the browser page.
+1. Open that link in a browser.
+2. Sign in to the Cloudflare account that contains the Active `saneax.in` domain.
+3. Review the authorization request.
+4. Click **Allow** or **Authorize**.
+5. Return to the terminal.
+
+Expected terminal result: Wrangler reports that login succeeded.
+
+### If no browser opens
+
+Copy the complete URL printed in the terminal and open it manually in a browser where Cloudflare is signed in.
+
+### If the wrong Cloudflare account opens
+
+Cancel the authorization, sign out of Cloudflare in that browser, sign in to the correct account, and run `npx wrangler login` again.
+
+### Verify the login
+
+Run:
+
+```bash
+npx wrangler whoami
+```
+
+The output should show the expected Cloudflare account. Do not continue if the account is wrong.
 
 ---
 
-# Part C — Create storage
+# Part C — Create the database and private image storage
 
-After login is complete, I can create the resources from pi09. You do not need to type these commands yourself:
+Run all commands from:
+
+```text
+~/workspace/personal/family/home_study
+```
+
+## Step C1: Check whether the resources already exist
+
+Run:
+
+```bash
+npx wrangler d1 list
+npx wrangler r2 bucket list
+```
+
+Look for these names:
+
+```text
+home-study
+home-study-rough-work
+home-study-rough-work-preview
+```
+
+Follow the matching path below.
+
+### If none of them exists
+
+Run:
 
 ```bash
 npx wrangler d1 create home-study
@@ -78,105 +201,277 @@ npx wrangler r2 bucket create home-study-rough-work
 npx wrangler r2 bucket create home-study-rough-work-preview
 ```
 
-What they mean:
+### If some already exist
 
-- `home-study`: the application database.
-- `home-study-rough-work`: private production images.
-- `home-study-rough-work-preview`: private test images.
+Create only the missing resources. Do not create duplicate resources with slightly different names.
 
-I will then:
+### If all three already exist
 
-1. Insert the new database ID into the project configuration.
-2. Run all tests again.
-3. Commit and push that safe, non-secret ID to GitHub.
+Do not recreate them. Continue to Step C2.
 
-**Do not enable public access or an `r2.dev` address for either R2 bucket.**
+## Step C2: Put the D1 database ID in the project
+
+When D1 is created, Cloudflare prints a line similar to:
+
+```text
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+The database ID identifies the database but is not a password.
+
+Open `wrangler.jsonc` and find:
+
+```jsonc
+"database_id": "REPLACE_WITH_D1_DATABASE_ID"
+```
+
+Replace only `REPLACE_WITH_D1_DATABASE_ID` with the real ID. Keep the quotation marks.
+
+The result should look like:
+
+```jsonc
+"database_id": "the-id-printed-by-cloudflare"
+```
+
+### If the D1 database already existed and its ID is unknown
+
+Run:
+
+```bash
+npx wrangler d1 info home-study
+```
+
+Use the displayed database ID.
+
+## Step C3: Regenerate types and verify the project
+
+Run:
+
+```bash
+npm run cf-typegen
+npm run check
+```
+
+Expected result:
+
+- formatting passes;
+- lint passes;
+- TypeScript passes;
+- tests pass;
+- the dry-run Worker build passes.
+
+Do not deploy if `npm run check` fails. Fix the reported problem first.
+
+## Step C4: Save the non-secret configuration to GitHub
+
+Run:
+
+```bash
+git add wrangler.jsonc worker-configuration.d.ts
+git commit -m "chore: connect production Cloudflare storage"
+git push origin main
+```
+
+If Git reports that there is nothing to commit, confirm that the placeholder in `wrangler.jsonc` was actually replaced.
 
 ---
 
-# Part D — First deployment
+# Part D — Create the database tables
 
-For the first prototype, the simplest path is for me to deploy from pi09 after Wrangler login. This avoids making you create API tokens and GitHub secrets before you have seen the application.
+The database exists but is empty until its migration is applied.
 
-I will run:
+## Step D1: Review the pending migration
+
+Run:
+
+```bash
+npx wrangler d1 migrations list home-study --remote
+```
+
+The first deployment should show `0001_initial.sql` as not yet applied.
+
+## Step D2: Apply it
+
+Run:
 
 ```bash
 npx wrangler d1 migrations apply home-study --remote
-npm run deploy
 ```
 
-This creates the database tables and publishes the Worker. I will verify the temporary Cloudflare address before saying it works.
+Confirm when Wrangler asks permission to continue.
 
-Later, once the prototype is stable, we can connect GitHub Actions so approved changes deploy automatically. That is optional groundwork—not required for the first deployment.
+Expected result: `0001_initial.sql` is marked as successfully applied.
+
+### If Wrangler says the migration was already applied
+
+That is safe. Do not apply it manually a second time; continue to Part E.
+
+### If migration application fails
+
+Do not deploy. Keep the complete error text and diagnose the failure first. Never delete the database merely to clear a migration error.
 
 ---
 
-# Part E — Give it the name study.saneax.in
+# Part E — Deploy the first prototype
 
-After the Worker is deployed:
+## Step E1: Run the final local check
 
-1. Open the [Cloudflare dashboard](https://dash.cloudflare.com/).
-2. In the left menu, click **Workers & Pages**.
-3. Click the Worker named **home-study**.
+```bash
+npm run check
+```
+
+Continue only if it passes.
+
+## Step E2: Deploy
+
+Run:
+
+```bash
+npm run deploy
+```
+
+Expected result: Wrangler uploads the Worker and prints a temporary address ending in `.workers.dev`.
+
+Open that temporary address in a browser. The page should display:
+
+```text
+Home Study
+A calm place to learn, practise, and improve.
+```
+
+Also open:
+
+```text
+https://the-temporary-address.workers.dev/api/health
+```
+
+The response should contain:
+
+```json
+{ "service": "home-study", "status": "ok", "version": "0.1.0" }
+```
+
+### If the page works but `/api/health` fails
+
+Do not attach the custom domain yet. Check the deployment logs and run `npm run check` again.
+
+### If deployment reports an authentication error
+
+Repeat Part B and verify `npx wrangler whoami` before trying again.
+
+---
+
+# Part F — Attach `study.saneax.in`
+
+After the temporary `.workers.dev` address works:
+
+1. Open [dash.cloudflare.com](https://dash.cloudflare.com/).
+2. Click **Workers & Pages**.
+3. Click **home-study**.
 4. Click **Settings**.
-5. Find **Domains & Routes**.
-6. Click **Add** or **Add Custom Domain**.
-7. Enter exactly:
+5. Open **Domains & Routes**.
+6. Click **Add**, **Add route**, or **Add Custom Domain**.
+7. Choose **Custom Domain** if Cloudflare offers multiple choices.
+8. Enter exactly:
 
    ```text
    study.saneax.in
    ```
 
-8. Confirm the change.
+9. Confirm the change.
+10. Let Cloudflare create the DNS record and HTTPS certificate.
 
-Cloudflare should create the required DNS entry and HTTPS certificate. Do not point the hostname to a home IP or another server.
+Do not manually create a second DNS record for the same hostname.
 
-Tell me **“study.saneax.in has been added”**. I will then verify:
+## Step F2: Verify the public address
 
-- The page opens over HTTPS.
-- `/api/health` returns the expected response.
-- No deployment or certificate error is present.
-
----
-
-# Part F — GitHub automatic deployment (later)
-
-This is not needed for the first prototype. When we enable it, I will guide you one screen at a time.
-
-At that stage, you will create a restricted Cloudflare API token and enter it directly into GitHub under:
+Open:
 
 ```text
-Repository → Settings → Environments → production
+https://study.saneax.in
 ```
 
-The secret names will be:
+Then open:
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+```text
+https://study.saneax.in/api/health
+```
 
-Do not create these yet unless I specifically ask during that stage. The GitHub deployment workflow currently runs only when manually started.
+Or run:
+
+```bash
+STUDY_BASE_URL=https://study.saneax.in npm run test:remote
+```
+
+Expected result: the landing page loads over HTTPS and the remote smoke test passes.
+
+### If Cloudflare says the hostname already exists
+
+Open **DNS → Records** for `saneax.in` and look for an existing `study` record. Do not delete it blindly. Determine what it currently serves before replacing it.
+
+### If HTTPS is initially pending
+
+Wait for Cloudflare to issue the certificate, refresh the page, and test again. Do not disable HTTPS verification.
 
 ---
 
-# Part G — Email and student login
+# Part G — Optional GitHub deployment automation
 
-These are deliberately disabled for now.
+The first prototype can be deployed entirely with Wrangler as described above. GitHub automation is optional and should be configured only after the manual deployment succeeds.
 
-- No progress email will be sent until you approve the report design and recipient.
-- No student password has been created.
-- No child’s personal details are present on the public landing page.
-- Rough-work storage will remain private.
+The repository contains a manual **Deploy** workflow. It does not run merely because code is pushed.
 
-We will build authentication as the next tested product slice after the first deployment works.
+To enable it later:
+
+1. Create a restricted Cloudflare API token.
+2. Open the GitHub repository `Incorpify-LLC/home_study`.
+3. Open **Settings → Environments**.
+4. Create an environment named `production`.
+5. Add these environment secrets:
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+6. Run the workflow from **Actions → Deploy → Run workflow**.
+
+The API token must be entered directly into GitHub’s masked secret field. Never store it in a file or paste it into chat.
+
+Recommended Cloudflare token permissions, restricted to the relevant account and `saneax.in` zone:
+
+- Workers Scripts: Edit
+- D1: Edit
+- Workers R2 Storage: Edit
+- Workers Routes: Edit
+- DNS: Edit
+
+Cloudflare may rename permissions over time. Select the least-privilege equivalents in the current interface.
 
 ---
 
-# Where you are now
+# Part H — Features intentionally left disabled
 
-Start with only this:
+The first deployment is only a technical foundation.
 
-1. Open [dash.cloudflare.com](https://dash.cloudflare.com/).
-2. Find `saneax.in`.
-3. Tell me whether its status is **Active**.
+- No student account or password exists yet.
+- No progress email is sent yet.
+- No child’s name or academic profile appears on the public landing page.
+- Rough-work buckets remain private.
+- No automatic production deployment occurs on a normal GitHub push.
 
-I will handle the next technical step after that confirmation.
+Authentication is the next product slice. Progress email will be enabled only after the report format, sender, recipient, and schedule are approved.
+
+---
+
+# Completion checklist
+
+The Cloudflare foundation is complete only when all boxes can be checked:
+
+- [x] `saneax.in` is Active in Cloudflare.
+- [ ] `npx wrangler whoami` shows the correct account.
+- [ ] D1 database `home-study` exists.
+- [ ] R2 bucket `home-study-rough-work` exists and is private.
+- [ ] R2 bucket `home-study-rough-work-preview` exists and is private.
+- [ ] `wrangler.jsonc` contains the real D1 database ID.
+- [ ] `npm run check` passes after connecting production resources.
+- [ ] Remote D1 migration `0001_initial.sql` is applied.
+- [ ] The `.workers.dev` deployment loads.
+- [ ] `https://study.saneax.in` loads over HTTPS.
+- [ ] `https://study.saneax.in/api/health` returns `status: ok`.
