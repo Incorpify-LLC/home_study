@@ -19,7 +19,7 @@ beforeAll(async () => {
 			'Parent A',
 			'parent-a@example.test',
 			'parent-a',
-			'pbkdf2-sha256$210000$MDEyMzQ1Njc4OWFiY2RlZg$H_ZMdkjDEDpZ4T7DlMYQs7RkF9UgyowFSsi_pzKxi-s',
+			'pbkdf2-sha256$100000$MDEyMzQ1Njc4OWFiY2RlZg$CQEF03iMraucElCfobodRqkaFY16F3mxFDIvP9WoJcs',
 		)
 		.run();
 });
@@ -153,6 +153,33 @@ describe('family credential login', () => {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ identifier: 'corrupt-a', password: 'correct horse battery staple' }),
+		});
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual({
+			error: 'invalid_credentials',
+			message: 'The identifier or password is incorrect.',
+		});
+	});
+
+	it('rejects a stored hash above the Workers PBKDF2 iteration cap without crashing', async () => {
+		await env.DB.prepare(
+			`INSERT INTO users (id, role, display_name, login_identifier, password_hash)
+			 VALUES (?, ?, ?, ?, ?)`,
+		)
+			.bind(
+				'user-parent-high-iterations',
+				'parent',
+				'High Iterations',
+				'high-iterations-a',
+				'pbkdf2-sha256$210000$MDEyMzQ1Njc4OWFiY2RlZg$H_ZMdkjDEDpZ4T7DlMYQs7RkF9UgyowFSsi_pzKxi-s',
+			)
+			.run();
+
+		const response = await SELF.fetch('https://study.saneax.in/api/login', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ identifier: 'high-iterations-a', password: 'correct horse battery staple' }),
 		});
 
 		expect(response.status).toBe(401);

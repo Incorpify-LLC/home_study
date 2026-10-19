@@ -10,7 +10,10 @@ const jsonHeaders = {
 };
 
 const sessionMaxAgeSeconds = 8 * 60 * 60;
-const fallbackPasswordHash = 'pbkdf2-sha256$210000$MDEyMzQ1Njc4OWFiY2RlZg$H_ZMdkjDEDpZ4T7DlMYQs7RkF9UgyowFSsi_pzKxi-s';
+const fallbackPasswordHash = 'pbkdf2-sha256$100000$MDEyMzQ1Njc4OWFiY2RlZg$CQEF03iMraucElCfobodRqkaFY16F3mxFDIvP9WoJcs';
+// Cloudflare Workers caps PBKDF2 iteration counts at 100_000; verification must
+// reject anything higher instead of throwing inside crypto.subtle.
+const maxPbkdf2Iterations = 100_000;
 
 type LoginUser = {
 	id: string;
@@ -101,7 +104,14 @@ async function verifyPassword(password: string, encodedHash: string): Promise<bo
 	const [algorithm, iterationsText, saltText, expectedText] = encodedHash.split('$');
 	const iterations = Number(iterationsText);
 
-	if (algorithm !== 'pbkdf2-sha256' || !Number.isSafeInteger(iterations) || iterations < 100_000 || !saltText || !expectedText) {
+	if (
+		algorithm !== 'pbkdf2-sha256' ||
+		!Number.isSafeInteger(iterations) ||
+		iterations < 100_000 ||
+		iterations > maxPbkdf2Iterations ||
+		!saltText ||
+		!expectedText
+	) {
 		// Still perform comparable derivation work so response timing does not reveal why verification failed.
 		await deriveFallback(password);
 		return false;
@@ -135,7 +145,7 @@ async function verifyPassword(password: string, encodedHash: string): Promise<bo
 async function deriveFallback(password: string): Promise<void> {
 	const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
 	await crypto.subtle.deriveBits(
-		{ name: 'PBKDF2', hash: 'SHA-256', salt: decodeBase64Url(fallbackPasswordHash.split('$')[2]), iterations: 210_000 },
+		{ name: 'PBKDF2', hash: 'SHA-256', salt: decodeBase64Url(fallbackPasswordHash.split('$')[2]), iterations: maxPbkdf2Iterations },
 		key,
 		32 * 8,
 	);
