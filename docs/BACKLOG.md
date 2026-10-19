@@ -23,6 +23,16 @@ Acceptance direction:
 - A student cannot read another student’s records by changing an identifier.
 - Parent recovery does not depend on a child’s email account.
 
+Delivery order:
+
+- [x] Anonymous clients can inspect their session state without leaking account data.
+- [x] A valid native family credential creates a secure, time-bounded server-side session.
+- [x] Invalid credentials return one generic response for missing and incorrect accounts.
+- [x] An authenticated client can resolve its identity and role from its session.
+- [x] Sign-out revokes the server-side session.
+- [ ] An authenticated parent or student sees only their permitted application shell.
+- [ ] Parent-controlled student password reset is available without requiring student email.
+
 ## Slice 2 — diagnostic assessment
 
 **Outcome:** A student completes a small reviewed diagnostic and the parent sees topic-level evidence.

@@ -85,6 +85,48 @@
 				font-size: 22px;
 				letter-spacing: -0.35px;
 			}
+			.login-form {
+				display: grid;
+				gap: 14px;
+			}
+			label {
+				display: grid;
+				gap: 7px;
+				font-size: 14px;
+				font-weight: 700;
+			}
+			input {
+				width: 100%;
+				border: 1px solid rgba(0, 0, 0, 0.18);
+				border-radius: 10px;
+				padding: 12px 13px;
+				font: inherit;
+			}
+			input:focus {
+				outline: 3px solid rgba(9, 127, 232, 0.2);
+				border-color: #097fe8;
+			}
+			button {
+				border: 0;
+				border-radius: 10px;
+				background: #097fe8;
+				color: #fff;
+				padding: 12px 16px;
+				font: inherit;
+				font-weight: 700;
+				cursor: pointer;
+			}
+			button:disabled {
+				opacity: 0.65;
+				cursor: wait;
+			}
+			.form-status {
+				min-height: 20px;
+				margin: 0;
+				color: #8a1c1c;
+				font-size: 14px;
+				line-height: 1.4;
+			}
 			.step {
 				display: grid;
 				grid-template-columns: 34px 1fr;
@@ -149,30 +191,55 @@
 						pressure or comparison.
 					</p>
 				</div>
-				<aside class="panel" aria-label="Learning cycle">
-					<h2>Every study session</h2>
-					<div class="step">
-						<div class="number">1</div>
-						<div><strong>Recall</strong><span>Bring yesterday’s learning back without hints.</span></div>
-					</div>
-					<div class="step">
-						<div class="number">2</div>
-						<div><strong>Learn</strong><span>Understand one clear concept with a worked example.</span></div>
-					</div>
-					<div class="step">
-						<div class="number">3</div>
-						<div><strong>Practise</strong><span>Apply it, upload rough work, and learn from errors.</span></div>
-					</div>
-					<div class="step">
-						<div class="number">4</div>
-						<div><strong>Review</strong><span>Return later until the idea is secure.</span></div>
-					</div>
+				<aside class="panel" aria-label="Family sign in">
+					<h2>Family sign in</h2>
+					<form id="login-form" class="login-form">
+						<label>
+							Sign-in name
+							<input name="identifier" autocomplete="username" required />
+						</label>
+						<label>
+							Password
+							<input name="password" type="password" autocomplete="current-password" required />
+						</label>
+						<button type="submit">Sign in</button>
+						<p id="login-status" class="form-status" role="status" aria-live="polite"></p>
+					</form>
 				</aside>
 			</section>
 			<footer>
-				<span>Prototype foundation · Authentication and student dashboards come next.</span>
+				<span>Private sign-in · Role-specific dashboards come next.</span>
 				<span>Designed around privacy, progress, and wellbeing.</span>
 			</footer>
 		</main>
+		<script>
+			const form = document.querySelector('#login-form');
+			const status = document.querySelector('#login-status');
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const submit = form.querySelector('button');
+				submit.disabled = true;
+				status.textContent = '';
+				const fields = new FormData(form);
+				try {
+					const response = await fetch('/api/login', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ identifier: fields.get('identifier'), password: fields.get('password') }),
+					});
+					const result = await response.json();
+					if (!response.ok) {
+						status.textContent = result.message ?? 'Sign in failed. Please try again.';
+						return;
+					}
+					status.style.color = '#176b3a';
+					status.textContent = `Signed in as ${result.user.displayName}.`;
+				} catch {
+					status.textContent = 'The service could not be reached. Please try again.';
+				} finally {
+					submit.disabled = false;
+				}
+			});
+		</script>
 	</body>
 </html>

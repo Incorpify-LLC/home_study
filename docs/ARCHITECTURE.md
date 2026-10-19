@@ -44,12 +44,11 @@ Modules may share one Worker and D1 database during the prototype. Boundaries ar
 
 ## Authentication direction
 
-The first implementation decision is still open:
+The application uses native family credentials so a student does not need a stable email account. Passwords are never stored directly: the Worker verifies a deliberately slow, salted password-derived key and keeps only its encoded verifier in D1. Login errors do not reveal whether an account exists.
 
-1. Native family credentials for students plus parent-controlled reset, or
-2. Cloudflare Access OTP if every student has a stable email identity.
+Sessions are opaque random tokens. D1 stores only a SHA-256 digest of each token, together with its user, expiry, and revocation state. The browser receives the original token in a `Secure`, `HttpOnly`, `SameSite=Strict` cookie. Authorization always loads the session and user from D1; it never trusts a role or student identifier supplied by the browser.
 
-The parent/admin surface may receive an additional Cloudflare Access policy later. Authentication will be built as its own TDD slice; the landing page does not pretend login exists.
+The parent/admin surface may receive an additional Cloudflare Access policy later as defence in depth. Parent-controlled student-password reset and parent recovery remain separate follow-up stories.
 
 ## Content provenance
 

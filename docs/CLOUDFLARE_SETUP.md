@@ -17,7 +17,7 @@ At the time this guide was updated:
 - `saneax.in` is present in Cloudflare and its status is **Active**.
 - The source code is in `Incorpify-LLC/home_study` on GitHub.
 - Production deployment is manual; a normal push to GitHub does not deploy the website.
-- The D1 database and R2 buckets may still need to be created.
+- The production Worker, D1 database, D1 schema, private R2 buckets, and custom domain have been verified.
 - Email reports and student logins are not enabled yet.
 
 If the Cloudflare account or domain status changes later, use the decision path in Part A.
@@ -465,13 +465,13 @@ Authentication is the next product slice. Progress email will be enabled only af
 The Cloudflare foundation is complete only when all boxes can be checked:
 
 - [x] `saneax.in` is Active in Cloudflare.
-- [ ] `npx wrangler whoami` shows the correct account.
-- [ ] D1 database `home-study` exists.
-- [ ] R2 bucket `home-study-rough-work` exists and is private.
-- [ ] R2 bucket `home-study-rough-work-preview` exists and is private.
-- [ ] `wrangler.jsonc` contains the real D1 database ID.
-- [ ] `npm run check` passes after connecting production resources.
-- [ ] Remote D1 migration `0001_initial.sql` is applied.
-- [ ] The `.workers.dev` deployment loads.
-- [ ] `https://study.saneax.in` loads over HTTPS.
-- [ ] `https://study.saneax.in/api/health` returns `status: ok`.
+- [x] `npx wrangler whoami` shows the correct account.
+- [x] D1 database `home-study` exists.
+- [x] R2 bucket `home-study-rough-work` exists and is private.
+- [x] R2 bucket `home-study-rough-work-preview` exists and is private.
+- [x] `wrangler.jsonc` contains the real D1 database ID.
+- [x] `npm run check` passes after connecting production resources.
+- [x] Remote D1 migration `0001_initial.sql` is applied.
+- [x] The Worker deployment loads.
+- [x] `https://study.saneax.in` loads over HTTPS.
+- [x] `https://study.saneax.in/api/health` returns `status: ok`.

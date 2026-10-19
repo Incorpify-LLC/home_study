@@ -18,7 +18,7 @@
 		{
 			"binding": "DB",
 			"database_name": "home-study",
-			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
+			"database_id": "e8d831c3-8bfd-4d5c-be0e-a0d3fdb830f7",
 			"migrations_dir": "migrations",
 		},
 	],
