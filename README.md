@@ -89,9 +89,11 @@ Bug fixes require a failing regression test first. Tests assert behavior, not pr
 
 The initial backlog is in [`docs/BACKLOG.md`](docs/BACKLOG.md). Architecture decisions are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Cloudflare owner setup
+## Cloudflare setup
 
-Follow [`docs/CLOUDFLARE_SETUP.md`](docs/CLOUDFLARE_SETUP.md). The application is intended for `study.saneax.in`, but no Cloudflare resources or DNS records are created merely by cloning this repository.
+Start with the beginner guide in [`docs/CLOUDFLARE_SETUP.md`](docs/CLOUDFLARE_SETUP.md). It asks for one simple dashboard check first, explains every Cloudflare component in plain language, and separates your clicks from the technical work I can do afterward.
+
+The application is intended for `study.saneax.in`, but no Cloudflare resource, DNS record, or automatic deployment is created merely by cloning or pushing this repository. Production deployment is a manual GitHub action until setup is complete.
 
 ## Security baseline
 
