@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="A private family workspace for deliberate study and steady progress." />
+		<meta name="robots" content="noindex, nofollow" />
+		<title>Home Study</title>
+		<style>
+			:root {
+				color-scheme: light;
+				font-family:
+					Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					BlinkMacSystemFont,
+					'Segoe UI',
+					sans-serif;
+				background: #f6f5f4;
+				color: rgba(0, 0, 0, 0.95);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: linear-gradient(180deg, #ffffff 0%, #f6f5f4 100%);
+			}
+			main {
+				width: min(1120px, calc(100% - 32px));
+				margin: 0 auto;
+				padding: 32px 0 72px;
+			}
+			nav {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px;
+			}
+			.brand {
+				font-size: 18px;
+				font-weight: 700;
+				letter-spacing: -0.3px;
+			}
+			.badge {
+				border-radius: 999px;
+				background: #f2f9ff;
+				color: #097fe8;
+				padding: 6px 10px;
+				font-size: 12px;
+				font-weight: 700;
+			}
+			.hero {
+				display: grid;
+				grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+				gap: 48px;
+				align-items: center;
+				padding: 112px 0 80px;
+			}
+			h1 {
+				max-width: 760px;
+				margin: 0;
+				font-size: clamp(44px, 7vw, 76px);
+				line-height: 0.98;
+				letter-spacing: -3px;
+			}
+			.lead {
+				max-width: 640px;
+				margin: 28px 0 0;
+				color: #615d59;
+				font-size: 20px;
+				line-height: 1.55;
+			}
+			.panel {
+				background: #fff;
+				border: 1px solid rgba(0, 0, 0, 0.1);
+				border-radius: 18px;
+				padding: 26px;
+				box-shadow: rgba(0, 0, 0, 0.04) 0 18px 45px;
+			}
+			.panel h2 {
+				margin: 0 0 18px;
+				font-size: 22px;
+				letter-spacing: -0.35px;
+			}
+			.step {
+				display: grid;
+				grid-template-columns: 34px 1fr;
+				gap: 13px;
+				padding: 14px 0;
+				border-top: 1px solid rgba(0, 0, 0, 0.08);
+			}
+			.step:first-of-type {
+				border-top: 0;
+			}
+			.number {
+				width: 30px;
+				height: 30px;
+				display: grid;
+				place-items: center;
+				border-radius: 9px;
+				background: #f6f5f4;
+				font-weight: 700;
+			}
+			.step strong,
+			.step span {
+				display: block;
+			}
+			.step span {
+				margin-top: 4px;
+				color: #615d59;
+				font-size: 14px;
+				line-height: 1.45;
+			}
+			footer {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: space-between;
+				gap: 12px;
+				padding-top: 24px;
+				border-top: 1px solid rgba(0, 0, 0, 0.1);
+				color: #615d59;
+				font-size: 13px;
+			}
+			@media (max-width: 760px) {
+				.hero {
+					grid-template-columns: 1fr;
+					padding-top: 72px;
+				}
+				h1 {
+					letter-spacing: -2px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<nav aria-label="Primary navigation">
+				<div class="brand">Home Study</div>
+				<div class="badge">Private family workspace</div>
+			</nav>
+			<section class="hero">
+				<div>
+					<h1>A calm place to learn, practise, and improve.</h1>
+					<p class="lead">
+						Short daily plans, thoughtful assessment, visible progress, and time to correct mistakes. Built for steady preparation—not
+						pressure or comparison.
+					</p>
+				</div>
+				<aside class="panel" aria-label="Learning cycle">
+					<h2>Every study session</h2>
+					<div class="step">
+						<div class="number">1</div>
+						<div><strong>Recall</strong><span>Bring yesterday’s learning back without hints.</span></div>
+					</div>
+					<div class="step">
+						<div class="number">2</div>
+						<div><strong>Learn</strong><span>Understand one clear concept with a worked example.</span></div>
+					</div>
+					<div class="step">
+						<div class="number">3</div>
+						<div><strong>Practise</strong><span>Apply it, upload rough work, and learn from errors.</span></div>
+					</div>
+					<div class="step">
+						<div class="number">4</div>
+						<div><strong>Review</strong><span>Return later until the idea is secure.</span></div>
+					</div>
+				</aside>
+			</section>
+			<footer>
+				<span>Prototype foundation · Authentication and student dashboards come next.</span>
+				<span>Designed around privacy, progress, and wellbeing.</span>
+			</footer>
+		</main>
+	</body>
+</html>
