@@ -29,12 +29,99 @@ beforeAll(async () => {
 		env.DB.prepare(
 			`INSERT INTO users (id, role, display_name, email) VALUES ('student-c', 'student', 'Student C', 'student-c@example.test')`,
 		),
+		env.DB.prepare(
+			`INSERT INTO users (id, role, display_name, email) VALUES ('student-d', 'student', 'Student D', 'student-d@example.test')`,
+		),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-a', 'CISCE', 'VIII', NULL)`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-b', 'CISCE', 'X', 2027)`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-c', 'CISCE', 'XII', 2027)`),
+		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-d', 'CISCE', 'VIII', NULL)`),
 		env.DB.prepare(`INSERT INTO parent_students (parent_id, student_id) VALUES ('parent-a', 'student-a')`),
 		env.DB.prepare(`INSERT INTO parent_students (parent_id, student_id) VALUES ('parent-b', 'student-b')`),
 	]);
+});
+
+describe('sequential chapter progression', () => {
+	it('publishes every reviewed chapter in a class-specific roadmap', async () => {
+		const expected = [
+			{ email: 'student-d@example.test', classLevel: 'VIII', subject: 'Mathematics', total: 11 },
+			{ email: 'student-b@example.test', classLevel: 'X', subject: 'Mathematics', total: 18 },
+			{ email: 'student-c@example.test', classLevel: 'XII', subject: 'Accountancy', total: 12 },
+		];
+
+		for (const track of expected) {
+			const response = await SELF.fetch('https://study.saneax.in/api/learning/roadmap', {
+				headers: accessHeaders(track.email),
+			});
+			expect(response.status).toBe(200);
+			const payload = (await response.json()) as {
+				track: { classLevel: string; subject: string };
+				modules: Array<{ sequence: number; title: string; status: string }>;
+				completed: number;
+				total: number;
+			};
+			expect(payload.track).toEqual({ classLevel: track.classLevel, subject: track.subject });
+			expect(payload.total).toBe(track.total);
+			expect(payload.modules).toHaveLength(track.total);
+			expect(payload.modules.map((module) => module.sequence)).toEqual(Array.from({ length: track.total }, (_, index) => index + 1));
+			expect(payload.modules.every((module) => module.status === 'not_started')).toBe(true);
+		}
+	});
+
+	it('does not unlock the next chapter before the current one is submitted', async () => {
+		const current = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(current.status).toBe(200);
+		const body = (await current.json()) as { assignment: { id: string; sequence: number; totalModules: number } };
+		expect(body.assignment.sequence).toBe(1);
+		expect(body.assignment.totalModules).toBe(11);
+
+		const blocked = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+			method: 'POST',
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(blocked.status).toBe(409);
+	});
+
+	it('unlocks exactly the next chapter after submission', async () => {
+		const existing = await env.DB.prepare(`SELECT id FROM assignments WHERE student_id = 'student-d' ORDER BY created_at LIMIT 1`).first<{
+			id: string;
+		}>();
+		expect(existing).not.toBeNull();
+		await env.DB.prepare(`UPDATE assignments SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP WHERE id = ?`)
+			.bind(existing?.id)
+			.run();
+
+		const next = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+			method: 'POST',
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(next.status).toBe(200);
+		const nextBody = (await next.json()) as {
+			assignment: { id: string; sequence: number; totalModules: number; title: string };
+		};
+		expect(nextBody.assignment.sequence).toBe(2);
+		expect(nextBody.assignment.totalModules).toBe(11);
+		expect(nextBody.assignment.title).toContain('Squares');
+
+		const repeated = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+			method: 'POST',
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(repeated.status).toBe(409);
+
+		const roadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmap', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		const roadmapBody = (await roadmap.json()) as {
+			completed: number;
+			modules: Array<{ sequence: number; status: string }>;
+		};
+		expect(roadmapBody.completed).toBe(1);
+		expect(roadmapBody.modules[0].status).toBe('submitted');
+		expect(roadmapBody.modules[1].status).toBe('assigned');
+	});
 });
 
 describe('reviewed learning assignment', () => {
@@ -90,8 +177,14 @@ describe('reviewed learning assignment', () => {
 
 	it('serves reviewed Mathematics and Accountancy diagnostics to all three class tracks', async () => {
 		const cases = [
-			{ email: 'student-b@example.test', classLevel: 'X', subject: 'Mathematics', title: 'Quadratic equations' },
-			{ email: 'student-c@example.test', classLevel: 'XII', subject: 'Accountancy', title: 'Partnership fundamentals' },
+			{ email: 'student-b@example.test', classLevel: 'X', subject: 'Mathematics', title: 'Goods and Services Tax', count: 5 },
+			{
+				email: 'student-c@example.test',
+				classLevel: 'XII',
+				subject: 'Accountancy',
+				title: 'Partnership fundamentals',
+				count: 6,
+			},
 		];
 		for (const expected of cases) {
 			const response = await SELF.fetch('https://study.saneax.in/api/learning/current', {
@@ -106,7 +199,7 @@ describe('reviewed learning assignment', () => {
 				subject: expected.subject,
 			});
 			expect(payload.assignment.title).toContain(expected.title);
-			expect(payload.assignment.questions).toHaveLength(6);
+			expect(payload.assignment.questions).toHaveLength(expected.count);
 		}
 	});
 

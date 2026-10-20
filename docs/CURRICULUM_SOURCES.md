@@ -84,13 +84,13 @@ The `ps.pdf` files are preliminary sections and tables of contents, not complete
 
 ## First reviewed learning release
 
-The first release intentionally implements one coherent unit per track rather than shallow coverage of every chapter:
+All three initial tracks now publish their complete reviewed course. Every chapter includes an original lesson, worked example, and diagnostic; chapter progression is sequential, and a learner's roadmap shows all published chapters with completion state.
 
-- **Class VIII Mathematics:** rational numbers and integral exponents.
-- **Class X Mathematics:** quadratic equations.
-- **Class XII Accountancy:** fundamentals of partnership accounts.
+- **Class VIII Mathematics (CISCE-aligned, 11 chapters):** rational numbers and integral exponents; squares, square roots, cubes, cube roots, number puzzles and sets; percentages, profit, loss, overheads, discount and tax; simple and compound interest; direct and inverse variation and time and work; algebraic expressions, identities and factorisation; linear equations and inequalities; quadrilaterals, parallelograms and Euler's relation; construction, reflection symmetry, circles and Cartesian graphs; mensuration; grouped data, pie charts and experimental probability.
+- **Class X Mathematics (ICSE 2027, 18 chapters):** the full Commercial Mathematics, Algebra, Geometry, Mensuration, Trigonometry, Statistics, and Probability scope.
+- **Class XII Accountancy (ISC 2027, 12 chapters):** the full Section A partnership and company accounts scope plus the Section B Management Accounting option.
 
-Each unit includes an original explanation, worked example, six-question diagnostic, draft saving, final submission, automatic objective scoring, correction rationales, and a parent evidence view. Later releases will add the remaining syllabus themes and method/rough-work review.
+Content batches were independently reviewed against the official CISCE documents; review findings (a defective cryptarithm, an out-of-scope square-root decimal, missing modal-class and non-axial reflection coverage, a garbled cash-flow step) were corrected before publication. Rough-work upload/review, reassessment, adaptation, and email reports remain future slices.
 
 ## Review rules
 

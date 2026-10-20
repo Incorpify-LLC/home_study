@@ -28,6 +28,7 @@ type StudentSummary = {
 
 type LearningTemplate = {
 	templateId: string;
+	sequence: number;
 	classLevel: string;
 	subject: string;
 	title: string;
@@ -44,6 +45,7 @@ type AssignmentRecord = {
 	id: string;
 	status: string;
 	templateId: string;
+	sequence: number;
 	classLevel: string;
 	subject: string;
 	title: string;
@@ -233,9 +235,10 @@ function parseStoredJson<T>(value: string): T {
 	return JSON.parse(value) as T;
 }
 
-async function reviewedTemplateForStudent(env: Env, studentId: string): Promise<LearningTemplate | null> {
+async function reviewedTemplateForStudent(env: Env, studentId: string, afterSequence = 0): Promise<LearningTemplate | null> {
 	return env.DB.prepare(
 		`SELECT assignment_templates.id AS templateId,
+		        assignment_templates.sequence,
 		        assignment_templates.class_level AS classLevel,
 		        assignment_templates.subject,
 		        assignment_templates.title,
@@ -250,15 +253,22 @@ async function reviewedTemplateForStudent(env: Env, studentId: string): Promise<
 		 JOIN assignment_templates ON assignment_templates.class_level = student_profiles.class_level
 		 JOIN learning_modules ON learning_modules.id = assignment_templates.module_id
 		 JOIN curriculum_topics ON curriculum_topics.id = learning_modules.topic_id
+		 LEFT JOIN assignments
+		   ON assignments.template_id = assignment_templates.id
+		  AND assignments.student_id = student_profiles.user_id
 		 WHERE student_profiles.user_id = ?
+		   AND assignments.id IS NULL
+		   AND assignment_templates.sequence > ?
 		   AND assignment_templates.active = 1
 		   AND assignment_templates.review_status = 'reviewed'
 		   AND learning_modules.review_status = 'reviewed'
 		   AND curriculum_topics.review_status = 'reviewed'
-		 ORDER BY assignment_templates.subject, assignment_templates.id
+		   AND (curriculum_topics.board IS NULL OR lower(curriculum_topics.board) = lower(student_profiles.board))
+		   AND (curriculum_topics.exam_year IS NULL OR curriculum_topics.exam_year = student_profiles.exam_year)
+		 ORDER BY assignment_templates.sequence
 		 LIMIT 1`,
 	)
-		.bind(studentId)
+		.bind(studentId, afterSequence)
 		.first<LearningTemplate>();
 }
 
@@ -267,6 +277,7 @@ async function assignmentRecord(env: Env, studentId: string, assignmentId: strin
 		`SELECT assignments.id,
 		        assignments.status,
 		        assignment_templates.id AS templateId,
+		        assignment_templates.sequence,
 		        assignment_templates.class_level AS classLevel,
 		        assignment_templates.subject,
 		        assignment_templates.title,
@@ -357,9 +368,22 @@ async function resultForAssignment(env: Env, assignmentId: string): Promise<Reco
 }
 
 async function assignmentPayload(env: Env, assignment: AssignmentRecord): Promise<Record<string, unknown>> {
-	const questions = await assignmentQuestions(env, assignment.id);
+	const [questions, totalRow] = await Promise.all([
+		assignmentQuestions(env, assignment.id),
+		env.DB.prepare(
+			`SELECT COUNT(*) AS total
+			 FROM assignment_templates
+			 WHERE class_level = ? AND subject = ? AND active = 1 AND review_status = 'reviewed'`,
+		)
+			.bind(assignment.classLevel, assignment.subject)
+			.first<{ total: number }>(),
+	]);
+	const totalModules = totalRow?.total ?? 0;
 	const payload: Record<string, unknown> = {
 		id: assignment.id,
+		sequence: assignment.sequence,
+		totalModules,
+		courseComplete: assignment.sequence === totalModules,
 		classLevel: assignment.classLevel,
 		subject: assignment.subject,
 		title: assignment.title,
@@ -396,15 +420,7 @@ async function assignmentPayload(env: Env, assignment: AssignmentRecord): Promis
 	return payload;
 }
 
-async function currentLearning(request: Request, env: Env): Promise<Response> {
-	const user = await authenticatedUser(request, env);
-	const denied = studentOnly(user);
-	if (denied || !user)
-		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
-
-	const template = await reviewedTemplateForStudent(env, user.id);
-	if (!template) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this class yet.' }, 404);
-
+async function createAssignment(env: Env, studentId: string, template: LearningTemplate): Promise<AssignmentRecord | null> {
 	const assignmentId = crypto.randomUUID();
 	const assignedFor = new Date().toISOString().slice(0, 10);
 	await env.DB.prepare(
@@ -412,13 +428,13 @@ async function currentLearning(request: Request, env: Env): Promise<Response> {
 		   (id, student_id, assigned_for, status, estimated_minutes, template_id)
 		 VALUES (?, ?, ?, 'assigned', ?, ?)`,
 	)
-		.bind(assignmentId, user.id, assignedFor, template.estimatedMinutes, template.templateId)
+		.bind(assignmentId, studentId, assignedFor, template.estimatedMinutes, template.templateId)
 		.run();
 
 	const existing = await env.DB.prepare(`SELECT id FROM assignments WHERE student_id = ? AND template_id = ?`)
-		.bind(user.id, template.templateId)
+		.bind(studentId, template.templateId)
 		.first<{ id: string }>();
-	if (!existing) return json({ error: 'internal_error', message: 'The assignment could not be prepared.' }, 500);
+	if (!existing) return null;
 
 	await env.DB.prepare(
 		`INSERT OR IGNORE INTO assignment_items (assignment_id, question_id, position)
@@ -428,9 +444,103 @@ async function currentLearning(request: Request, env: Env): Promise<Response> {
 	)
 		.bind(existing.id, template.templateId)
 		.run();
+	return assignmentRecord(env, studentId, existing.id);
+}
 
-	const assignment = await assignmentRecord(env, user.id, existing.id);
-	if (!assignment) return json({ error: 'internal_error', message: 'The assignment could not be loaded.' }, 500);
+async function latestAssignmentForStudent(env: Env, studentId: string): Promise<AssignmentRecord | null> {
+	const row = await env.DB.prepare(
+		`SELECT assignments.id
+		 FROM assignments
+		 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+		 WHERE assignments.student_id = ?
+		 ORDER BY CASE WHEN assignments.status IN ('assigned', 'in_progress') THEN 0 ELSE 1 END,
+		          assignment_templates.sequence DESC
+		 LIMIT 1`,
+	)
+		.bind(studentId)
+		.first<{ id: string }>();
+	return row ? assignmentRecord(env, studentId, row.id) : null;
+}
+
+async function currentLearning(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	let assignment = await latestAssignmentForStudent(env, user.id);
+	if (!assignment) {
+		const template = await reviewedTemplateForStudent(env, user.id);
+		if (!template) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this class yet.' }, 404);
+		assignment = await createAssignment(env, user.id, template);
+	}
+	if (!assignment) return json({ error: 'internal_error', message: 'The assignment could not be prepared.' }, 500);
+	return json({ assignment: await assignmentPayload(env, assignment) });
+}
+
+async function learningRoadmap(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const result = await env.DB.prepare(
+		`SELECT assignment_templates.sequence,
+		        assignment_templates.class_level AS classLevel,
+		        assignment_templates.subject,
+		        assignment_templates.title,
+		        assignments.id AS assignmentId,
+		        COALESCE(assignments.status, 'not_started') AS status
+		 FROM student_profiles
+		 JOIN assignment_templates ON assignment_templates.class_level = student_profiles.class_level
+		 JOIN learning_modules ON learning_modules.id = assignment_templates.module_id
+		 JOIN curriculum_topics ON curriculum_topics.id = learning_modules.topic_id
+		 LEFT JOIN assignments
+		   ON assignments.template_id = assignment_templates.id
+		  AND assignments.student_id = student_profiles.user_id
+		 WHERE student_profiles.user_id = ?
+		   AND assignment_templates.active = 1
+		   AND assignment_templates.review_status = 'reviewed'
+		   AND learning_modules.review_status = 'reviewed'
+		   AND curriculum_topics.review_status = 'reviewed'
+		   AND (curriculum_topics.board IS NULL OR lower(curriculum_topics.board) = lower(student_profiles.board))
+		   AND (curriculum_topics.exam_year IS NULL OR curriculum_topics.exam_year = student_profiles.exam_year)
+		 ORDER BY assignment_templates.sequence`,
+	)
+		.bind(user.id)
+		.all<{
+			sequence: number;
+			classLevel: string;
+			subject: string;
+			title: string;
+			assignmentId: string | null;
+			status: string;
+		}>();
+	if (result.results.length === 0) return json({ error: 'not_found', message: 'No reviewed learning roadmap is available.' }, 404);
+	const first = result.results[0];
+	return json({
+		track: { classLevel: first.classLevel, subject: first.subject },
+		modules: result.results.map(({ sequence, title, assignmentId, status }) => ({ sequence, title, assignmentId, status })),
+		completed: result.results.filter((module) => module.status === 'submitted' || module.status === 'reviewed').length,
+		total: result.results.length,
+	});
+}
+
+async function nextLearning(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const current = await latestAssignmentForStudent(env, user.id);
+	if (!current) return json({ error: 'not_found', message: 'Open the first chapter before continuing.' }, 404);
+	if (current.status !== 'submitted' && current.status !== 'reviewed') {
+		return json({ error: 'current_not_submitted', message: 'Submit the current chapter before opening the next one.' }, 409);
+	}
+	const template = await reviewedTemplateForStudent(env, user.id, current.sequence);
+	if (!template) return json({ error: 'course_complete', message: 'Every reviewed chapter in this course is complete.' }, 409);
+	const assignment = await createAssignment(env, user.id, template);
+	if (!assignment) return json({ error: 'internal_error', message: 'The next chapter could not be prepared.' }, 500);
 	return json({ assignment: await assignmentPayload(env, assignment) });
 }
 
@@ -694,6 +804,14 @@ export default {
 
 		if (pathname === '/api/learning/current' && request.method === 'GET') {
 			return currentLearning(request, env);
+		}
+
+		if (pathname === '/api/learning/roadmap' && request.method === 'GET') {
+			return learningRoadmap(request, env);
+		}
+
+		if (pathname === '/api/learning/next' && request.method === 'POST') {
+			return nextLearning(request, env);
 		}
 
 		const responseMatch = pathname.match(/^\/api\/learning\/assignments\/([A-Za-z0-9-]+)\/responses$/);

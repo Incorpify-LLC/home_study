@@ -173,9 +173,51 @@
 			}
 			.student-list,
 			.progress-list,
-			.correction-list {
+			.correction-list,
+			.roadmap-list {
 				display: grid;
 				gap: 12px;
+			}
+			.roadmap-list {
+				grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+			}
+			.roadmap-item {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				gap: 10px;
+				align-items: start;
+				padding: 13px;
+				border: 1px solid #e1e6ed;
+				border-radius: 12px;
+				background: #fafcff;
+			}
+			.roadmap-number {
+				display: grid;
+				place-items: center;
+				width: 28px;
+				height: 28px;
+				border-radius: 50%;
+				background: #e8eef5;
+				font-size: 12px;
+				font-weight: 800;
+			}
+			.roadmap-item[data-status='submitted'] .roadmap-number,
+			.roadmap-item[data-status='reviewed'] .roadmap-number {
+				background: #d9f4e3;
+				color: #176538;
+			}
+			.roadmap-item[data-status='assigned'] .roadmap-number,
+			.roadmap-item[data-status='in_progress'] .roadmap-number {
+				background: #dceeff;
+				color: #075ea8;
+			}
+			.roadmap-item strong,
+			.roadmap-item small {
+				display: block;
+			}
+			.roadmap-item small {
+				margin-top: 4px;
+				color: #647083;
 			}
 			.student-card,
 			.progress-card,
@@ -365,6 +407,16 @@
 					</div>
 
 					<div data-role="student" hidden>
+						<section id="course-roadmap" class="panel" aria-labelledby="roadmap-title">
+							<div class="assignment-heading">
+								<div>
+									<span class="eyebrow">Complete course</span>
+									<h2 id="roadmap-title">Chapter roadmap</h2>
+								</div>
+								<p id="roadmap-summary" class="meta"></p>
+							</div>
+							<div id="roadmap-list" class="roadmap-list" aria-live="polite">Loading chapters…</div>
+						</section>
 						<div id="learning-workspace" class="stack" aria-live="polite">
 							<p class="notice">Loading your reviewed learning assignment…</p>
 						</div>
@@ -408,6 +460,10 @@
 								</div>
 								<p class="muted">Read every rationale. A first diagnostic is evidence for planning, not a final judgement.</p>
 								<div id="correction-list" class="correction-list"></div>
+								<div class="submit-row">
+									<button id="next-assignment" type="button">Open next chapter</button>
+									<span id="course-complete-message" class="muted" hidden>All reviewed chapters are complete.</span>
+								</div>
 							</section>
 						</template>
 					</div>
@@ -519,6 +575,44 @@
 						element('h2', `${student.displayName} · progress evidence`),
 						element('p', 'Progress could not be loaded.', 'notice'),
 					);
+				}
+			}
+
+			function renderRoadmap(roadmap) {
+				const list = document.querySelector('#roadmap-list');
+				const summary = document.querySelector('#roadmap-summary');
+				summary.textContent = `${roadmap.completed} of ${roadmap.total} completed`;
+				list.replaceChildren();
+				const labels = {
+					not_started: 'Not started',
+					assigned: 'Current chapter',
+					in_progress: 'In progress',
+					submitted: 'Completed',
+					reviewed: 'Reviewed',
+				};
+				for (const module of roadmap.modules) {
+					const card = element('article', undefined, 'roadmap-item');
+					card.dataset.status = module.status;
+					card.append(element('span', String(module.sequence), 'roadmap-number'));
+					const details = element('div');
+					details.append(element('strong', module.title), element('small', labels[module.status] || module.status));
+					card.append(details);
+					list.append(card);
+				}
+			}
+
+			async function loadRoadmap() {
+				const list = document.querySelector('#roadmap-list');
+				try {
+					const response = await fetch('/api/learning/roadmap');
+					const result = await response.json();
+					if (!response.ok) {
+						list.replaceChildren(element('p', result.message || 'The chapter roadmap could not be loaded.', 'notice'));
+						return;
+					}
+					renderRoadmap(result);
+				} catch {
+					list.replaceChildren(element('p', 'The chapter roadmap could not be loaded. Please reload.', 'notice'));
 				}
 			}
 
@@ -637,6 +731,35 @@
 					card.append(element('p', item.rationale, 'muted'));
 					list.append(card);
 				}
+				const next = document.querySelector('#next-assignment');
+				const complete = document.querySelector('#course-complete-message');
+				next.hidden = assignment.courseComplete;
+				complete.hidden = !assignment.courseComplete;
+			}
+
+			async function openNextChapter() {
+				const button = document.querySelector('#next-assignment');
+				button.disabled = true;
+				try {
+					const response = await fetch('/api/learning/next', { method: 'POST' });
+					const result = await response.json();
+					if (!response.ok) {
+						button.disabled = false;
+						if (result.error === 'course_complete') {
+							button.hidden = true;
+							document.querySelector('#course-complete-message').hidden = false;
+							return;
+						}
+						window.alert(result.message || 'The next chapter could not be opened.');
+						return;
+					}
+					renderLearning(result.assignment);
+					await loadRoadmap();
+					document.querySelector('#learning-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+				} catch {
+					button.disabled = false;
+					window.alert('The next chapter could not be opened. Please try again.');
+				}
 			}
 
 			async function submitCurrentAssignment() {
@@ -664,6 +787,7 @@
 				for (const control of document.querySelectorAll('#question-form input, #question-form select, #question-form button'))
 					control.disabled = true;
 				renderCorrections(currentAssignment);
+				await loadRoadmap();
 				document.querySelector('#corrections').scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 
@@ -689,6 +813,7 @@
 				for (const [index, question] of assignment.questions.entries()) form.append(questionField(question, index, submitted));
 				const submit = document.querySelector('#submit-assignment');
 				submit.addEventListener('click', submitCurrentAssignment);
+				document.querySelector('#next-assignment').addEventListener('click', openNextChapter);
 				if (submitted) {
 					submit.closest('.submit-row').hidden = true;
 					renderCorrections(assignment);
@@ -697,13 +822,14 @@
 
 			async function loadLearning() {
 				try {
-					const response = await fetch('/api/learning/current');
-					const result = await response.json();
-					if (!response.ok) {
+					const learningResponse = await fetch('/api/learning/current');
+					const result = await learningResponse.json();
+					if (!learningResponse.ok) {
 						learningWorkspace.replaceChildren(element('p', result.message || 'Learning assignment could not be loaded.', 'notice'));
 						return;
 					}
 					renderLearning(result.assignment);
+					await loadRoadmap();
 				} catch {
 					learningWorkspace.replaceChildren(element('p', 'Learning assignment could not be loaded. Please reload.', 'notice'));
 				}

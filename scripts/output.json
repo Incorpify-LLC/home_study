@@ -1,0 +1,1391 @@
+{
+	"track": {
+		"class_level": "XII",
+		"subject": "Accountancy"
+	},
+	"modules": [
+		{
+			"id": "module-xii-goodwill-valuation",
+			"topic_id": "topic-xii-goodwill-valuation",
+			"sequence": 2,
+			"unit": "Partnership Accounts",
+			"topic": "Goodwill: valuation and treatment",
+			"title": "Goodwill: meaning, factors, average profit, weighted average, super profit and capitalisation",
+			"objective": "Explain the nature and factors of goodwill, calculate its value using average profit, weighted average, super profit, and capitalisation methods, and apply Accounting Standard 26 principles.",
+			"overview": "Goodwill represents the capitalized value of a firm's reputation, customer loyalty, advantageous location, and operational efficiency that enables it to earn super profits—earnings exceeding normal returns on capital employed in the same industry. Because it arises from intangible business advantages, goodwill cannot be physically inspected. Under Indian Accounting Standard (AS) 26, internally generated goodwill must not be recognized in the books of accounts because no monetary consideration has been paid for it; only purchased goodwill can be recorded in financial statements. Partnership accounting values goodwill during reconstitution—such as partner admission, retirement, death, or change in profit-sharing ratio—to compensate partners who surrender their future profit shares. Valuation methods include simple average profit and weighted average profit (adjusted for past abnormal gains, abnormal losses, and non-operating incomes), super profit (excess of normal profit calculated on capital employed), and capitalisation of either average profit or super profit. Mastery of these methods requires strict distinction between normal trading earnings and non-recurring transactions.",
+			"key_points": [
+				"AS-26 prohibits the recognition of self-generated goodwill as an asset in the books; it is adjusted strictly through partner capital or current accounts.",
+				"Adjusted past profit excludes abnormal gains, non-operating incomes, and abnormal losses to reflect the normal sustainable earning power of the firm.",
+				"Super profit is the excess of adjusted average profit over normal profit, where normal profit equals capital employed multiplied by the normal rate of return.",
+				"Under capitalisation of super profit, goodwill equals super profit divided by the normal rate of return, yielding the exact same value as capitalisation of average profit when capital employed is identical."
+			],
+			"worked_example": {
+				"prompt": "A firm earned profits of ₹1,20,000, ₹1,50,000, and ₹1,80,000 during the last three years. The profit of the second year included an abnormal gain of ₹30,000. Capital employed is ₹8,00,000 and the normal rate of return is 10%. Calculate goodwill based on 3 years' purchase of super profit.",
+				"steps": [
+					"Adjust the second year's profit by deducting the abnormal gain: ₹1,50,000 − ₹30,000 = ₹1,20,000. The adjusted three-year profits are ₹1,20,000, ₹1,20,000, and ₹1,80,000.",
+					"Calculate average normal profit: (₹1,20,000 + ₹1,20,000 + ₹1,80,000) ÷ 3 = ₹4,20,000 ÷ 3 = ₹1,40,000.",
+					"Compute normal profit: ₹8,00,000 × 10% = ₹80,000. Super profit = Average normal profit − Normal profit = ₹1,40,000 − ₹80,000 = ₹60,000.",
+					"Goodwill = Super profit × 3 years' purchase = ₹60,000 × 3 = ₹1,80,000."
+				],
+				"answer": "₹1,80,000"
+			},
+			"practice_advice": "Always eliminate abnormal losses by adding them back and abnormal gains by deducting them before computing average profit. Verify whether weights or simple averages are specified.",
+			"estimated_minutes": 50,
+			"questions": [
+				{
+					"id": "xii-goodwill-weighted-average",
+					"type": "numeric",
+					"prompt": "The profits of a partnership firm for the past three years were: Year 1: ₹60,000; Year 2: ₹75,000; Year 3: ₹90,000. Weights assigned to the years are 1, 2, and 3 respectively. Calculate the value of goodwill at 2 years' purchase of weighted average profit in rupees.",
+					"answer": {
+						"value": 160000,
+						"tolerance": 0
+					},
+					"rationale": "Weighted profit = (60,000 × 1) + (75,000 × 2) + (90,000 × 3) = 60,000 + 1,50,000 + 2,70,000 = ₹4,80,000. Total weights = 1 + 2 + 3 = 6. Weighted average profit = ₹4,80,000 ÷ 6 = ₹80,000. Goodwill = ₹80,000 × 2 = ₹1,60,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-goodwill-as26-rule",
+					"type": "single_choice",
+					"prompt": "According to Accounting Standard 26 (Intangible Assets), how should self-generated (internally developed) goodwill be treated on reconstitution of a partnership firm?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Raised as an asset in the balance sheet at its full evaluated value"
+						},
+						{
+							"id": "b",
+							"label": "Adjusted through the partners' capital or current accounts without appearing in the balance sheet"
+						},
+						{
+							"id": "c",
+							"label": "Debited to the Revaluation Account and credited to Old Partners' Capital Accounts"
+						},
+						{
+							"id": "d",
+							"label": "Amortised over a period of 10 years through the Profit and Loss Appropriation Account"
+						}
+					],
+					"answer": {
+						"choice": "b"
+					},
+					"rationale": "AS-26 mandates that internally generated goodwill should not be recognised in the books of accounts because no cash or consideration has been paid for it. It must be adjusted through partners' capital/current accounts.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-goodwill-capitalisation-super",
+					"type": "numeric",
+					"prompt": "A firm's average annual profit is ₹96,000. Total tangible assets are ₹9,00,000 and outside liabilities are ₹3,00,000. If the normal rate of return is 12%, calculate the value of goodwill under the capitalisation of super profit method in rupees.",
+					"answer": {
+						"value": 200000,
+						"tolerance": 0
+					},
+					"rationale": "Capital Employed = Tangible Assets − Outside Liabilities = ₹9,00,000 − ₹3,00,000 = ₹6,00,000. Normal Profit = ₹6,00,000 × 12% = ₹72,000. Super Profit = Average Profit − Normal Profit = ₹96,000 − ₹72,000 = ₹24,000. Goodwill = (Super Profit / Normal Rate of Return) × 100 = (₹24,000 ÷ 12) × 100 = ₹2,00,000.",
+					"difficulty": 3,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-goodwill-abnormal-adjustment",
+					"type": "numeric",
+					"prompt": "A firm reported a net profit of ₹1,50,000 for the year ended 31st March 2026. This included an abnormal loss on fire of ₹30,000, interest on non-trade investments of ₹12,000, and an unrecorded annual insurance premium of ₹8,000 to be accounted for in the future. Calculate the adjusted normal business profit for goodwill valuation in rupees.",
+					"answer": {
+						"value": 160000,
+						"tolerance": 0
+					},
+					"rationale": "Adjusted normal profit = Reported profit + Abnormal loss − Non-trade investment income − Recurring future expense = ₹1,50,000 + ₹30,000 − ₹12,000 − ₹8,000 = ₹1,60,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-goodwill-capitalised-average",
+					"type": "single_choice",
+					"prompt": "When goodwill is valued using the capitalisation of average profit method, which mathematical formula is applied?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Goodwill = Capitalised Value of Business − Net Assets (Capital Employed)"
+						},
+						{
+							"id": "b",
+							"label": "Goodwill = Net Assets (Capital Employed) − Capitalised Value of Business"
+						},
+						{
+							"id": "c",
+							"label": "Goodwill = Super Profit × Normal Rate of Return"
+						},
+						{
+							"id": "d",
+							"label": "Goodwill = Average Profit × Number of Years' Purchase"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under the capitalisation of average profit method, Capitalised Value = (Average Profit / Normal Rate) × 100. Goodwill is the excess of this capitalised value over the actual net assets (capital employed).",
+					"difficulty": 2,
+					"requires_rough_work": false
+				}
+			]
+		},
+		{
+			"id": "module-xii-admission-partner",
+			"topic_id": "topic-xii-admission-partner",
+			"sequence": 3,
+			"unit": "Partnership Accounts",
+			"topic": "Admission of a partner",
+			"title": "Admission of a partner: ratios, goodwill, revaluation, reserves and capital adjustment",
+			"objective": "Calculate new profit-sharing and sacrificing ratios, record journal entries for goodwill, revaluation, and accumulated reserves, and adjust capital accounts upon the admission of a partner.",
+			"overview": "Admission of a new partner reconstitutes the partnership firm, requiring determination of new profit-sharing ratios and the sacrificing ratio (Old Ratio minus New Ratio). Assets and liabilities are revalued through the Revaluation Account (or Profit and Loss Adjustment Account) to ensure the incoming partner neither benefits from past unrecorded appreciation nor suffers from pre-existing depreciations. The net balance of revaluation is transferred to old partners' capital accounts in their old profit-sharing ratio. Accumulated reserves, general reserves, and existing profits or losses belong exclusively to old partners and are credited or debited to their capital accounts in the old ratio. Under AS-26, any existing goodwill on the balance sheet is written off among old partners in the old ratio. The incoming partner's premium for goodwill is credited to sacrificing partners in their sacrificing ratio; if not brought in cash, it is debited to the incoming partner's current account. Finally, capital adjustments require either aligning old partners' capitals with the new partner's contribution or deriving the incoming partner's capital from the aggregate adjusted capitals of old partners.",
+			"key_points": [
+				"Sacrificing ratio = Old profit share − New profit share; it determines how the premium for goodwill brought by the incoming partner is distributed among old partners.",
+				"Revaluation profit or loss belongs exclusively to the old partners and is divided in their old profit-sharing ratio.",
+				"Existing goodwill appearing on the balance sheet date of admission must be written off completely among old partners in their old profit-sharing ratio.",
+				"When a new partner fails to bring goodwill premium in cash, the incoming partner's current account is debited to avoid impairing agreed fixed or initial capital."
+			],
+			"worked_example": {
+				"prompt": "X and Y are partners sharing profits in the ratio 3:2. Z is admitted for a 1/5th share, which he acquires entirely from X. Z brings ₹1,00,000 as capital and ₹40,000 as premium for goodwill. Pass necessary journal entries for goodwill and state the new profit-sharing ratio.",
+				"steps": [
+					"Calculate new shares: Z's share is 1/5 (2/10). X sacrifices 1/5: X's new share = 3/5 − 1/5 = 2/5 (4/10). Y sacrifices 0: Y's new share = 2/5 (4/10). New ratio of X, Y, and Z = 2/5 : 2/5 : 1/5 = 2:2:1.",
+					"Identify sacrificing partner: Only X sacrifices his share (Sacrificing ratio: X = 1/5, Y = 0).",
+					"Record cash brought in: Debit Cash/Bank ₹1,40,000; Credit Z's Capital A/c ₹1,00,000; Credit Premium for Goodwill A/c ₹40,000.",
+					"Distribute goodwill premium: Debit Premium for Goodwill A/c ₹40,000; Credit X's Capital A/c ₹40,000 (entire premium goes to sacrificing partner X)."
+				],
+				"answer": "New profit-sharing ratio is 2:2:1. Premium of ₹40,000 is credited entirely to X's Capital Account."
+			},
+			"practice_advice": "Always calculate the sacrificing ratio before allocating goodwill premium. Remember that partners who gain on admission must also be debited for their share of goodwill.",
+			"estimated_minutes": 60,
+			"questions": [
+				{
+					"id": "xii-admission-sacrificing-share",
+					"type": "numeric",
+					"prompt": "A and B are partners sharing profits in the ratio 5:3. C is admitted for a 1/4th share in future profits. C acquires this share equally from A and B. Calculate the sacrificing share of partner A as a fraction, expressed here as a decimal to three decimal places.",
+					"answer": {
+						"value": 0.125,
+						"tolerance": 0.0001
+					},
+					"rationale": "C's share = 1/4. C acquires it equally from A and B, so sacrifice by A = 1/4 × 1/2 = 1/8. 1/8 in decimal form is 0.125.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-admission-goodwill-not-in-cash",
+					"type": "single_choice",
+					"prompt": "When an incoming partner is unable to bring their share of premium for goodwill in cash, which account is debited to credit the sacrificing partners?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Incoming Partner's Current Account"
+						},
+						{
+							"id": "b",
+							"label": "Goodwill Account"
+						},
+						{
+							"id": "c",
+							"label": "Revaluation Account"
+						},
+						{
+							"id": "d",
+							"label": "Profit and Loss Suspense Account"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "As per AS-26 and standard practice, self-generated goodwill cannot be raised. To preserve the incoming partner's agreed capital balance intact, the incoming partner's current account is debited.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-admission-revaluation-balance",
+					"type": "numeric",
+					"prompt": "On C's admission, the firm's assets and liabilities were revalued: Machinery (book value ₹80,000) was appreciated by 15%, Furniture (book value ₹40,000) was depreciated by 10%, and an unrecorded liability for damages of ₹3,000 was recognised. What is the net profit on revaluation to be credited to old partners in rupees?",
+					"answer": {
+						"value": 5000,
+						"tolerance": 0
+					},
+					"rationale": "Appreciation of Machinery = ₹80,000 × 15% = +₹12,000 (credit). Depreciation of Furniture = ₹40,000 × 10% = −₹4,000 (debit). Unrecorded liability = −₹3,000 (debit). Net Revaluation Profit = ₹12,000 − ₹4,000 − ₹3,000 = ₹5,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-admission-new-partner-capital",
+					"type": "numeric",
+					"prompt": "P and Q are partners sharing profits in the ratio 3:2. Their adjusted capitals after all revaluations, reserves, and goodwill adjustments are ₹1,20,000 and ₹80,000 respectively. R is admitted for a 1/5th share and is required to bring in capital proportionate to his share in the firm. Calculate the amount of capital R must bring in rupees.",
+					"answer": {
+						"value": 50000,
+						"tolerance": 0
+					},
+					"rationale": "Combined share of old partners P and Q = 1 − 1/5 = 4/5. Combined adjusted capital of P and Q = ₹1,20,000 + ₹80,000 = ₹2,00,000. Total capital of new firm = ₹2,00,000 × (5/4) = ₹2,50,000. R's required capital = ₹2,50,000 × 1/5 = ₹50,000 (or ₹2,00,000 ÷ 4 = ₹50,000).",
+					"difficulty": 3,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-admission-workmen-compensation",
+					"type": "single_choice",
+					"prompt": "At the time of admission of a partner, Workmen Compensation Reserve stands at ₹50,000 in the balance sheet. A claim on account of workmen compensation is estimated at ₹35,000. How is the remaining ₹15,000 treated?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Credited to Old Partners' Capital Accounts in their old profit-sharing ratio"
+						},
+						{
+							"id": "b",
+							"label": "Credited to All Partners' Capital Accounts in the new profit-sharing ratio"
+						},
+						{
+							"id": "c",
+							"label": "Transferred to the Revaluation Account as a gain"
+						},
+						{
+							"id": "d",
+							"label": "Retained in the balance sheet under Current Liabilities"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "The surplus Workmen Compensation Reserve (₹50,000 − ₹35,000 = ₹15,000) represents undistributed profits earned prior to admission, and is therefore distributed to old partners in their old profit-sharing ratio.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				}
+			]
+		},
+		{
+			"id": "module-xii-retirement-death",
+			"topic_id": "topic-xii-retirement-death",
+			"sequence": 4,
+			"unit": "Partnership Accounts",
+			"topic": "Retirement and death of a partner",
+			"title": "Retirement and death: gaining ratio, goodwill, revaluation, profit to date, capital and loan/executor accounts",
+			"objective": "Compute gaining ratios, record goodwill adjustments without raising goodwill account, calculate interim profit to the date of death, and prepare retiring partner loan accounts and deceased partner executor accounts.",
+			"overview": "When a partner retires or dies, the existing partnership ceases, necessitating settlement of the outgoing partner's claims. The continuing partners acquire the outgoing partner's interest in the gaining ratio (New Share minus Old Share). As per AS-26, the retiring or deceased partner's share of firm goodwill is evaluated and credited to their capital account, while continuing partners' capital or current accounts are debited in their gaining ratio without creating a goodwill account on the balance sheet. Assets and liabilities are revalued, and accumulated reserves and profits are shared among all existing partners in their old ratio. For a partner dying during an accounting year, accrued profit from the start of the financial year to the date of death is estimated using either time proportion or turnover/sales basis, debited to Profit and Loss Suspense Account if the remaining partners' profit-sharing ratio remains unchanged. The final balance of a retiring partner is paid immediately or transferred to a Loan Account; a deceased partner's balance is transferred to their Executor's Account.",
+			"key_points": [
+				"Gaining ratio = New profit share − Old profit share; continuing partners compensate the retiring or deceased partner for goodwill in this ratio.",
+				"Under AS-26, goodwill is adjusted by debiting gaining partners' capital accounts and crediting the outgoing partner's capital account.",
+				"Interim profit up to the date of death is debited to Profit and Loss Suspense Account when the continuing partners maintain their relative profit-sharing ratio.",
+				"Amounts unpaid to a retiring partner are transferred to Partner's Loan Account bearing statutory interest at 6% p.a. under Section 37 in the absence of an agreed rate."
+			],
+			"worked_example": {
+				"prompt": "A, B, and C are partners sharing profits in the ratio 4:3:2. B retires, and A and C agree to share future profits in the ratio 5:3. Firm goodwill is valued at ₹1,80,000. Pass the journal entry to adjust B's share of goodwill.",
+				"steps": [
+					"Calculate gaining ratio: Gain = New Share − Old Share. A's gain = 5/8 − 4/9 = (45 − 32)/72 = 13/72. C's gain = 3/8 − 2/9 = (27 − 16)/72 = 11/72. Gaining ratio between A and C is 13:11.",
+					"Calculate B's share of goodwill: B's share = ₹1,80,00,000? B's share = ₹1,80,000 × 3/9 = ₹60,000.",
+					"Divide B's goodwill between A and C in gaining ratio (13:11): A's debit = ₹60,000 × (13/24) = ₹32,500. C's debit = ₹60,000 × (11/24) = ₹27,500.",
+					"Journal entry: Debit A's Capital A/c ₹32,500; Debit C's Capital A/c ₹27,500; Credit B's Capital A/c ₹60,000."
+				],
+				"answer": "Debit A's Capital A/c ₹32,500, Debit C's Capital A/c ₹27,500, and Credit B's Capital A/c ₹60,000."
+			},
+			"practice_advice": "Check whether the continuing partners' ratio changes. If a partner makes a sacrifice on retirement of another partner, that partner must be credited rather than debited.",
+			"estimated_minutes": 60,
+			"questions": [
+				{
+					"id": "xii-retirement-gaining-ratio",
+					"type": "numeric",
+					"prompt": "L, M, and N were partners sharing profits in the ratio 5:3:2. M retires, and L and N decide to share future profits in the ratio 3:2. Calculate L's gaining share as a fraction, expressed as a decimal (e.g. 0.10).",
+					"answer": {
+						"value": 0.1,
+						"tolerance": 0.001
+					},
+					"rationale": "L's old share = 5/10. L's new share = 3/5 = 6/10. L's gaining share = New share − Old share = 6/10 − 5/10 = 1/10 = 0.1.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-death-pl-suspense",
+					"type": "single_choice",
+					"prompt": "Partner D died on 30th June 2026. The accounting year ends on 31st March. The remaining partners continue sharing profits in their old relative ratio. Which entry records D's share of interim profit to the date of death?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Debit Profit and Loss Suspense A/c; Credit D's Capital A/c"
+						},
+						{
+							"id": "b",
+							"label": "Debit D's Capital A/c; Credit Profit and Loss Suspense A/c"
+						},
+						{
+							"id": "c",
+							"label": "Debit Profit and Loss Appropriation A/c; Credit D's Capital A/c"
+						},
+						{
+							"id": "d",
+							"label": "Debit Remaining Partners' Capital A/cs; Credit D's Capital A/c"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "When profit-sharing ratios among remaining partners do not alter, the deceased partner's share of profit up to date of death is debited to Profit and Loss Suspense Account and credited to the Deceased Partner's Capital Account.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-death-sales-basis-profit",
+					"type": "numeric",
+					"prompt": "K died on 30th June 2026. The firm's sales for the preceding year ended 31st March 2026 were ₹12,00,000 and profit was ₹2,40,000. Sales from 1st April 2026 to 30th June 2026 amounted to ₹3,00,000. K's profit share in the firm was 1/3rd. Calculate K's share of interim profit to the date of death in rupees on turnover basis.",
+					"answer": {
+						"value": 20000,
+						"tolerance": 0
+					},
+					"rationale": "Profit margin on sales = (₹2,40,000 / ₹12,00,000) × 100 = 20%. Estimated firm profit for 3 months = ₹3,00,000 × 20% = ₹60,000. K's share = ₹60,000 × 1/3 = ₹20,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-retirement-section-37-interest",
+					"type": "numeric",
+					"prompt": "On retirement, ₹2,00,000 was due to partner R. The firm did not settle the balance immediately and there was no agreement regarding interest. Six months later, the firm pays the entire dues. Under Section 37 of the Indian Partnership Act, 1932, what is the statutory interest payable to R in rupees for these 6 months?",
+					"answer": {
+						"value": 6000,
+						"tolerance": 0
+					},
+					"rationale": "Under Section 37 of the Indian Partnership Act, 1932, in the absence of an agreement, an outgoing partner is entitled to interest at 6% per annum on the unpaid balance. Interest = ₹2,00,000 × 6% × (6/12) = ₹6,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-death-executor-transfer",
+					"type": "single_choice",
+					"prompt": "Upon the death of a partner, where is the net credit balance of the deceased partner's capital account transferred?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Deceased Partner's Executor's Account"
+						},
+						{
+							"id": "b",
+							"label": "Deceased Partner's Loan Account"
+						},
+						{
+							"id": "c",
+							"label": "Remaining Partners' Capital Accounts"
+						},
+						{
+							"id": "d",
+							"label": "Realisation Account"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Since the deceased partner is no longer legally capable of holding an account, the entire balance standing to their credit is transferred to their legal representative via Deceased Partner's Executor's Account.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				}
+			]
+		},
+		{
+			"id": "module-xii-dissolution-firm",
+			"topic_id": "topic-xii-dissolution-firm",
+			"sequence": 5,
+			"unit": "Partnership Accounts",
+			"topic": "Dissolution of a partnership firm",
+			"title": "Dissolution: Section 48 settlement, realisation, partner loan/capital and bank accounts",
+			"objective": "Apply the statutory order of settlement under Section 48 of the Partnership Act, prepare Realisation Account, handle partner loans, and close capital and cash/bank accounts.",
+			"overview": "Dissolution of a partnership firm terminates the business entirely, requiring asset disposal, liability satisfaction, and closure of all books of account, unlike dissolution of partnership which merely reconstitutes the firm. Section 48 of the Indian Partnership Act, 1932 governs the priority of settlement. Losses, including capital deficiencies, must be paid first out of profits, then out of partners' capital, and lastly by partners individually in their profit-sharing ratio. Firm assets are applied in strict sequence: first to discharge third-party liabilities; second to repay advances and loans given by partners to the firm; third to settle partners' capital accounts ratably; and any surplus is distributed according to profit-sharing ratios. A nominal Realisation Account is prepared to determine net gain or loss on disposing of non-cash assets and discharging liabilities. Notably, partner loans to the firm are not transferred to the Realisation Account but are settled separately through the bank account after external creditors are fully paid, unless capital deficiencies require set-off.",
+			"key_points": [
+				"Section 48 mandates paying outside debts first, partner advances/loans second, partner capitals third, and dividing surplus in the profit-sharing ratio.",
+				"Cash and bank balances, partner loans to the firm, and accumulated profits/losses are not transferred to the Realisation Account.",
+				"If an asset is taken over by a creditor in full satisfaction of their claim, no journal entry is recorded in the Realisation Account.",
+				"Realisation expenses paid by the firm on behalf of a partner who agreed to bear them are debited to that partner's capital account, not to Realisation Account."
+			],
+			"worked_example": {
+				"prompt": "During the dissolution of a firm, sundry assets of book value ₹3,00,000 were realised for ₹2,60,000. Sundry creditors of book value ₹80,000 accepted ₹75,000 in full settlement. Dissolution expenses amounted to ₹5,000 paid by the firm. Calculate the profit or loss on realisation.",
+				"steps": [
+					"Debit Realisation Account with book value of sundry assets: ₹3,00,000.",
+					"Credit Realisation Account with book value of sundry creditors: ₹80,000.",
+					"Credit Realisation Account with cash realised from assets: ₹2,60,000.",
+					"Debit Realisation Account with cash paid to creditors (₹75,000) and realisation expenses (₹5,000): Total cash debits = ₹80,000.",
+					"Total Debits = ₹3,00,000 + ₹80,000 = ₹3,80,000. Total Credits = ₹80,000 + ₹2,60,000 = ₹3,40,000. Net Loss on Realisation = ₹3,80,000 − ₹3,40,000 = ₹40,000."
+				],
+				"answer": "Loss on realisation of ₹40,000."
+			},
+			"practice_advice": "Remember that provisions against assets (e.g. Provision for Doubtful Debts) are transferred to the credit side of Realisation Account, but gross asset values are debited.",
+			"estimated_minutes": 55,
+			"questions": [
+				{
+					"id": "xii-dissolution-creditor-asset-takeover",
+					"type": "single_choice",
+					"prompt": "In the dissolution of a firm, a creditor of ₹50,000 accepts stock worth ₹45,000 in full settlement of their claim. What entry is recorded in the Realisation Account for this settlement?",
+					"options": [
+						{
+							"id": "a",
+							"label": "No journal entry is required"
+						},
+						{
+							"id": "b",
+							"label": "Debit Realisation A/c ₹5,000 and Credit Stock A/c ₹5,000"
+						},
+						{
+							"id": "c",
+							"label": "Debit Creditors A/c ₹50,000 and Credit Stock A/c ₹45,000"
+						},
+						{
+							"id": "d",
+							"label": "Debit Realisation A/c ₹45,000 and Credit Cash A/c ₹45,000"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Both the asset and the liability have already been transferred to the Realisation Account. When an asset is taken over by a creditor in full settlement, no further entry is passed.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-dissolution-unrecorded-asset",
+					"type": "numeric",
+					"prompt": "An unrecorded typewriter estimated at ₹6,000 was sold for ₹4,500 during dissolution. Dissolution expenses of ₹1,500 were paid by the firm. What is the net cash received and credited to Realisation Account exclusively from the sale of this unrecorded typewriter in rupees?",
+					"answer": {
+						"value": 4500,
+						"tolerance": 0
+					},
+					"rationale": "Cash received from the sale of an unrecorded asset is debited to Cash/Bank A/c and credited to Realisation A/c at the actual realised value of ₹4,500.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-dissolution-partner-loan-priority",
+					"type": "single_choice",
+					"prompt": "Under Section 48 of the Indian Partnership Act, 1932, what is the priority order for applying firm assets upon dissolution?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Third-party debts first, Partner loans second, Partner capitals third, Surplus divided in profit-sharing ratio"
+						},
+						{
+							"id": "b",
+							"label": "Partner capitals first, Third-party debts second, Partner loans third, Surplus divided equally"
+						},
+						{
+							"id": "c",
+							"label": "Partner loans first, Third-party debts second, Partner capitals third, Surplus divided in capital ratio"
+						},
+						{
+							"id": "d",
+							"label": "Third-party debts first, Partner capitals second, Partner loans third, Surplus divided equally"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Section 48(b) provides that assets must be applied first to pay external debts of the firm, secondly to pay partner loans/advances rateably, thirdly to pay partner capitals rateably, and the residue divided according to profit-sharing ratio.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-dissolution-partner-deficiency",
+					"type": "numeric",
+					"prompt": "Partner S has a debit balance of ₹30,000 in their capital account after distributing realisation loss. S's share of firm profit is 1/4th. S is solvent. How much cash must S bring into the firm's bank account to settle this capital deficiency in rupees?",
+					"answer": {
+						"value": 30000,
+						"tolerance": 0
+					},
+					"rationale": "A solvent partner having a debit (deficiency) balance in their capital account must pay in cash equal to that full debit balance (₹30,000) to clear their liability to the firm.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-dissolution-realisation-loss-calc",
+					"type": "numeric",
+					"prompt": "At dissolution, total sundry assets transferred to Realisation Account were ₹5,00,000. Assets realised 80% of book value. Sundry liabilities of ₹1,20,000 were settled at a discount of 5%. Realisation expenses were ₹4,000. What is the total loss on realisation in rupees?",
+					"answer": {
+						"value": 98000,
+						"tolerance": 0
+					},
+					"rationale": "Realisation Debits = Assets ₹5,00,000 + Cash paid for liabilities (₹1,20,000 − 5% = ₹1,14,000) + Cash for expenses ₹4,000 = ₹6,18,000. Realisation Credits = Liabilities transferred ₹1,20,000 + Cash from assets (80% of ₹5,00,000 = ₹4,00,000) = ₹5,20,000. Loss on realisation = ₹6,18,000 − ₹5,20,000 = ₹98,000.",
+					"difficulty": 3,
+					"requires_rough_work": true
+				}
+			]
+		},
+		{
+			"id": "module-xii-issue-of-shares",
+			"topic_id": "topic-xii-issue-of-shares",
+			"sequence": 6,
+			"unit": "Joint Stock Company Accounts",
+			"topic": "Issue of shares",
+			"title": "Issue of shares: par/premium, non-cash consideration, calls, over/undersubscription, pro-rata, forfeiture and reissue",
+			"objective": "Account for share capital issues at par and premium, execute pro-rata allotment, record calls in arrears/advance, and compute forfeiture and reissue transfers to capital reserve.",
+			"overview": "A joint stock company finances long-term operations by issuing equity and preference shares. Shares may be issued at par or at a premium under Section 52(2) of the Companies Act, 2013, which restricts securities premium utilisation to specified capital purposes like issuing fully paid bonus shares or writing off preliminary expenses. When shares are issued for consideration other than cash to vendors or underwriters, share capital is credited at nominal face value while any excess purchase price is credited to Securities Premium. In oversubscription, companies frequently make pro-rata allotments, adjusting surplus application money toward allotment and subsequent calls. Non-payment of calls leads to forfeiture after due statutory notice. Upon forfeiture, the nominal called-up capital is debited, received premium is retained unless unpaid, and paid-up share money is credited to Forfeited Shares Account. On reissue of forfeited shares, permissible discounts cannot exceed the amount previously forfeited on those reissued shares; any net surplus gain on reissued shares is transferred to Capital Reserve Account.",
+			"key_points": [
+				"Securities premium is credited to Securities Premium Account and can only be used for purposes specifically mandated under Section 52(2).",
+				"Excess application money on pro-rata allotment is adjusted against allotment and future calls; unabsorbed surplus is refunded.",
+				"On forfeiture, Share Capital is debited with called-up value; unpaid securities premium is debited only if it was not received previously.",
+				"Capital Reserve receives the net surplus on reissued shares, calculated as (amount forfeited per share − discount allowed on reissue) × number of shares reissued."
+			],
+			"worked_example": {
+				"prompt": "Omega Ltd. forfeited 400 equity shares of ₹10 each, ₹8 called up, held by K for non-payment of first call of ₹2 per share. He had paid application and allotment money of ₹6 per share. Later, 300 of these shares were reissued as ₹8 paid up for ₹7 per share. Pass entries for forfeiture and reissue and calculate transfer to Capital Reserve.",
+				"steps": [
+					"Forfeiture entry: Debit Equity Share Capital A/c (400 × ₹8 called up) = ₹3,200; Credit Calls in Arrears A/c (400 × ₹2 unpaid) = ₹800; Credit Forfeited Shares A/c (400 × ₹6 paid) = ₹2,400.",
+					"Reissue entry for 300 shares: Debit Bank A/c (300 × ₹7) = ₹2,100; Debit Forfeited Shares A/c (discount = 300 × ₹1) = ₹300; Credit Equity Share Capital A/c (300 × ₹8) = ₹2,400.",
+					"Calculate transfer to Capital Reserve on 300 reissued shares: Amount forfeited on 300 shares = 300 × ₹6 = ₹1,800. Less discount allowed on reissue = ₹300. Net gain = ₹1,800 − ₹300 = ₹1,500.",
+					"Capital Reserve entry: Debit Forfeited Shares A/c ₹1,500; Credit Capital Reserve A/c ₹1,500."
+				],
+				"answer": "Transfer to Capital Reserve is ₹1,500."
+			},
+			"practice_advice": "Calculate capital reserve strictly on the number of shares actually reissued. The forfeited balance relating to un-reissued shares stays in the Forfeited Shares Account.",
+			"estimated_minutes": 65,
+			"questions": [
+				{
+					"id": "xii-shares-non-cash-consideration",
+					"type": "numeric",
+					"prompt": "Nova Ltd. purchased machinery worth ₹3,30,000 from a vendor. It agreed to settle the purchase consideration by issuing equity shares of ₹10 each at a premium of 10%. How many equity shares were issued to the vendor?",
+					"answer": {
+						"value": 30000,
+						"tolerance": 0
+					},
+					"rationale": "Issue price per share = Face value ₹10 + Premium (10% of ₹10) ₹1 = ₹11. Number of shares issued = Purchase consideration ÷ Issue price = ₹3,30,000 ÷ ₹11 = 30,000 shares.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-shares-securities-premium-usage",
+					"type": "single_choice",
+					"prompt": "Under Section 52(2) of the Companies Act, 2013, for which of the following purposes CAN the Securities Premium Account be legally utilised?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Issue of fully paid bonus shares to members"
+						},
+						{
+							"id": "b",
+							"label": "Payment of annual dividend to equity shareholders"
+						},
+						{
+							"id": "c",
+							"label": "Writing off trading losses incurred during the year"
+						},
+						{
+							"id": "d",
+							"label": "Payment of manager's commission"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under Section 52(2), securities premium may be used for issuing unissued shares as fully paid bonus shares, writing off preliminary expenses, writing off commission or discount on issue, or buy-back of shares. It cannot be used to pay dividends or write off trading losses.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-shares-pro-rata-allotment",
+					"type": "numeric",
+					"prompt": "Zenith Ltd. invited applications for 50,000 shares of ₹10 each. Applications were received for 80,000 shares. Allotment was made pro-rata to all applicants. Application money was ₹3 per share and allotment money was ₹4 per share. How much excess application money in rupees was adjusted towards allotment?",
+					"answer": {
+						"value": 90000,
+						"tolerance": 0
+					},
+					"rationale": "Excess applications = 80,000 − 50,000 = 30,000 shares. Excess application money received = 30,000 × ₹3 = ₹90,000. Total allotment money due on 50,000 shares = 50,000 × ₹4 = ₹2,00,000. Since ₹90,000 is less than ₹2,00,000, the entire ₹90,000 is adjusted towards allotment.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-shares-capital-reserve-transfer",
+					"type": "numeric",
+					"prompt": "A company forfeited 200 shares of ₹10 each, fully called up, on which application and allotment money of ₹7 per share was paid. Out of these, 150 shares were reissued as fully paid up for ₹8 per share. What amount in rupees is transferred to Capital Reserve?",
+					"answer": {
+						"value": 750,
+						"tolerance": 0
+					},
+					"rationale": "Forfeited amount per share = ₹7. On reissue of 150 shares at ₹8 (discount = ₹10 − ₹8 = ₹2 per share): Net gain per reissued share = ₹7 − ₹2 = ₹5. Total transfer to Capital Reserve = 150 shares × ₹5 = ₹750.",
+					"difficulty": 3,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-shares-forfeiture-premium-rule",
+					"type": "single_choice",
+					"prompt": "When shares issued at a premium are forfeited and the securities premium on those shares has already been received by the company, how is Securities Premium treated in the forfeiture entry?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Securities Premium Account is not debited"
+						},
+						{
+							"id": "b",
+							"label": "Securities Premium Account is debited with the premium amount"
+						},
+						{
+							"id": "c",
+							"label": "Securities Premium Account is credited to Capital Reserve"
+						},
+						{
+							"id": "d",
+							"label": "Securities Premium Account is transferred to Forfeited Shares Account"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Once received, securities premium cannot be cancelled or debited upon forfeiture (Section 52). Therefore, Securities Premium Account is not debited when premium has already been collected.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				}
+			]
+		},
+		{
+			"id": "module-xii-issue-of-debentures",
+			"topic_id": "topic-xii-issue-of-debentures",
+			"sequence": 7,
+			"unit": "Joint Stock Company Accounts",
+			"topic": "Issue of debentures",
+			"title": "Issue of debentures: par/premium/discount, collateral, non-cash consideration, redemption premium, interest and TDS",
+			"objective": "Record debenture issues at par, premium, or discount, account for debentures as collateral security, write off issue discounts, and calculate debenture interest with TDS.",
+			"overview": "A debenture is a written instrument issued under the common seal of a company acknowledging debt and promising repayment of principal with periodic interest at a specified coupon rate. Debentures can be issued at par, at a premium, or at a discount, unlike shares which cannot be issued at a discount under Section 53 of the Companies Act, 2013. When issued with contractual terms of redemption at a premium, the anticipated redemption premium is recognised at the time of issue by debiting Loss on Issue of Debentures Account and crediting Premium on Redemption of Debentures Account. Debentures may also be issued as collateral security for bank loans, accounted for either without journal entries or through a Debenture Suspense Account. Debenture interest is a fixed charge against company profits, payable irrespective of earnings, and subject to Tax Deducted at Source (TDS). In accordance with current regulatory standards, any discount or loss on issue of debentures must be completely written off in the year of issue itself using Securities Premium or Statement of Profit and Loss.",
+			"key_points": [
+				"Companies may issue debentures at a discount, whereas issuing equity shares at a discount is legally prohibited under Section 53.",
+				"When debentures are redeemable at a premium, Loss on Issue of Debentures is debited and Premium on Redemption of Debentures is credited at issue.",
+				"Debentures issued as collateral security represent secondary backing for a loan and can be recorded via Debenture Suspense Account or disclosed by note.",
+				"Debenture interest is a charge against profit, not an appropriation, and is subject to TDS before net payment to debentureholders."
+			],
+			"worked_example": {
+				"prompt": "Titan Ltd. issued 2,000, 9% debentures of ₹100 each at a discount of 4%, redeemable at a premium of 5% after 5 years. Pass the journal entry on issue of debentures.",
+				"steps": [
+					"Calculate issue proceeds: Nominal value = 2,000 × ₹100 = ₹2,00,000. Discount on issue = 4% of ₹2,00,000 = ₹8,000. Net cash received = ₹2,00,000 − ₹8,000 = ₹1,92,000.",
+					"Calculate redemption premium: Premium on redemption = 5% of ₹2,00,000 = ₹10,000.",
+					"Combine discount and redemption premium into Loss on Issue of Debentures: Total loss = ₹8,000 (discount) + ₹10,000 (redemption premium) = ₹18,000.",
+					"Journal entry: Debit Bank A/c ₹1,92,000; Debit Loss on Issue of Debentures A/c ₹18,000; Credit 9% Debentures A/c ₹2,00,000; Credit Premium on Redemption of Debentures A/c ₹10,000."
+				],
+				"answer": "Debit Bank ₹1,92,000, Debit Loss on Issue ₹18,000, Credit 9% Debentures ₹2,00,000, Credit Premium on Redemption ₹10,000."
+			},
+			"practice_advice": "Always debit Loss on Issue of Debentures for the sum of issue discount and redemption premium. Ensure Premium on Redemption is shown under Non-Current Liabilities on the balance sheet.",
+			"estimated_minutes": 55,
+			"questions": [
+				{
+					"id": "xii-debentures-interest-tds",
+					"type": "numeric",
+					"prompt": "A company has ₹10,00,000 nominal value of 10% Debentures outstanding. Debenture interest is payable half-yearly on 30th September and 31st March. Tax Deducted at Source (TDS) is 10%. Calculate the net amount in rupees paid to debentureholders for the half-year ending 30th September.",
+					"answer": {
+						"value": 45000,
+						"tolerance": 0
+					},
+					"rationale": "Gross half-yearly interest = ₹10,00,000 × 10% × (6/12) = ₹50,000. TDS = 10% of ₹50,000 = ₹5,000. Net amount paid to debentureholders = ₹50,000 − ₹5,000 = ₹45,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-debentures-collateral-entry",
+					"type": "single_choice",
+					"prompt": "When a company records the issue of debentures as collateral security for a bank loan using the second method (recording a journal entry), which account is debited?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Debenture Suspense Account"
+						},
+						{
+							"id": "b",
+							"label": "Bank Loan Account"
+						},
+						{
+							"id": "c",
+							"label": "Debentures Account"
+						},
+						{
+							"id": "d",
+							"label": "Statement of Profit and Loss"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under the journal entry method for collateral security, the entry passed is: Debit Debenture Suspense A/c and Credit Debentures A/c. Debenture Suspense is deducted from Debentures on the balance sheet.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-debentures-vendor-discount",
+					"type": "numeric",
+					"prompt": "Apex Ltd. purchased building worth ₹4,75,000 from a vendor and issued 12% debentures of ₹100 each at a discount of 5% in full satisfaction of the purchase price. How many debentures were issued to the vendor?",
+					"answer": {
+						"value": 5000,
+						"tolerance": 0
+					},
+					"rationale": "Issue price per debenture = ₹100 − 5% = ₹95. Number of debentures issued = Purchase consideration ÷ Issue price = ₹4,75,000 ÷ ₹95 = 5,000 debentures.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-debentures-loss-write-off-order",
+					"type": "single_choice",
+					"prompt": "Where should Loss on Issue of Debentures be written off first, if sufficient balance is available, in the year of issue?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Securities Premium Account"
+						},
+						{
+							"id": "b",
+							"label": "Statement of Profit and Loss"
+						},
+						{
+							"id": "c",
+							"label": "General Reserve"
+						},
+						{
+							"id": "d",
+							"label": "Debenture Redemption Reserve"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under Section 52(2) of the Companies Act, 2013, securities premium must be utilised first to write off discount allowed or loss incurred on issue of debentures before charging to Statement of Profit and Loss.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-debentures-loss-on-issue-total",
+					"type": "numeric",
+					"prompt": "Mercury Ltd. issued 5,000, 8% debentures of ₹100 each at a discount of 6%, redeemable at a premium of 4%. What is the total amount debited to Loss on Issue of Debentures Account in rupees?",
+					"answer": {
+						"value": 50000,
+						"tolerance": 0
+					},
+					"rationale": "Nominal value = 5,000 × ₹100 = ₹5,00,000. Discount on issue = 6% of ₹5,00,000 = ₹30,000. Premium on redemption = 4% of ₹5,00,000 = ₹20,000. Total Loss on Issue = ₹30,000 + ₹20,000 = ₹50,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				}
+			]
+		},
+		{
+			"id": "module-xii-redemption-of-debentures",
+			"topic_id": "topic-xii-redemption-of-debentures",
+			"sequence": 8,
+			"unit": "Joint Stock Company Accounts",
+			"topic": "Redemption of debentures",
+			"title": "Redemption of debentures: profits/capital, lump sum, DRR and DRI rules in syllabus",
+			"objective": "Explain redemption out of capital and profits, apply statutory DRR (10%) and DRI (15%) rules for specified company categories, and record entries for lump sum redemption.",
+			"overview": "Redemption of debentures refers to the discharge of debenture liability by repaying the principal sum to debentureholders in accordance with terms of issue. Under the Companies Act, 2013 and Rule 18 of the Companies (Share Capital and Debentures) Rules, 2014, statutory safeguards protect debentureholders. Unlisted companies (other than All India Financial Institutions, Banking Companies, NBFCs, and Housing Finance Companies) must create a Debenture Redemption Reserve (DRR) equivalent to at least 10% of the nominal value of outstanding debentures out of profits available for dividend before redemption commences. Furthermore, such unlisted companies as well as listed companies must invest at least 15% of the nominal amount of debentures maturing during the year ending 31st March in specified Debenture Redemption Investments (DRI) on or before 30th April of the current financial year. Upon redemption, DRI is encashed, debentures are discharged in lump sum, and the DRR balance is transferred directly to General Reserve because it represents undistributed profits freed from restriction.",
+			"key_points": [
+				"Unlisted non-NBFC/HFC companies must create DRR equal to 10% of nominal debenture value out of profits before redemption.",
+				"Both listed and specified unlisted companies must invest at least 15% of debentures maturing in the year into DRI on or before 30th April.",
+				"Banking companies, All India Financial Institutions, NBFCs, and HFCs are completely exempt from creating DRR.",
+				"After all debentures of the series are redeemed, the remaining balance in DRR is transferred to General Reserve."
+			],
+			"worked_example": {
+				"prompt": "An unlisted manufacturing company (non-NBFC/HFC) has ₹10,00,000, 9% Debentures maturing on 31st March 2027. State the DRR and DRI requirements under the Companies Rules, 2014, and calculate their required amounts.",
+				"steps": [
+					"Determine DRR: An unlisted non-NBFC/HFC manufacturing company must create DRR equal to 10% of nominal value of debentures before redemption starts. DRR = 10% of ₹10,00,000 = ₹1,00,000.",
+					"Determine DRI: The company must invest at least 15% of the nominal value of debentures maturing during the year on or before 30th April 2026. DRI = 15% of ₹10,00,000 = ₹1,50,000.",
+					"Encashed on redemption: DRI of ₹1,50,000 is encashed prior to repayment on 31st March 2027.",
+					"Transfer upon redemption: After full redemption of the ₹10,00,000 debentures, the DRR of ₹1,00,000 is transferred from DRR Account to General Reserve Account."
+				],
+				"answer": "DRR required is ₹1,00,000 (10%); DRI required by 30th April is ₹1,50,000 (15%)."
+			},
+			"practice_advice": "Always read the company category carefully. State whether the entity is an unlisted non-NBFC manufacturing company, a listed company, or a banking company to apply the exact DRR/DRI percentage.",
+			"estimated_minutes": 55,
+			"questions": [
+				{
+					"id": "xii-redemption-drr-amount",
+					"type": "numeric",
+					"prompt": "An unlisted non-NBFC manufacturing company has outstanding 8% Debentures of nominal value ₹20,00,000 to be redeemed in lump sum. In accordance with Rule 18 of the Companies (Share Capital and Debentures) Rules, what minimum amount in rupees must be transferred to Debenture Redemption Reserve (DRR) before redemption?",
+					"answer": {
+						"value": 200000,
+						"tolerance": 0
+					},
+					"rationale": "As per Rule 18(7)(b) for unlisted companies (other than NBFCs and HFCs), DRR must be created at 10% of the nominal value of outstanding debentures. DRR = 10% of ₹20,00,000 = ₹2,00,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-redemption-dri-deadline",
+					"type": "single_choice",
+					"prompt": "By which statutory date must an unlisted manufacturing company invest at least 15% of the nominal value of debentures maturing during the year ending on 31st March?",
+					"options": [
+						{
+							"id": "a",
+							"label": "On or before 30th April of the current financial year"
+						},
+						{
+							"id": "b",
+							"label": "On or before 31st March of the preceding financial year"
+						},
+						{
+							"id": "c",
+							"label": "On or before 30th June of the current financial year"
+						},
+						{
+							"id": "d",
+							"label": "On or before 31st December of the current financial year"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under Rule 18(7)(c), the company must deposit or invest an amount not less than 15% of the nominal value of debentures maturing during the year ending 31st March on or before the 30th day of April of that current year.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-redemption-dri-calc",
+					"type": "numeric",
+					"prompt": "Galaxy Ltd., an unlisted non-NBFC manufacturing company, has ₹8,00,000 nominal value of debentures due for redemption on 31st January 2027. Under the 15% statutory investment requirement, how much must the company invest in Debenture Redemption Investment (DRI) on or before 30th April 2026 in rupees?",
+					"answer": {
+						"value": 120000,
+						"tolerance": 0
+					},
+					"rationale": "DRI required = 15% of nominal value of debentures maturing during the financial year = 15% of ₹8,00,000 = ₹1,20,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-redemption-drr-transfer-general-reserve",
+					"type": "single_choice",
+					"prompt": "Where is the balance remaining in the Debenture Redemption Reserve (DRR) transferred after all debentures of that series have been fully redeemed?",
+					"options": [
+						{
+							"id": "a",
+							"label": "General Reserve"
+						},
+						{
+							"id": "b",
+							"label": "Capital Reserve"
+						},
+						{
+							"id": "c",
+							"label": "Securities Premium Account"
+						},
+						{
+							"id": "d",
+							"label": "Debenture Suspense Account"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "DRR is an appropriation of profits available for dividend. Once the obligation to debentureholders is fulfilled upon redemption, the reserve is transferred to General Reserve.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-redemption-lump-sum-premium",
+					"type": "numeric",
+					"prompt": "Solaris Ltd. redeemed 4,000, 10% Debentures of ₹100 each at a premium of 5% in lump sum on maturity. What is the total cash payment made to debentureholders in rupees?",
+					"answer": {
+						"value": 420000,
+						"tolerance": 0
+					},
+					"rationale": "Nominal value = 4,000 × ₹100 = ₹4,00,000. Premium on redemption = 5% of ₹4,00,000 = ₹20,000. Total amount paid to debentureholders = ₹4,00,000 + ₹20,000 = ₹4,20,000.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				}
+			]
+		},
+		{
+			"id": "module-xii-final-accounts-companies",
+			"topic_id": "topic-xii-final-accounts-companies",
+			"sequence": 9,
+			"unit": "Joint Stock Company Accounts",
+			"topic": "Final accounts of companies",
+			"title": "Final accounts of companies: Schedule III Part I Balance Sheet and notes to accounts",
+			"objective": "Classify items into major heads and sub-heads of Schedule III Part I Balance Sheet and prepare detailed notes to accounts for Share Capital and Reserves.",
+			"overview": "Under Section 129 of the Companies Act, 2013, every joint stock company must prepare its financial statements in accordance with Schedule III. Part I of Schedule III prescribes a mandatory vertical format for the Balance Sheet, categorized into two principal divisions: Equity and Liabilities, and Assets. Equity and Liabilities comprises four major heads: Shareholders' Funds, Share Application Money Pending Allotment, Non-Current Liabilities, and Current Liabilities. Assets comprises two major heads: Non-Current Assets and Current Assets. Detailed financial breakdowns are excluded from the face of the balance sheet and presented systematically in Notes to Accounts. For example, Note 1 on Share Capital discloses Authorised Capital, Issued Capital, Subscribed and Fully Paid-up Capital, and Subscribed but Not Fully Paid-up Capital (with Calls in Arrears deducted and Forfeited Shares added). Contingent liabilities and capital commitments are never added into the balance sheet totals but are disclosed exclusively as explanatory footnotes.",
+			"key_points": [
+				"Schedule III Part I mandates a strict vertical balance sheet format divided into Equity and Liabilities, and Assets.",
+				"Share Capital in Notes to Accounts must distinguish between authorised, issued, subscribed fully paid, and subscribed not fully paid.",
+				"Calls in arrears is deducted from subscribed capital, whereas forfeited shares balance is added to arrive at disclosed Share Capital.",
+				"Contingent liabilities and capital commitments are disclosed in Notes to Accounts and never incorporated into balance sheet totals."
+			],
+			"worked_example": {
+				"prompt": "Pioneer Ltd. has Authorised Capital of 1,00,000 equity shares of ₹10 each. It issued 60,000 shares. All shares were subscribed. The company called ₹8 per share. All shareholders paid except one holding 2,000 shares who failed to pay the first call of ₹2. Present Share Capital in Notes to Accounts.",
+				"steps": [
+					"Authorised Capital: 1,00,000 Equity Shares of ₹10 each = ₹10,00,000 (shown in notes, not added to total).",
+					"Issued Capital: 60,000 Equity Shares of ₹10 each = ₹6,00,000 (shown in notes, not added to total).",
+					"Subscribed Capital: Since ₹8 is called up, all 60,000 shares fall under 'Subscribed but not fully paid-up': 60,000 Equity Shares of ₹10 each, ₹8 called up = ₹4,80,000.",
+					"Deduct Calls in Arrears: 2,000 shares × ₹2 = ₹4,000. Net Subscribed Capital = ₹4,80,000 − ₹4,000 = ₹4,76,000."
+				],
+				"answer": "Disclosed Share Capital in the Balance Sheet is ₹4,76,000."
+			},
+			"practice_advice": "Memorise the exact hierarchy of major heads and sub-heads in Schedule III. Check whether calls have been fully made before classifying under 'Subscribed and fully paid up'.",
+			"estimated_minutes": 55,
+			"questions": [
+				{
+					"id": "xii-final-accounts-bills-payable-head",
+					"type": "single_choice",
+					"prompt": "Under which sub-head of Schedule III Part I is 'Bills Payable' shown on the balance sheet of a company?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Trade Payables"
+						},
+						{
+							"id": "b",
+							"label": "Other Current Liabilities"
+						},
+						{
+							"id": "c",
+							"label": "Short-term Borrowings"
+						},
+						{
+							"id": "d",
+							"label": "Short-term Provisions"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Under Schedule III, Trade Payables includes sundry creditors and bills payable arising from normal business operations.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-final-accounts-subscribed-capital-calc",
+					"type": "numeric",
+					"prompt": "Atlas Ltd. has an issued capital of 50,000 equity shares of ₹10 each, fully called up. All shares were subscribed. A shareholder holding 2,000 shares failed to pay the final call of ₹2 per share. The company has a balance of ₹5,000 in the Forfeited Shares Account from previously forfeited shares. What is the total Share Capital to be shown on the Balance Sheet in rupees?",
+					"answer": {
+						"value": 501000,
+						"tolerance": 0
+					},
+					"rationale": "Subscribed capital called up = 50,000 × ₹10 = ₹5,00,000. Less: Calls in Arrears (2,000 × ₹2 = ₹4,000) = ₹4,96,000. Add: Forfeited Shares Account = ₹5,000. Total Share Capital disclosed = ₹5,01,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-final-accounts-unpaid-dividend",
+					"type": "single_choice",
+					"prompt": "Under Schedule III Part I, under which major head and sub-head is 'Unpaid / Unclaimed Dividend' presented?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Current Liabilities under Other Current Liabilities"
+						},
+						{
+							"id": "b",
+							"label": "Shareholders' Funds under Reserves and Surplus"
+						},
+						{
+							"id": "c",
+							"label": "Current Liabilities under Short-term Provisions"
+						},
+						{
+							"id": "d",
+							"label": "Non-Current Liabilities under Other Long-term Liabilities"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Unpaid or unclaimed dividend represents a current financial liability payable on demand, classified under Current Liabilities as Other Current Liabilities.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-final-accounts-reserves-surplus-total",
+					"type": "numeric",
+					"prompt": "Atlas Ltd. reported the following balances on 31st March 2026: General Reserve ₹2,50,000; Securities Premium ₹1,20,000; Capital Reserve ₹80,000; and Surplus (credit balance in Statement of Profit and Loss) ₹3,50,000. What is the total of Reserves and Surplus to be disclosed under Shareholders' Funds in rupees?",
+					"answer": {
+						"value": 800000,
+						"tolerance": 0
+					},
+					"rationale": "Reserves and Surplus = General Reserve (₹2,50,000) + Securities Premium (₹1,20,000) + Capital Reserve (₹80,000) + Surplus balance in Statement of Profit and Loss (₹3,50,000) = ₹8,00,000.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-final-accounts-contingent-liabilities",
+					"type": "single_choice",
+					"prompt": "Where are 'Contingent Liabilities and Commitments' placed in the financial statements prepared under Schedule III?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Disclosed in Notes to Accounts outside the balance sheet total"
+						},
+						{
+							"id": "b",
+							"label": "Added under Non-Current Liabilities on the balance sheet"
+						},
+						{
+							"id": "c",
+							"label": "Deducted from Shareholders' Funds on the balance sheet"
+						},
+						{
+							"id": "d",
+							"label": "Added under Current Liabilities on the balance sheet"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Contingent liabilities represent obligations dependent on future uncertain events. Under Schedule III, they are not recorded on the face of the balance sheet but disclosed in the Notes to Accounts.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				}
+			]
+		},
+		{
+			"id": "module-xii-financial-statement-analysis",
+			"topic_id": "topic-xii-financial-statement-analysis",
+			"sequence": 10,
+			"unit": "Management Accounting",
+			"topic": "Financial statement analysis",
+			"title": "Financial statement analysis: comparative and common-size statements",
+			"objective": "Construct and interpret comparative statements (horizontal analysis) and common-size statements (vertical analysis) for Balance Sheets and Statements of Profit and Loss.",
+			"overview": "Financial statement analysis evaluates an enterprise's profitability, operational efficiency, liquidity, and long-term solvency by examining relationships among financial statement figures. Two core techniques are comparative statements and common-size statements. Comparative statements perform horizontal analysis across two or more accounting periods, displaying the prior year amount, current year amount, absolute monetary change, and percentage change computed as absolute change divided by the previous year's base figure multiplied by one hundred. This identifies operational growth trajectories and cost escalations over time. In contrast, common-size statements perform vertical analysis for a single period or across periods by converting every financial item into a percentage of a common base. In a Common-Size Balance Sheet, total assets (or total equity and liabilities) serves as the one hundred percent base. In a Common-Size Statement of Profit and Loss, Revenue from Operations serves as the one hundred percent base, allowing analysts to assess proportion of expenses to net sales.",
+			"key_points": [
+				"Comparative statements represent horizontal analysis, calculating absolute change and percentage change relative to the preceding year.",
+				"Common-size statements represent vertical analysis, expressing individual components as percentages of a common base.",
+				"In a Common-Size Statement of Profit and Loss, Revenue from Operations is taken as the 100% benchmark.",
+				"In a Common-Size Balance Sheet, Total Assets (or Total Equity and Liabilities) is taken as the 100% benchmark."
+			],
+			"worked_example": {
+				"prompt": "For the year ended 31st March 2025, Revenue from Operations was ₹8,00,000, and for the year ended 31st March 2026, it was ₹10,00,000. Calculate the absolute change and percentage change for the Comparative Statement of Profit and Loss.",
+				"steps": [
+					"Identify previous year figure (Base): Year 2025 = ₹8,00,000.",
+					"Identify current year figure: Year 2026 = ₹10,00,000.",
+					"Calculate absolute change: ₹10,00,000 − ₹8,00,000 = +₹2,00,000.",
+					"Calculate percentage change: (Absolute change ÷ Previous year figure) × 100 = (₹2,00,000 ÷ ₹8,00,000) × 100 = 25%."
+				],
+				"answer": "Absolute change is +₹2,00,000; Percentage change is +25.0%."
+			},
+			"practice_advice": "Always divide by the previous year's figure when calculating percentage change in comparative statements. Do not divide by the current year.",
+			"estimated_minutes": 50,
+			"questions": [
+				{
+					"id": "xii-analysis-comparative-expense-pct",
+					"type": "numeric",
+					"prompt": "In a Comparative Statement of Profit and Loss, employee benefit expenses were ₹4,00,000 in 2024-25 and ₹5,20,000 in 2025-26. Calculate the percentage increase in employee benefit expenses. Enter the answer as a percentage number (e.g. 25 for 25%).",
+					"answer": {
+						"value": 30,
+						"tolerance": 0.01
+					},
+					"rationale": "Absolute change = ₹5,20,000 − ₹4,00,000 = ₹1,20,000. Percentage change = (₹1,20,000 ÷ ₹4,00,000) × 100 = 30%.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-analysis-common-size-pl-base",
+					"type": "single_choice",
+					"prompt": "What item is taken as the base (100%) when preparing a Common-Size Statement of Profit and Loss?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Revenue from Operations (Net Sales)"
+						},
+						{
+							"id": "b",
+							"label": "Total Income"
+						},
+						{
+							"id": "c",
+							"label": "Gross Profit"
+						},
+						{
+							"id": "d",
+							"label": "Net Profit before Tax"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "In a Common-Size Statement of Profit and Loss, Revenue from Operations is taken as the base (100%), and all items of income and expenses are expressed as percentages of Revenue from Operations.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-analysis-common-size-bs-pct",
+					"type": "numeric",
+					"prompt": "In a Common-Size Balance Sheet of Alpha Ltd., Total Assets are ₹25,00,000. Non-Current Assets stand at ₹15,00,000. What percentage of Total Assets do Non-Current Assets represent? Enter the answer as a percentage number (e.g. 50 for 50%).",
+					"answer": {
+						"value": 60,
+						"tolerance": 0.01
+					},
+					"rationale": "Percentage = (Non-Current Assets ÷ Total Assets) × 100 = (₹15,00,000 ÷ ₹25,00,000) × 100 = 60%.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-analysis-horizontal-vs-vertical",
+					"type": "single_choice",
+					"prompt": "Which type of financial analysis is exemplified by a Comparative Balance Sheet?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Horizontal analysis"
+						},
+						{
+							"id": "b",
+							"label": "Vertical analysis"
+						},
+						{
+							"id": "c",
+							"label": "Ratio analysis"
+						},
+						{
+							"id": "d",
+							"label": "Static analysis"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Horizontal analysis (trend analysis) reviews financial figures across multiple successive accounting periods to observe changes and growth over time, as in comparative statements.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-analysis-tax-percentage-change",
+					"type": "numeric",
+					"prompt": "A company's Profit before Tax was ₹6,00,000 in Year 1 and ₹9,00,000 in Year 2. What is the percentage change in Profit before Tax in the Comparative Statement? Enter the number as a percentage (e.g. 50 for 50%).",
+					"answer": {
+						"value": 50,
+						"tolerance": 0.01
+					},
+					"rationale": "Absolute change = ₹9,00,000 − ₹6,00,000 = ₹3,00,000. Percentage change = (₹3,00,000 ÷ ₹6,00,000) × 100 = 50%.",
+					"difficulty": 1,
+					"requires_rough_work": true
+				}
+			]
+		},
+		{
+			"id": "module-xii-cash-flow-statement",
+			"topic_id": "topic-xii-cash-flow-statement",
+			"sequence": 11,
+			"unit": "Management Accounting",
+			"topic": "Cash flow statement",
+			"title": "Cash flow statement under AS-3 using the indirect method",
+			"objective": "Prepare a Cash Flow Statement using the indirect method under AS-3, classifying operating, investing, and financing cash flows for a manufacturing company.",
+			"overview": "A Cash Flow Statement prepared under Accounting Standard 3 (Revised) reports cash and cash equivalent inflows and outflows during an accounting period, categorized into Operating, Investing, and Financing activities. Under the indirect method, cash flow from Operating Activities starts from Net Profit before Tax and Extraordinary Items, adjusting for non-cash and non-operating debits and credits—such as adding back depreciation, amortisation of intangibles, loss on sale of assets, and finance costs, while deducting profit on asset sales and investment income. Subsequent adjustments for changes in working capital (excluding cash and bank balances) and deduction of direct taxes paid yield net operating cash. Investing activities record acquisitions and disposals of long-term assets and non-current investments, including interest and dividend received for non-financial companies. Financing activities record proceeds and redemptions of share capital and borrowings, along with interest paid and dividends paid. The net total equals the net change in cash and cash equivalents.",
+			"key_points": [
+				"For manufacturing and non-financial companies, interest paid and dividends paid are classified strictly as Financing activities.",
+				"Interest received and dividends received on investments are classified strictly as Investing activities for manufacturing firms.",
+				"Operating cash flow starts from Net Profit before Tax, adding back non-cash expenses like depreciation and non-operating interest expense.",
+				"Cash and cash equivalents include cash in hand, bank balances, and highly liquid short-term investments maturing within three months."
+			],
+			"worked_example": {
+				"prompt": "A manufacturing company reported Net Profit before Tax of ₹2,50,000. It charged Depreciation of ₹40,000, paid Interest on Debentures of ₹30,000, and recorded a Profit on sale of machinery of ₹10,000. Trade receivables increased by ₹20,000 and Trade payables increased by ₹15,000. Calculate Cash from Operating Activities before tax.",
+				"steps": [
+					"Start with Net Profit before Tax: ₹2,50,000.",
+					"Add non-cash and non-operating expenses: Add Depreciation (₹40,000) and Interest on Debentures (₹30,000). Subtotal = ₹3,20,000.",
+					"Deduct non-operating income: Deduct Profit on sale of machinery (₹10,000). Operating profit before working capital changes = ₹3,10,000.",
+					"Adjust working capital changes: Deduct increase in Trade receivables (−₹20,000) and add increase in Trade payables (+₹15,000). Net working capital adjustment = −₹5,000.",
+					"Cash generated from Operating Activities before tax = ₹3,10,000 − ₹5,000 = ₹3,05,000."
+				],
+				"answer": "Cash generated from operating activities before tax is ₹3,05,000."
+			},
+			"practice_advice": "For non-financial/manufacturing entities, remember the rule: interest and dividend received go to Investing; interest and dividend paid go to Financing.",
+			"estimated_minutes": 70,
+			"questions": [
+				{
+					"id": "xii-cfs-interest-paid-classification",
+					"type": "single_choice",
+					"prompt": "In the Cash Flow Statement of a manufacturing company under AS-3, how is interest paid on long-term borrowings classified?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Financing Activity"
+						},
+						{
+							"id": "b",
+							"label": "Operating Activity"
+						},
+						{
+							"id": "c",
+							"label": "Investing Activity"
+						},
+						{
+							"id": "d",
+							"label": "Cash Equivalent"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "For a manufacturing/non-financing company, interest paid relates to capital and borrowing structure, so it is classified strictly as a Financing Activity under AS-3.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-cfs-investing-activity-calc",
+					"type": "numeric",
+					"prompt": "During the year, a manufacturing company purchased machinery for ₹5,00,000, sold old furniture (book value ₹40,000) for ₹30,000, received dividend on shares held as investments ₹15,000, and paid interest on debentures ₹25,000. Calculate the net cash used in Investing Activities in rupees (enter as a positive number for cash outflow).",
+					"answer": {
+						"value": 455000,
+						"tolerance": 0
+					},
+					"rationale": "Investing activities include: Purchase of machinery (−₹5,00,000) + Sale of furniture (+₹30,000) + Dividend received (+₹15,000) = −₹4,55,000. Interest paid on debentures (₹25,000) is a Financing Activity and is excluded. Net cash outflow in investing activities is ₹4,55,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-cfs-dividend-received-manufacturing",
+					"type": "single_choice",
+					"prompt": "Under AS-3, how should dividend received on non-current investments be classified by a manufacturing company?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Investing Activity"
+						},
+						{
+							"id": "b",
+							"label": "Operating Activity"
+						},
+						{
+							"id": "c",
+							"label": "Financing Activity"
+						},
+						{
+							"id": "d",
+							"label": "Extraordinary Item"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "For non-financial companies, receiving return on investments (dividend or interest received) is classified as an Investing Activity.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-cfs-financing-cash-flow",
+					"type": "numeric",
+					"prompt": "Apex Ltd., a manufacturing company, issued 10,000 equity shares of ₹10 each at a premium of ₹2 per share. It redeemed 9% Debentures of nominal value ₹80,000 at par and paid an interim dividend of ₹15,000. Calculate the net cash generated from Financing Activities in rupees.",
+					"answer": {
+						"value": 25000,
+						"tolerance": 0
+					},
+					"rationale": "Financing cash inflows: Issue of equity shares including premium = 10,000 × ₹12 = +₹1,20,000. Financing cash outflows: Redemption of debentures = −₹80,000; Payment of interim dividend = −₹15,000. Net cash generated from financing activities = ₹1,20,000 − ₹80,000 − ₹15,000 = ₹25,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-cfs-working-capital-effect",
+					"type": "numeric",
+					"prompt": "During an accounting year, a company's inventories decreased by ₹35,000, trade payables decreased by ₹20,000, and prepaid expenses increased by ₹5,000. What is the net cash effect of these working capital changes in rupees? Enter positive for net inflow or negative for net outflow.",
+					"answer": {
+						"value": 10000,
+						"tolerance": 0
+					},
+					"rationale": "Decrease in inventories is a cash inflow (+₹35,000). Decrease in trade payables is a cash outflow (−₹20,000). Increase in prepaid expenses is a cash outflow (−₹5,000). Net cash effect = +₹35,000 − ₹20,000 − ₹5,000 = +₹10,000.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				}
+			]
+		},
+		{
+			"id": "module-xii-ratio-analysis",
+			"topic_id": "topic-xii-ratio-analysis",
+			"sequence": 12,
+			"unit": "Management Accounting",
+			"topic": "Ratio analysis",
+			"title": "Ratio analysis: liquidity, solvency, activity and profitability ratios in the syllabus",
+			"objective": "Compute and interpret liquidity, solvency, activity/turnover, and profitability ratios respecting ISC syllabus rules on gross versus net trade receivables.",
+			"overview": "Ratio analysis evaluates enterprise financial condition and operational efficiency by examining meaningful mathematical relationships between balance sheet and revenue statement items. The syllabus classifies ratios into four categories: liquidity, solvency, activity, and profitability. Liquidity ratios measure short-term debt-paying ability: Current Ratio (Current Assets divided by Current Liabilities) and Liquid Ratio (Quick Assets divided by Current Liabilities, excluding inventory and prepaid expenses). Crucially, under ISC syllabus standards, provision for doubtful debts is deducted from trade receivables (net debtors) when determining current assets for liquidity ratios. Solvency ratios evaluate long-term financial stability, encompassing Debt to Equity, Total Assets to Debt, Proprietary Ratio, and Interest Coverage Ratio. Activity or turnover ratios gauge the efficiency of asset utilisation, including Inventory Turnover, Trade Receivables Turnover, Trade Payables Turnover, and Working Capital Turnover. Here, gross trade receivables (before deducting provision for doubtful debts) must be used. Finally, profitability ratios reflect operating performance through Gross Profit, Operating, Operating Profit, Net Profit, and Return on Investment percentages.",
+			"key_points": [
+				"Current and Quick ratios use net trade receivables after deducting provision for doubtful debts from current assets.",
+				"Trade Receivables Turnover Ratio strictly uses gross trade receivables before deducting provision for doubtful debts.",
+				"Operating Ratio plus Operating Profit Ratio always equals 100% when expressed as percentages of Revenue from Operations.",
+				"Interest Coverage Ratio is computed as Net Profit before Interest and Tax divided by Fixed Interest Charges, expressed in times."
+			],
+			"worked_example": {
+				"prompt": "A firm has Total Debtors of ₹1,60,000, Provision for Doubtful Debts of ₹10,000, Cash and Bank ₹50,000, Inventories ₹80,000, and Current Liabilities ₹1,40,000. Calculate (a) Current Ratio and (b) Quick Ratio.",
+				"steps": [
+					"Calculate Net Debtors: Total Debtors ₹1,60,000 − Provision ₹10,000 = ₹1,50,000.",
+					"Calculate Current Assets: Net Debtors (₹1,50,000) + Cash and Bank (₹50,000) + Inventories (₹80,000) = ₹2,80,000.",
+					"Current Ratio = Current Assets ÷ Current Liabilities = ₹2,80,000 ÷ ₹1,40,000 = 2.0 (or 2:1).",
+					"Calculate Quick Assets: Net Debtors (₹1,50,000) + Cash and Bank (₹50,000) = ₹2,00,000 (excluding Inventories). Quick Ratio = ₹2,00,000 ÷ ₹1,40,000 = 1.43 (or 1.43:1)."
+				],
+				"answer": "Current Ratio is 2:1 (2.0); Quick Ratio is 1.43:1 (1.43)."
+			},
+			"practice_advice": "Always distinguish between net debtors for Current/Quick ratios and gross debtors for Trade Receivables Turnover. Deducting provision in turnover ratio is a frequent student error.",
+			"estimated_minutes": 65,
+			"questions": [
+				{
+					"id": "xii-ratios-current-ratio-calc",
+					"type": "numeric",
+					"prompt": "A company has Current Liabilities of ₹1,50,000. Its Current Assets consist of: Inventories ₹90,000; Cash and Bank ₹30,000; Trade Receivables (Gross) ₹1,90,000; and Provision for Doubtful Debts ₹10,000. Calculate the Current Ratio. Enter the number as a decimal rounded to two decimal places (e.g. 2.00).",
+					"answer": {
+						"value": 2,
+						"tolerance": 0.01
+					},
+					"rationale": "For Current Ratio, net trade receivables are taken: Gross Debtors (₹1,90,000) − Provision (₹10,000) = ₹1,80,000. Current Assets = Inventories (₹90,000) + Cash (₹30,000) + Net Debtors (₹1,80,000) = ₹3,00,000. Current Ratio = ₹3,00,000 ÷ ₹1,50,000 = 2.0.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-ratios-debtors-turnover-rule",
+					"type": "single_choice",
+					"prompt": "Under the ISC Accountancy syllabus, which figure of Trade Receivables should be used when calculating the Trade Receivables Turnover Ratio?",
+					"options": [
+						{
+							"id": "a",
+							"label": "Gross trade receivables before deducting provision for doubtful debts"
+						},
+						{
+							"id": "b",
+							"label": "Net trade receivables after deducting provision for doubtful debts"
+						},
+						{
+							"id": "c",
+							"label": "Trade receivables plus bills payable"
+						},
+						{
+							"id": "d",
+							"label": "Cash receivables only"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "The Trade Receivables Turnover Ratio evaluates the effectiveness of credit management and collection from all credit customers; hence, gross trade receivables before deducting provision for doubtful debts must be used.",
+					"difficulty": 2,
+					"requires_rough_work": false
+				},
+				{
+					"id": "xii-ratios-interest-coverage",
+					"type": "numeric",
+					"prompt": "A company's Net Profit after Tax is ₹4,20,000. Income tax rate is 30%. The company has outstanding 10% Debentures of ₹10,00,000. Calculate the Interest Coverage Ratio in times.",
+					"answer": {
+						"value": 7,
+						"tolerance": 0.01
+					},
+					"rationale": "Net Profit before Tax = Net Profit after Tax ÷ (1 − Tax rate) = ₹4,20,000 ÷ 0.70 = ₹6,00,000. Annual debenture interest = ₹10,00,000 × 10% = ₹1,00,000. Net Profit before Interest and Tax (PBIT) = Net Profit before Tax + Interest = ₹6,00,000 + ₹1,00,000 = ₹7,00,000. Interest Coverage Ratio = PBIT ÷ Interest = ₹7,00,000 ÷ ₹1,00,000 = 7 times.",
+					"difficulty": 3,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-ratios-inventory-turnover",
+					"type": "numeric",
+					"prompt": "Opening Inventory is ₹60,000 and Closing Inventory is ₹1,00,000. Purchases during the year were ₹4,50,000 and direct expenses were ₹30,000. Calculate the Inventory Turnover Ratio in times.",
+					"answer": {
+						"value": 5.5,
+						"tolerance": 0.01
+					},
+					"rationale": "Cost of Revenue from Operations (COGS) = Opening Inventory + Purchases + Direct Expenses − Closing Inventory = ₹60,000 + ₹4,50,000 + ₹30,000 − ₹1,00,000 = ₹4,40,000. Average Inventory = (₹60,000 + ₹1,00,000) ÷ 2 = ₹80,000. Inventory Turnover Ratio = ₹4,40,000 ÷ ₹80,000 = 5.5 times.",
+					"difficulty": 2,
+					"requires_rough_work": true
+				},
+				{
+					"id": "xii-ratios-operating-relationship",
+					"type": "single_choice",
+					"prompt": "If a business has an Operating Ratio of 78%, what is its Operating Profit Ratio?",
+					"options": [
+						{
+							"id": "a",
+							"label": "22%"
+						},
+						{
+							"id": "b",
+							"label": "78%"
+						},
+						{
+							"id": "c",
+							"label": "122%"
+						},
+						{
+							"id": "d",
+							"label": "12%"
+						}
+					],
+					"answer": {
+						"choice": "a"
+					},
+					"rationale": "Operating Ratio and Operating Profit Ratio are complementary: Operating Ratio + Operating Profit Ratio = 100%. Therefore, Operating Profit Ratio = 100% − 78% = 22%.",
+					"difficulty": 1,
+					"requires_rough_work": false
+				}
+			]
+		}
+	]
+}

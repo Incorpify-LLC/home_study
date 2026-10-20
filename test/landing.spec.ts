@@ -28,8 +28,10 @@ describe('Access-protected application shell', () => {
 		const page = await response.text();
 
 		expect(page).toContain('id="learning-workspace"');
+		expect(page).toContain('id="course-roadmap"');
 		expect(page).toContain('id="question-form"');
 		expect(page).toContain('id="submit-assignment"');
+		expect(page).toContain('id="next-assignment"');
 		expect(page).toContain('id="progress-view"');
 		expect(page).toContain('Corrections');
 		expect(page).toContain('Save answer');

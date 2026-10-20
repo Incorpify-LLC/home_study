@@ -22,8 +22,9 @@ Product notes that contain family-specific information should stay outside the r
 - Worker-side Access JWT verification and D1 email-to-role mapping
 - Separate parent and student application shells
 - Parent-only listing of learners linked through `parent_students`
-- Reviewed first learning units for Class VIII Mathematics, Class X Mathematics, and Class XII Accountancy
-- Student lesson, worked example, six-question diagnostic, draft save/resume, submission, objective scoring, and corrections
+- Reviewed complete course roadmaps: Class VIII Mathematics (11 chapters), Class X Mathematics (18 chapters), and Class XII Accountancy (12 chapters)
+- Student lesson, worked example, diagnostic, draft save/resume, submission, objective scoring, and corrections
+- Sequential chapter progression: the next chapter unlocks only after the current one is submitted
 - Parent evidence view scoped to explicitly linked learners
 - D1 schema for source provenance, reviewed content, assignment templates, responses, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
