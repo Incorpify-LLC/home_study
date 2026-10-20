@@ -19,9 +19,21 @@ describe('Access-protected application shell', () => {
 		for (const privateTerm of ['@gmail.com', 'weak in']) {
 			expect(page).not.toContain(privateTerm);
 		}
-		expect(page).not.toContain('<form');
 		expect(page).not.toContain('/api/login');
 		expect(page).not.toContain('type="password"');
+	});
+
+	it('contains an accessible learning workflow and parent evidence view', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="learning-workspace"');
+		expect(page).toContain('id="question-form"');
+		expect(page).toContain('id="submit-assignment"');
+		expect(page).toContain('id="progress-view"');
+		expect(page).toContain('Corrections');
+		expect(page).toContain('Save answer');
+		expect(page).not.toContain('Your first reviewed learning plan will appear here.');
 	});
 
 	it('uses the Cloudflare Access session and logout flow', async () => {

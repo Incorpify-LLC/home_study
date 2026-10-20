@@ -22,12 +22,15 @@ Product notes that contain family-specific information should stay outside the r
 - Worker-side Access JWT verification and D1 email-to-role mapping
 - Separate parent and student application shells
 - Parent-only listing of learners linked through `parent_students`
-- D1 baseline schema for users, curriculum, questions, assignments, attempts, mastery, uploads, and delivery records
+- Reviewed first learning units for Class VIII Mathematics, Class X Mathematics, and Class XII Accountancy
+- Student lesson, worked example, six-question diagnostic, draft save/resume, submission, objective scoring, and corrections
+- Parent evidence view scoped to explicitly linked learners
+- D1 schema for source provenance, reviewed content, assignment templates, responses, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
 - Local Cloudflare integration tests
 - CI and production deployment workflows
 
-Diagnostic assessments, assignments, uploads, and email are deliberately not stubbed as fake functionality. They will be added one tested vertical slice at a time.
+The first three diagnostic units are functional. Rough-work upload/review, broader syllabus coverage, delayed reassessment, and email reports remain later tested slices; the interface does not pretend those capabilities exist.
 
 ## Stack
 
@@ -95,7 +98,7 @@ Bug fixes require a failing regression test first. Tests assert behavior, not pr
 - Put irreversible or sensitive actions behind explicit parent approval.
 - Do not generate pretend data or pretend integrations to make a screen look complete.
 
-The initial backlog is in [`docs/BACKLOG.md`](docs/BACKLOG.md), the current delivery gaps are in [`docs/DELIVERY_ROADMAP.md`](docs/DELIVERY_ROADMAP.md), and architecture decisions are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The initial backlog is in [`docs/BACKLOG.md`](docs/BACKLOG.md), the current delivery gaps are in [`docs/DELIVERY_ROADMAP.md`](docs/DELIVERY_ROADMAP.md), the curriculum source register is in [`docs/CURRICULUM_SOURCES.md`](docs/CURRICULUM_SOURCES.md), and architecture decisions are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Cloudflare setup
 

@@ -18,6 +18,7 @@
 					sans-serif;
 				color: #172033;
 				background: #f5f7fb;
+				font-synthesis: none;
 			}
 			* {
 				box-sizing: border-box;
@@ -31,13 +32,16 @@
 				background: radial-gradient(circle at top left, #e9f3ff, transparent 40%), #f5f7fb;
 			}
 			main {
-				width: min(1040px, calc(100% - 32px));
+				width: min(1080px, calc(100% - 32px));
 				margin: 0 auto;
 				padding: 28px 0 64px;
 			}
 			nav,
 			.nav-actions,
-			.dashboard-heading {
+			.dashboard-heading,
+			.assignment-heading,
+			.question-actions,
+			.score-line {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
@@ -48,7 +52,8 @@
 				font-weight: 800;
 				letter-spacing: -0.4px;
 			}
-			.badge {
+			.badge,
+			.eyebrow {
 				display: inline-block;
 				border-radius: 999px;
 				padding: 7px 11px;
@@ -66,6 +71,24 @@
 				font: inherit;
 				font-weight: 750;
 				cursor: pointer;
+			}
+			button:hover {
+				background: #075fa6;
+			}
+			button:focus-visible,
+			input:focus-visible,
+			select:focus-visible {
+				outline: 3px solid #8fc8f7;
+				outline-offset: 2px;
+			}
+			button:disabled {
+				cursor: not-allowed;
+				opacity: 0.6;
+			}
+			button.secondary {
+				border: 1px solid #bdd2e5;
+				background: white;
+				color: #075ea8;
 			}
 			.hero {
 				min-height: 65vh;
@@ -111,7 +134,7 @@
 				}
 			}
 			.dashboard {
-				padding: 72px 0;
+				padding: 64px 0;
 			}
 			.dashboard-heading {
 				align-items: flex-end;
@@ -123,29 +146,40 @@
 			}
 			.muted {
 				color: #647083;
-				line-height: 1.5;
+				line-height: 1.55;
 			}
 			.grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 				gap: 20px;
+			}
+			.parent-grid {
+				grid-template-columns: minmax(250px, 0.8fr) minmax(320px, 1.5fr);
 			}
 			.panel {
 				padding: 25px;
 				border: 1px solid #dde3ec;
 				border-radius: 18px;
-				background: rgba(255, 255, 255, 0.88);
+				background: rgba(255, 255, 255, 0.92);
 				box-shadow: 0 18px 45px rgba(25, 40, 65, 0.06);
 			}
-			.panel h2 {
-				margin: 0 0 12px;
-				font-size: 21px;
+			.panel + .panel,
+			.stack > * + * {
+				margin-top: 20px;
 			}
-			.student-list {
+			.panel h2,
+			.panel h3 {
+				margin-top: 0;
+			}
+			.student-list,
+			.progress-list,
+			.correction-list {
 				display: grid;
 				gap: 12px;
 			}
-			.student-card {
+			.student-card,
+			.progress-card,
+			.correction-card {
 				padding: 16px;
 				border: 1px solid #e1e6ed;
 				border-radius: 12px;
@@ -156,15 +190,109 @@
 				display: block;
 			}
 			.student-card span {
-				margin-top: 5px;
+				margin: 5px 0 12px;
 				color: #647083;
 				font-size: 13px;
 			}
-			.notice {
-				padding: 16px;
+			.notice,
+			.feedback {
+				padding: 14px 16px;
 				border-radius: 12px;
 				background: #f1f6fb;
 				color: #506077;
+				line-height: 1.5;
+			}
+			.feedback.success {
+				background: #e9f8ee;
+				color: #176538;
+			}
+			.feedback.error {
+				background: #fff0ef;
+				color: #9b2921;
+			}
+			.lesson {
+				border-left: 5px solid #096fc1;
+			}
+			.lesson li,
+			.worked-example li {
+				margin: 8px 0;
+				line-height: 1.55;
+			}
+			.worked-example {
+				padding: 18px;
+				border-radius: 12px;
+				background: #f6f9fc;
+			}
+			.assignment-heading {
+				align-items: flex-start;
+			}
+			.meta {
+				color: #647083;
+				font-size: 14px;
+			}
+			.question {
+				min-inline-size: 0;
+				margin: 0 0 18px;
+				padding: 20px;
+				border: 1px solid #dfe5ed;
+				border-radius: 14px;
+			}
+			.question legend {
+				max-width: 100%;
+				padding: 0 6px;
+				font-weight: 750;
+				line-height: 1.5;
+			}
+			.option {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				margin: 10px 0;
+				padding: 10px;
+				border-radius: 9px;
+				background: #f8fafc;
+			}
+			input[type='number'],
+			select {
+				width: 100%;
+				max-width: 320px;
+				padding: 10px 12px;
+				border: 1px solid #bdc8d5;
+				border-radius: 9px;
+				background: white;
+				font: inherit;
+			}
+			.question-actions {
+				justify-content: flex-start;
+				flex-wrap: wrap;
+				margin-top: 14px;
+			}
+			.question-status {
+				color: #176538;
+				font-size: 13px;
+				font-weight: 700;
+			}
+			.rough-work {
+				color: #7c4f06;
+				font-size: 13px;
+			}
+			.submit-row {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				flex-wrap: wrap;
+				padding-top: 8px;
+			}
+			.score {
+				font-size: 32px;
+				font-weight: 850;
+				color: #075ea8;
+			}
+			.correction-card[data-correct='false'] {
+				border-left: 5px solid #d15b50;
+			}
+			.correction-card[data-correct='true'] {
+				border-left: 5px solid #35a461;
 			}
 			footer {
 				margin-top: 40px;
@@ -173,13 +301,20 @@
 				color: #697488;
 				font-size: 13px;
 			}
-			@media (max-width: 680px) {
-				.dashboard-heading {
-					align-items: flex-start;
-					flex-direction: column;
+			@media (max-width: 760px) {
+				.dashboard-heading,
+				.assignment-heading,
+				.parent-grid {
+					display: block;
 				}
 				h1 {
 					letter-spacing: -2px;
+				}
+				.dashboard-heading > .muted {
+					margin-top: 12px;
+				}
+				.parent-grid > * + * {
+					margin-top: 20px;
 				}
 			}
 		</style>
@@ -214,24 +349,67 @@
 						</div>
 						<p id="dashboard-note" class="muted"></p>
 					</div>
+
 					<div data-role="parent" hidden>
-						<div class="grid">
+						<div class="grid parent-grid">
 							<section class="panel" aria-labelledby="students-title">
 								<h2 id="students-title">Learners</h2>
-								<p class="muted">Only learners linked to your parent account appear here.</p>
+								<p class="muted">Choose a learner to view submitted evidence. Learners are never ranked or compared.</p>
 								<div id="student-list" class="student-list" aria-live="polite"></div>
 							</section>
-							<section class="panel">
-								<h2>Family overview</h2>
-								<p class="notice">Learning plans and progress reports will appear here as they are reviewed.</p>
+							<section id="progress-view" class="panel" aria-labelledby="progress-title" aria-live="polite">
+								<h2 id="progress-title">Progress evidence</h2>
+								<p class="notice">Select a learner to review completion, objective scores, and corrections.</p>
 							</section>
 						</div>
 					</div>
+
 					<div data-role="student" hidden>
-						<section class="panel">
-							<h2>Your study space</h2>
-							<p class="notice">Your first reviewed learning plan will appear here.</p>
-						</section>
+						<div id="learning-workspace" class="stack" aria-live="polite">
+							<p class="notice">Loading your reviewed learning assignment…</p>
+						</div>
+						<template id="learning-template">
+							<section class="panel lesson" aria-labelledby="lesson-title">
+								<span class="eyebrow">Learn first</span>
+								<h2 id="lesson-title"></h2>
+								<p data-field="overview"></p>
+								<ul data-field="key-points"></ul>
+								<div class="worked-example">
+									<h3>Worked example</h3>
+									<p data-field="example-prompt"></p>
+									<ol data-field="example-steps"></ol>
+									<p><strong>Answer:</strong> <span data-field="example-answer"></span></p>
+								</div>
+								<p class="muted" data-field="practice-advice"></p>
+							</section>
+							<section class="panel" aria-labelledby="assignment-title">
+								<div class="assignment-heading">
+									<div>
+										<span class="eyebrow" data-field="subject"></span>
+										<h2 id="assignment-title" data-field="assignment-title"></h2>
+									</div>
+									<p class="meta" data-field="estimated-time"></p>
+								</div>
+								<p class="muted" data-field="instructions"></p>
+								<div id="assignment-feedback" class="feedback" role="status" hidden></div>
+								<form id="question-form" novalidate></form>
+								<div class="submit-row">
+									<button id="submit-assignment" type="button">Submit all answers</button>
+									<span class="muted">Submission is final and opens the correction view.</span>
+								</div>
+							</section>
+							<section id="corrections" class="panel" aria-labelledby="corrections-title" hidden>
+								<div class="score-line">
+									<div>
+										<span class="eyebrow">Review</span>
+										<h2 id="corrections-title">Corrections</h2>
+									</div>
+									<div id="result-score" class="score"></div>
+								</div>
+								<p class="muted">Read every rationale. A first diagnostic is evidence for planning, not a final judgement.</p>
+								<div id="correction-list" class="correction-list"></div>
+							</section>
+						</template>
 					</div>
 				</div>
 			</section>
@@ -247,15 +425,38 @@
 			const parentShell = document.querySelector('[data-role="parent"]');
 			const studentShell = document.querySelector('[data-role="student"]');
 			const studentList = document.querySelector('#student-list');
+			const progressView = document.querySelector('#progress-view');
+			const learningWorkspace = document.querySelector('#learning-workspace');
+			let currentAssignment = null;
+
+			function element(tag, text, className) {
+				const node = document.createElement(tag);
+				if (text !== undefined) node.textContent = text;
+				if (className) node.className = className;
+				return node;
+			}
+
+			function showMessage(target, message, kind = '') {
+				target.hidden = false;
+				target.className = `feedback ${kind}`.trim();
+				target.textContent = message;
+			}
+
+			function answerLabel(question, answer) {
+				if (!answer) return 'No answer';
+				if (question.type === 'numeric') return String(answer.value);
+				const option = (question.options || []).find((item) => item.id === answer.choice);
+				return option ? option.label : String(answer.choice || 'No answer');
+			}
 
 			function studentCard(student) {
-				const card = document.createElement('article');
-				card.className = 'student-card';
-				const name = document.createElement('strong');
-				name.textContent = student.displayName;
-				const details = document.createElement('span');
-				details.textContent = [student.board, `Class ${student.classLevel}`, student.examYear].filter(Boolean).join(' · ');
-				card.append(name, details);
+				const card = element('article', undefined, 'student-card');
+				card.append(element('strong', student.displayName));
+				card.append(element('span', [student.board, `Class ${student.classLevel}`, student.examYear].filter(Boolean).join(' · ')));
+				const viewButton = element('button', 'View progress', 'secondary');
+				viewButton.type = 'button';
+				viewButton.addEventListener('click', () => loadProgress(student));
+				card.append(viewButton);
 				return card;
 			}
 
@@ -264,14 +465,248 @@
 				const response = await fetch('/api/students');
 				const result = await response.json();
 				studentList.replaceChildren();
-				if (!response.ok || result.students.length === 0) {
-					const message = document.createElement('p');
-					message.className = 'notice';
-					message.textContent = response.ok ? 'No linked learners were found.' : 'Learners could not be loaded.';
-					studentList.append(message);
+				if (!response.ok || !Array.isArray(result.students) || result.students.length === 0) {
+					studentList.append(element('p', response.ok ? 'No linked learners were found.' : 'Learners could not be loaded.', 'notice'));
 					return;
 				}
 				for (const student of result.students) studentList.append(studentCard(student));
+			}
+
+			function renderProgressAssignment(assignment) {
+				const card = element('article', undefined, 'progress-card');
+				card.append(element('h3', assignment.title));
+				const status = assignment.status === 'submitted' || assignment.status === 'reviewed' ? 'Submitted' : 'Not yet submitted';
+				const summary =
+					assignment.possible > 0 ? `${status} · ${assignment.earned}/${assignment.possible} (${assignment.percentage}%)` : status;
+				card.append(element('p', summary, 'muted'));
+				if (assignment.evidence.length > 0) {
+					const list = element('div', undefined, 'correction-list');
+					for (const item of assignment.evidence) {
+						const evidence = element('div', undefined, 'correction-card');
+						evidence.dataset.correct = String(item.score === 1);
+						evidence.append(element('strong', item.prompt));
+						evidence.append(element('p', item.score === 1 ? 'Correct' : 'Needs correction'));
+						evidence.append(element('p', item.rationale, 'muted'));
+						list.append(evidence);
+					}
+					card.append(list);
+				}
+				return card;
+			}
+
+			async function loadProgress(student) {
+				progressView.replaceChildren(
+					element('h2', `${student.displayName} · progress evidence`),
+					element('p', 'Loading evidence…', 'notice'),
+				);
+				try {
+					const response = await fetch(`/api/students/${encodeURIComponent(student.id)}/progress`);
+					const result = await response.json();
+					progressView.replaceChildren(element('h2', `${student.displayName} · progress evidence`));
+					if (!response.ok) {
+						progressView.append(element('p', result.message || 'Progress could not be loaded.', 'notice'));
+						return;
+					}
+					if (result.assignments.length === 0) {
+						progressView.append(element('p', 'No assignment has been opened yet.', 'notice'));
+						return;
+					}
+					const list = element('div', undefined, 'progress-list');
+					for (const assignment of result.assignments) list.append(renderProgressAssignment(assignment));
+					progressView.append(list);
+				} catch {
+					progressView.replaceChildren(
+						element('h2', `${student.displayName} · progress evidence`),
+						element('p', 'Progress could not be loaded.', 'notice'),
+					);
+				}
+			}
+
+			function savedAnswerFor(question) {
+				const fieldset = document.querySelector(`[data-question-id="${CSS.escape(question.id)}"]`);
+				if (!fieldset) return null;
+				if (question.type === 'numeric') {
+					const input = fieldset.querySelector('input[type="number"]');
+					if (!input || input.value.trim() === '') return null;
+					const value = Number(input.value);
+					return Number.isFinite(value) ? { value } : null;
+				}
+				const checked = fieldset.querySelector('input[type="radio"]:checked');
+				return checked ? { choice: checked.value } : null;
+			}
+
+			async function saveQuestion(question, quiet = false) {
+				const fieldset = document.querySelector(`[data-question-id="${CSS.escape(question.id)}"]`);
+				const status = fieldset.querySelector('.question-status');
+				const answer = savedAnswerFor(question);
+				if (!answer) {
+					status.textContent = 'Choose or enter an answer first.';
+					return false;
+				}
+				const confidence = Number(fieldset.querySelector('select').value);
+				const response = await fetch(`/api/learning/assignments/${currentAssignment.id}/responses`, {
+					method: 'PUT',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ questionId: question.id, answer, confidence }),
+				});
+				const result = await response.json();
+				if (!response.ok) {
+					status.textContent = result.message || 'Answer could not be saved.';
+					return false;
+				}
+				if (!quiet) status.textContent = 'Saved.';
+				return true;
+			}
+
+			function questionField(question, index, submitted) {
+				const fieldset = element('fieldset', undefined, 'question');
+				fieldset.dataset.questionId = question.id;
+				const legend = element('legend', `${index + 1}. ${question.prompt}`);
+				fieldset.append(legend);
+				if (question.type === 'numeric') {
+					const label = element('label', 'Your numeric answer');
+					label.htmlFor = `answer-${question.id}`;
+					const input = document.createElement('input');
+					input.type = 'number';
+					input.step = 'any';
+					input.id = `answer-${question.id}`;
+					input.inputMode = 'decimal';
+					input.disabled = submitted;
+					if (question.response) input.value = question.response.answer.value;
+					fieldset.append(label, input);
+				} else {
+					for (const option of question.options || []) {
+						const label = element('label', undefined, 'option');
+						const input = document.createElement('input');
+						input.type = 'radio';
+						input.name = `answer-${question.id}`;
+						input.value = option.id;
+						input.disabled = submitted;
+						input.checked = question.response?.answer?.choice === option.id;
+						label.append(input, element('span', option.label));
+						fieldset.append(label);
+					}
+				}
+				if (question.requiresRoughWork)
+					fieldset.append(element('p', 'Show and keep your rough work for later method review.', 'rough-work'));
+				const actions = element('div', undefined, 'question-actions');
+				const confidenceLabel = element('label', 'Confidence: ');
+				const confidence = document.createElement('select');
+				confidence.setAttribute('aria-label', `Confidence for question ${index + 1}`);
+				for (const [value, label] of [
+					['1', '1 · Guessing'],
+					['2', '2 · Unsure'],
+					['3', '3 · Fairly sure'],
+					['4', '4 · Sure'],
+					['5', '5 · Very sure'],
+				]) {
+					const option = element('option', label);
+					option.value = value;
+					option.selected = Number(value) === (question.response?.confidence || 3);
+					confidence.append(option);
+				}
+				confidence.disabled = submitted;
+				confidenceLabel.append(confidence);
+				actions.append(confidenceLabel);
+				if (!submitted) {
+					const save = element('button', 'Save answer', 'secondary');
+					save.type = 'button';
+					save.addEventListener('click', () => saveQuestion(question));
+					actions.append(save);
+				}
+				actions.append(element('span', question.response ? 'Saved.' : '', 'question-status'));
+				fieldset.append(actions);
+				return fieldset;
+			}
+
+			function renderCorrections(assignment) {
+				const section = document.querySelector('#corrections');
+				const list = document.querySelector('#correction-list');
+				const score = document.querySelector('#result-score');
+				section.hidden = false;
+				score.textContent = `${assignment.result.earned}/${assignment.result.possible} · ${assignment.result.percentage}%`;
+				list.replaceChildren();
+				for (const item of assignment.result.corrections) {
+					const question = assignment.questions.find((candidate) => candidate.id === item.questionId);
+					const card = element('article', undefined, 'correction-card');
+					card.dataset.correct = String(item.score === 1);
+					card.append(element('h3', item.prompt));
+					card.append(element('p', item.score === 1 ? 'Correct' : 'Needs correction'));
+					card.append(element('p', `Your answer: ${answerLabel(question, item.answer)}`));
+					card.append(element('p', `Correct answer: ${answerLabel(question, item.correctAnswer)}`));
+					card.append(element('p', item.rationale, 'muted'));
+					list.append(card);
+				}
+			}
+
+			async function submitCurrentAssignment() {
+				const feedback = document.querySelector('#assignment-feedback');
+				const submit = document.querySelector('#submit-assignment');
+				submit.disabled = true;
+				for (const question of currentAssignment.questions) {
+					if (!(await saveQuestion(question, true))) {
+						showMessage(feedback, 'Answer every question before submitting.', 'error');
+						submit.disabled = false;
+						return;
+					}
+				}
+				const response = await fetch(`/api/learning/assignments/${currentAssignment.id}/submit`, { method: 'POST' });
+				const result = await response.json();
+				if (!response.ok) {
+					showMessage(feedback, result.message || 'The assignment could not be submitted.', 'error');
+					submit.disabled = false;
+					return;
+				}
+				currentAssignment.status = 'submitted';
+				currentAssignment.result = result.result;
+				showMessage(feedback, 'Submitted. Review every correction below.', 'success');
+				submit.closest('.submit-row').hidden = true;
+				for (const control of document.querySelectorAll('#question-form input, #question-form select, #question-form button'))
+					control.disabled = true;
+				renderCorrections(currentAssignment);
+				document.querySelector('#corrections').scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+
+			function renderLearning(assignment) {
+				currentAssignment = assignment;
+				const template = document.querySelector('#learning-template');
+				learningWorkspace.replaceChildren(template.content.cloneNode(true));
+				document.querySelector('[data-field="subject"]').textContent = `Class ${assignment.classLevel} · ${assignment.subject}`;
+				document.querySelector('[data-field="assignment-title"]').textContent = assignment.title;
+				document.querySelector('[data-field="estimated-time"]').textContent = `About ${assignment.estimatedMinutes} minutes`;
+				document.querySelector('[data-field="instructions"]').textContent = assignment.instructions;
+				document.querySelector('#lesson-title').textContent = assignment.lesson.title;
+				document.querySelector('[data-field="overview"]').textContent = assignment.lesson.overview;
+				const keyPoints = document.querySelector('[data-field="key-points"]');
+				for (const point of assignment.lesson.keyPoints) keyPoints.append(element('li', point));
+				document.querySelector('[data-field="example-prompt"]').textContent = assignment.lesson.workedExample.prompt;
+				const steps = document.querySelector('[data-field="example-steps"]');
+				for (const step of assignment.lesson.workedExample.steps) steps.append(element('li', step));
+				document.querySelector('[data-field="example-answer"]').textContent = assignment.lesson.workedExample.answer;
+				document.querySelector('[data-field="practice-advice"]').textContent = assignment.lesson.practiceAdvice;
+				const submitted = assignment.status === 'submitted' || assignment.status === 'reviewed';
+				const form = document.querySelector('#question-form');
+				for (const [index, question] of assignment.questions.entries()) form.append(questionField(question, index, submitted));
+				const submit = document.querySelector('#submit-assignment');
+				submit.addEventListener('click', submitCurrentAssignment);
+				if (submitted) {
+					submit.closest('.submit-row').hidden = true;
+					renderCorrections(assignment);
+				}
+			}
+
+			async function loadLearning() {
+				try {
+					const response = await fetch('/api/learning/current');
+					const result = await response.json();
+					if (!response.ok) {
+						learningWorkspace.replaceChildren(element('p', result.message || 'Learning assignment could not be loaded.', 'notice'));
+						return;
+					}
+					renderLearning(result.assignment);
+				} catch {
+					learningWorkspace.replaceChildren(element('p', 'Learning assignment could not be loaded. Please reload.', 'notice'));
+				}
 			}
 
 			async function showSession(result) {
@@ -282,10 +717,11 @@
 				parentShell.hidden = result.user.role !== 'parent';
 				studentShell.hidden = result.user.role !== 'student';
 				if (result.user.role === 'parent') {
-					dashboardNote.textContent = 'Your private family learning overview.';
+					dashboardNote.textContent = 'Private evidence for each linked learner.';
 					await loadStudents();
 				} else {
-					dashboardNote.textContent = 'Your work stays private to you and your parent.';
+					dashboardNote.textContent = 'Learn, save your work, submit, and correct.';
+					await loadLearning();
 				}
 			}
 
