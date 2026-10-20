@@ -2,6 +2,8 @@
 
 Items are ordered by delivery value. Each story must have acceptance tests before implementation.
 
+The production gap analysis and end-to-end acceptance criteria are maintained in [`DELIVERY_ROADMAP.md`](DELIVERY_ROADMAP.md).
+
 ## Shipped foundation
 
 - [x] Worker and static-assets runtime

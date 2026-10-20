@@ -95,7 +95,7 @@ Bug fixes require a failing regression test first. Tests assert behavior, not pr
 - Put irreversible or sensitive actions behind explicit parent approval.
 - Do not generate pretend data or pretend integrations to make a screen look complete.
 
-The initial backlog is in [`docs/BACKLOG.md`](docs/BACKLOG.md). Architecture decisions are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The initial backlog is in [`docs/BACKLOG.md`](docs/BACKLOG.md), the current delivery gaps are in [`docs/DELIVERY_ROADMAP.md`](docs/DELIVERY_ROADMAP.md), and architecture decisions are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Cloudflare setup
 
