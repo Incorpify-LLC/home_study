@@ -14,6 +14,10 @@
 		"directory": "./public",
 		"run_worker_first": true,
 	},
+	"vars": {
+		"ACCESS_AUD": "c93617cd3040d01ef9323a9a44ecb408940e3e70b4271fb7f2d4c26b07bb35a9",
+		"ACCESS_TEAM_DOMAIN": "incorpify.cloudflareaccess.com",
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
@@ -27,16 +31,6 @@
 			"binding": "ROUGH_WORK",
 			"bucket_name": "home-study-rough-work",
 			"preview_bucket_name": "home-study-rough-work-preview",
-		},
-	],
-	"ratelimits": [
-		{
-			"name": "LOGIN_RATE_LIMITER",
-			"namespace_id": "3640010559",
-			"simple": {
-				"limit": 5,
-				"period": 60,
-			},
 		},
 	],
 	"observability": {

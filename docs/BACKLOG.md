@@ -18,22 +18,20 @@ Items are ordered by delivery value. Each story must have acceptance tests befor
 Acceptance direction:
 
 - Parent and student roles are enforced server-side.
-- Invalid credentials do not reveal whether an account exists.
-- Sessions are HTTP-only, secure, same-site, revocable, and time-bounded.
+- Cloudflare Access allows only explicitly approved email identities through email OTP.
+- The Worker verifies Access JWT signature, issuer, audience, type, and expiry before D1 lookup.
 - A student cannot read another student’s records by changing an identifier.
-- Parent recovery does not depend on a child’s email account.
+- No native password login or public registration exists.
 
 Delivery order:
 
-- [x] Anonymous clients can inspect their session state without leaking account data.
-- [x] A valid native family credential creates a secure, time-bounded server-side session.
-- [x] Invalid credentials return one generic response for missing and incorrect accounts.
-- [x] Login attempts pass through Cloudflare's permissive per-location limiter before password derivation.
-- [x] An authenticated client can resolve its identity and role from its session.
-- [x] Sign-out revokes the server-side session.
-- [x] The first parent can be provisioned from a masked, explicitly targeted local command.
-- [ ] An authenticated parent or student sees only their permitted application shell.
-- [ ] Parent-controlled student password reset is available without requiring student email.
+- [x] A valid Cloudflare Access JWT resolves a pre-provisioned active D1 identity.
+- [x] Invalid signature, issuer, audience, type, and time claims are rejected.
+- [x] Unmapped identities receive no application role.
+- [x] Cloudflare Access provides the session and email OTP flow.
+- [x] A parent can list only the students linked to that parent.
+- [x] An authenticated parent or student sees only their permitted application shell.
+- [x] Native login, password reset, learner creation, and public registration routes are absent.
 
 ## Slice 2 — diagnostic assessment
 

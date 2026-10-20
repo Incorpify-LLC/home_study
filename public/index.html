@@ -8,7 +8,6 @@
 		<title>Home Study</title>
 		<style>
 			:root {
-				color-scheme: light;
 				font-family:
 					Inter,
 					ui-sans-serif,
@@ -17,159 +16,167 @@
 					BlinkMacSystemFont,
 					'Segoe UI',
 					sans-serif;
-				background: #f6f5f4;
-				color: rgba(0, 0, 0, 0.95);
+				color: #172033;
+				background: #f5f7fb;
 			}
 			* {
 				box-sizing: border-box;
 			}
+			[hidden] {
+				display: none !important;
+			}
 			body {
 				margin: 0;
 				min-height: 100vh;
-				background: linear-gradient(180deg, #ffffff 0%, #f6f5f4 100%);
+				background: radial-gradient(circle at top left, #e9f3ff, transparent 40%), #f5f7fb;
 			}
 			main {
-				width: min(1120px, calc(100% - 32px));
+				width: min(1040px, calc(100% - 32px));
 				margin: 0 auto;
-				padding: 32px 0 72px;
+				padding: 28px 0 64px;
 			}
-			nav {
+			nav,
+			.nav-actions,
+			.dashboard-heading {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
 				gap: 16px;
 			}
 			.brand {
-				font-size: 18px;
-				font-weight: 700;
-				letter-spacing: -0.3px;
+				font-size: 19px;
+				font-weight: 800;
+				letter-spacing: -0.4px;
 			}
 			.badge {
+				display: inline-block;
 				border-radius: 999px;
-				background: #f2f9ff;
-				color: #097fe8;
-				padding: 6px 10px;
+				padding: 7px 11px;
+				background: #e8f3ff;
+				color: #075ea8;
 				font-size: 12px;
-				font-weight: 700;
-			}
-			.hero {
-				display: grid;
-				grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-				gap: 48px;
-				align-items: center;
-				padding: 112px 0 80px;
-			}
-			h1 {
-				max-width: 760px;
-				margin: 0;
-				font-size: clamp(44px, 7vw, 76px);
-				line-height: 0.98;
-				letter-spacing: -3px;
-			}
-			.lead {
-				max-width: 640px;
-				margin: 28px 0 0;
-				color: #615d59;
-				font-size: 20px;
-				line-height: 1.55;
-			}
-			.panel {
-				background: #fff;
-				border: 1px solid rgba(0, 0, 0, 0.1);
-				border-radius: 18px;
-				padding: 26px;
-				box-shadow: rgba(0, 0, 0, 0.04) 0 18px 45px;
-			}
-			.panel h2 {
-				margin: 0 0 18px;
-				font-size: 22px;
-				letter-spacing: -0.35px;
-			}
-			.login-form {
-				display: grid;
-				gap: 14px;
-			}
-			label {
-				display: grid;
-				gap: 7px;
-				font-size: 14px;
-				font-weight: 700;
-			}
-			input {
-				width: 100%;
-				border: 1px solid rgba(0, 0, 0, 0.18);
-				border-radius: 10px;
-				padding: 12px 13px;
-				font: inherit;
-			}
-			input:focus {
-				outline: 3px solid rgba(9, 127, 232, 0.2);
-				border-color: #097fe8;
+				font-weight: 800;
 			}
 			button {
 				border: 0;
 				border-radius: 10px;
-				background: #097fe8;
-				color: #fff;
-				padding: 12px 16px;
+				padding: 10px 14px;
+				background: #096fc1;
+				color: white;
 				font: inherit;
-				font-weight: 700;
+				font-weight: 750;
 				cursor: pointer;
 			}
-			button:disabled {
-				opacity: 0.65;
-				cursor: wait;
-			}
-			.form-status {
-				min-height: 20px;
-				margin: 0;
-				color: #8a1c1c;
-				font-size: 14px;
-				line-height: 1.4;
-			}
-			.step {
-				display: grid;
-				grid-template-columns: 34px 1fr;
-				gap: 13px;
-				padding: 14px 0;
-				border-top: 1px solid rgba(0, 0, 0, 0.08);
-			}
-			.step:first-of-type {
-				border-top: 0;
-			}
-			.number {
-				width: 30px;
-				height: 30px;
+			.hero {
+				min-height: 65vh;
 				display: grid;
 				place-items: center;
-				border-radius: 9px;
-				background: #f6f5f4;
-				font-weight: 700;
+				text-align: center;
 			}
-			.step strong,
-			.step span {
+			.hero-inner {
+				max-width: 720px;
+			}
+			h1 {
+				margin: 18px 0;
+				font-size: clamp(42px, 7vw, 72px);
+				line-height: 1;
+				letter-spacing: -2.8px;
+			}
+			.lead {
+				margin: 0 auto;
+				max-width: 640px;
+				color: #5e687a;
+				font-size: 19px;
+				line-height: 1.6;
+			}
+			.status {
+				margin-top: 30px;
+				color: #345;
+				font-size: 14px;
+			}
+			.spinner {
+				display: inline-block;
+				width: 16px;
+				height: 16px;
+				margin-right: 8px;
+				vertical-align: -3px;
+				border: 2px solid #c9d9e8;
+				border-top-color: #096fc1;
+				border-radius: 50%;
+				animation: spin 0.8s linear infinite;
+			}
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			.dashboard {
+				padding: 72px 0;
+			}
+			.dashboard-heading {
+				align-items: flex-end;
+				margin-bottom: 30px;
+			}
+			.dashboard-heading h1 {
+				margin: 8px 0 0;
+				font-size: clamp(36px, 5vw, 54px);
+			}
+			.muted {
+				color: #647083;
+				line-height: 1.5;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+				gap: 20px;
+			}
+			.panel {
+				padding: 25px;
+				border: 1px solid #dde3ec;
+				border-radius: 18px;
+				background: rgba(255, 255, 255, 0.88);
+				box-shadow: 0 18px 45px rgba(25, 40, 65, 0.06);
+			}
+			.panel h2 {
+				margin: 0 0 12px;
+				font-size: 21px;
+			}
+			.student-list {
+				display: grid;
+				gap: 12px;
+			}
+			.student-card {
+				padding: 16px;
+				border: 1px solid #e1e6ed;
+				border-radius: 12px;
+				background: #fafcff;
+			}
+			.student-card strong,
+			.student-card span {
 				display: block;
 			}
-			.step span {
-				margin-top: 4px;
-				color: #615d59;
-				font-size: 14px;
-				line-height: 1.45;
-			}
-			footer {
-				display: flex;
-				flex-wrap: wrap;
-				justify-content: space-between;
-				gap: 12px;
-				padding-top: 24px;
-				border-top: 1px solid rgba(0, 0, 0, 0.1);
-				color: #615d59;
+			.student-card span {
+				margin-top: 5px;
+				color: #647083;
 				font-size: 13px;
 			}
-			@media (max-width: 760px) {
-				.hero {
-					grid-template-columns: 1fr;
-					padding-top: 72px;
+			.notice {
+				padding: 16px;
+				border-radius: 12px;
+				background: #f1f6fb;
+				color: #506077;
+			}
+			footer {
+				margin-top: 40px;
+				padding-top: 22px;
+				border-top: 1px solid #dfe4eb;
+				color: #697488;
+				font-size: 13px;
+			}
+			@media (max-width: 680px) {
+				.dashboard-heading {
+					align-items: flex-start;
+					flex-direction: column;
 				}
 				h1 {
 					letter-spacing: -2px;
@@ -181,65 +188,121 @@
 		<main>
 			<nav aria-label="Primary navigation">
 				<div class="brand">Home Study</div>
-				<div class="badge">Private family workspace</div>
+				<div class="nav-actions">
+					<span class="badge">Private family workspace</span>
+					<button id="logout" type="button" hidden>Sign out</button>
+				</div>
 			</nav>
-			<section class="hero">
-				<div>
+
+			<section id="checking" class="hero">
+				<div class="hero-inner">
+					<span class="badge">Secure learning space</span>
 					<h1>A calm place to learn, practise, and improve.</h1>
 					<p class="lead">
-						Short daily plans, thoughtful assessment, visible progress, and time to correct mistakes. Built for steady preparation—not
-						pressure or comparison.
+						Short daily plans, thoughtful assessment, visible progress, and time to correct mistakes—without pressure or comparison.
 					</p>
+					<p class="status" role="status"><span class="spinner" aria-hidden="true"></span>Checking secure access…</p>
 				</div>
-				<aside class="panel" aria-label="Family sign in">
-					<h2>Family sign in</h2>
-					<form id="login-form" class="login-form">
-						<label>
-							Sign-in name
-							<input name="identifier" autocomplete="username" required />
-						</label>
-						<label>
-							Password
-							<input name="password" type="password" autocomplete="current-password" required />
-						</label>
-						<button type="submit">Sign in</button>
-						<p id="login-status" class="form-status" role="status" aria-live="polite"></p>
-					</form>
-				</aside>
 			</section>
-			<footer>
-				<span>Private sign-in · Role-specific dashboards come next.</span>
-				<span>Designed around privacy, progress, and wellbeing.</span>
-			</footer>
+
+			<section id="dashboard" hidden>
+				<div class="dashboard">
+					<div class="dashboard-heading">
+						<div>
+							<span class="badge">Signed in securely</span>
+							<h1 id="dashboard-title">Welcome</h1>
+						</div>
+						<p id="dashboard-note" class="muted"></p>
+					</div>
+					<div data-role="parent" hidden>
+						<div class="grid">
+							<section class="panel" aria-labelledby="students-title">
+								<h2 id="students-title">Learners</h2>
+								<p class="muted">Only learners linked to your parent account appear here.</p>
+								<div id="student-list" class="student-list" aria-live="polite"></div>
+							</section>
+							<section class="panel">
+								<h2>Family overview</h2>
+								<p class="notice">Learning plans and progress reports will appear here as they are reviewed.</p>
+							</section>
+						</div>
+					</div>
+					<div data-role="student" hidden>
+						<section class="panel">
+							<h2>Your study space</h2>
+							<p class="notice">Your first reviewed learning plan will appear here.</p>
+						</section>
+					</div>
+				</div>
+			</section>
+
+			<footer>Protected by Cloudflare Access · Designed around privacy, progress, and wellbeing.</footer>
 		</main>
 		<script>
-			const form = document.querySelector('#login-form');
-			const status = document.querySelector('#login-status');
-			form.addEventListener('submit', async (event) => {
-				event.preventDefault();
-				const submit = form.querySelector('button');
-				submit.disabled = true;
-				status.textContent = '';
-				const fields = new FormData(form);
-				try {
-					const response = await fetch('/api/login', {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ identifier: fields.get('identifier'), password: fields.get('password') }),
-					});
-					const result = await response.json();
-					if (!response.ok) {
-						status.textContent = result.message ?? 'Sign in failed. Please try again.';
-						return;
-					}
-					status.style.color = '#176b3a';
-					status.textContent = `Signed in as ${result.user.displayName}.`;
-				} catch {
-					status.textContent = 'The service could not be reached. Please try again.';
-				} finally {
-					submit.disabled = false;
+			const checking = document.querySelector('#checking');
+			const dashboard = document.querySelector('#dashboard');
+			const dashboardTitle = document.querySelector('#dashboard-title');
+			const dashboardNote = document.querySelector('#dashboard-note');
+			const logout = document.querySelector('#logout');
+			const parentShell = document.querySelector('[data-role="parent"]');
+			const studentShell = document.querySelector('[data-role="student"]');
+			const studentList = document.querySelector('#student-list');
+
+			function studentCard(student) {
+				const card = document.createElement('article');
+				card.className = 'student-card';
+				const name = document.createElement('strong');
+				name.textContent = student.displayName;
+				const details = document.createElement('span');
+				details.textContent = [student.board, `Class ${student.classLevel}`, student.examYear].filter(Boolean).join(' · ');
+				card.append(name, details);
+				return card;
+			}
+
+			async function loadStudents() {
+				studentList.textContent = 'Loading learners…';
+				const response = await fetch('/api/students');
+				const result = await response.json();
+				studentList.replaceChildren();
+				if (!response.ok || result.students.length === 0) {
+					const message = document.createElement('p');
+					message.className = 'notice';
+					message.textContent = response.ok ? 'No linked learners were found.' : 'Learners could not be loaded.';
+					studentList.append(message);
+					return;
 				}
+				for (const student of result.students) studentList.append(studentCard(student));
+			}
+
+			async function showSession(result) {
+				checking.hidden = true;
+				dashboard.hidden = false;
+				logout.hidden = false;
+				dashboardTitle.textContent = `Welcome, ${result.user.displayName}`;
+				parentShell.hidden = result.user.role !== 'parent';
+				studentShell.hidden = result.user.role !== 'student';
+				if (result.user.role === 'parent') {
+					dashboardNote.textContent = 'Your private family learning overview.';
+					await loadStudents();
+				} else {
+					dashboardNote.textContent = 'Your work stays private to you and your parent.';
+				}
+			}
+
+			logout.addEventListener('click', () => {
+				window.location.assign('/cdn-cgi/access/logout');
 			});
+
+			(async () => {
+				try {
+					const response = await fetch('/api/session', { headers: { accept: 'application/json' } });
+					const result = await response.json();
+					if (result.authenticated) await showSession(result);
+					else window.location.reload();
+				} catch {
+					document.querySelector('.status').textContent = 'Secure access could not be confirmed. Please reload this page.';
+				}
+			})();
 		</script>
 	</body>
 </html>

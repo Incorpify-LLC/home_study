@@ -13,6 +13,9 @@ export default defineConfig(async () => ({
 			wrangler: { configPath: './wrangler.jsonc' },
 			miniflare: {
 				bindings: {
+					ACCESS_AUD: 'test-audience',
+					ACCESS_TEAM_DOMAIN: 'family.cloudflareaccess.com',
+					ACCESS_TEST_MODE: 'true',
 					TEST_MIGRATIONS: await readD1Migrations('./migrations'),
 				},
 			},

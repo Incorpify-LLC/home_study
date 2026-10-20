@@ -18,7 +18,7 @@ At the time this guide was updated:
 - The source code is in `Incorpify-LLC/home_study` on GitHub.
 - Production deployment is manual; a normal push to GitHub does not deploy the website.
 - The production Worker, D1 database, D1 schema, private R2 buckets, and custom domain have been verified.
-- Family sign-in is deployed, but production accounts must be provisioned explicitly; email reports are not enabled yet.
+- Cloudflare Access protects the site with email OTP and an exact identity allowlist; email reports are not enabled yet.
 
 If the Cloudflare account or domain status changes later, use the decision path in Part A.
 
@@ -26,11 +26,12 @@ If the Cloudflare account or domain status changes later, use the decision path 
 
 # What Cloudflare will contain
 
-The application uses three Cloudflare services:
+The application uses four Cloudflare services:
 
 1. **Worker** — runs the website and its API.
 2. **D1 database** — stores users, questions, assignments, answers, and progress.
 3. **R2 buckets** — privately store photographs of rough work.
+4. **Cloudflare Access** — authenticates only approved family email addresses using one-time PINs.
 
 The setup creates these resources:
 
@@ -446,30 +447,20 @@ Cloudflare may rename permissions over time. Select the least-privilege equivale
 
 ---
 
-# Part H — Provision the first parent account
+# Part H — Configure family OTP access
 
-After the authentication deployment and migrations succeed, create the first parent account from a trusted interactive terminal:
+1. In **Zero Trust → Access controls → Applications**, create a **Self-hosted and private** application for the complete `study.saneax.in` hostname. Leave the path empty.
+2. Enable only **One-time PIN** and use instant authentication when offered.
+3. Create one **Allow** policy using the **Emails** selector with only the approved family addresses. Do not use Everyone, an email-domain selector, or Bypass.
+4. Pre-create matching active users in D1 and link each student through `parent_students`. Keep real family identities out of Git history and fixtures.
+5. Configure `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` in the Worker. Never configure `ACCESS_TEST_MODE` in production.
 
-```bash
-cd ~/workspace/personal/family/home_study
-npm run provision:parent -- --remote
-```
-
-The command asks for:
-
-1. the exact confirmation text shown in the terminal;
-2. a parent display name;
-3. a private sign-in name;
-4. an optional recovery email;
-5. a password entered twice without displaying it.
-
-Do not put the password in the command, a file, GitHub, or chat. If Wrangler reports that the sign-in name or email already exists, do not create a variation blindly; verify the existing account first.
-
-Use `--local` instead of `--remote` only when creating a disposable account in the local D1 database.
+The Worker maps the verified Access JWT email to D1. Receiving an OTP is not by itself an application role, and an email header supplied by the browser is not trusted.
 
 ## Features intentionally left disabled
 
-- Student account creation remains disabled until the authenticated parent surface is ready.
+- Public self-registration and native password login remain disabled.
+- Diagnostic assessments and assignments remain disabled until reviewed learning content is ready.
 - No progress email is sent yet.
 - No child’s name or academic profile appears on the public landing page.
 - Rough-work buckets remain private.
@@ -490,7 +481,9 @@ The Cloudflare foundation is complete only when all boxes can be checked:
 - [x] R2 bucket `home-study-rough-work-preview` exists and is private.
 - [x] `wrangler.jsonc` contains the real D1 database ID.
 - [x] `npm run check` passes after connecting production resources.
-- [x] Remote D1 migration `0001_initial.sql` is applied.
+- [x] All remote D1 migrations through `0004_parent_students.sql` are applied.
+- [x] Exactly one parent and three linked student identities are provisioned privately in D1.
+- [x] Cloudflare Access protects the hostname with email OTP.
 - [x] The Worker deployment loads.
 - [x] `https://study.saneax.in` loads over HTTPS.
 - [x] `https://study.saneax.in/api/health` returns `status: ok`.

@@ -18,14 +18,16 @@ Product notes that contain family-specific information should stay outside the r
 
 - Cloudflare Worker API with `GET /api/health`
 - Responsive, privacy-safe landing page
-- Native family sign-in with revocable, eight-hour server-side sessions
-- Per-location login abuse throttling and a masked parent-account provisioning command
+- Cloudflare Access email OTP restricted to pre-approved family identities
+- Worker-side Access JWT verification and D1 email-to-role mapping
+- Separate parent and student application shells
+- Parent-only listing of learners linked through `parent_students`
 - D1 baseline schema for users, curriculum, questions, assignments, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
 - Local Cloudflare integration tests
 - CI and production deployment workflows
 
-Parent and student dashboards, assessments, uploads, and email are deliberately not stubbed as fake functionality. They will be added one tested vertical slice at a time.
+Diagnostic assessments, assignments, uploads, and email are deliberately not stubbed as fake functionality. They will be added one tested vertical slice at a time.
 
 ## Stack
 
@@ -78,17 +80,9 @@ npx vitest run test/file.ts    # one test file
 npm run check                  # formatting, lint, types, tests, dry-run build
 ```
 
-## Provision the first parent account
+## Provision family identities
 
-Only run this from an interactive terminal on a trusted machine after production migrations are applied:
-
-```bash
-npm run provision:parent -- --remote
-```
-
-The command requires an explicit production confirmation, asks for the parent’s display name, private sign-in name, optional recovery email, and password. Password entry is hidden. The plaintext password is never written to disk, included in a command-line argument, printed, or sent to chat. A temporary owner-only SQL file contains only the derived password verifier and is deleted after Wrangler finishes.
-
-Use `--local` instead of `--remote` for a local test account. Do not invent or commit family credentials. Student accounts will be created later through the authenticated parent surface rather than this bootstrap command.
+Production identities are created privately in D1 and must also appear in the exact-email Cloudflare Access Allow policy. The application has no public registration, password login, learner-creation route, or just-in-time account creation. Never commit family names or addresses to fixtures, documentation, migrations, or source code.
 
 Bug fixes require a failing regression test first. Tests assert behavior, not private implementation details.
 
@@ -114,7 +108,7 @@ The application is intended for `study.saneax.in`, but no Cloudflare resource, D
 - No student personal data in source control or fixtures.
 - Every server route must authorize the requested record or object.
 - Rough-work objects stay private and use unpredictable keys.
-- Passwords, API tokens, and session secrets go in Cloudflare/GitHub secrets, never files.
+- API tokens, OTPs, and recovery codes go only through their protected systems, never source files or chat.
 - Objective scoring may be automatic; subjective or image-based scoring stays reviewable.
 - No public leaderboards or sibling comparisons.
 

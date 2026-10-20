@@ -10,6 +10,9 @@ Home Study is a private family application. It creates daily learning plans, adm
 Browser / PWA
      │ HTTPS
      ▼
+Cloudflare Access (exact-email OTP policy)
+     │ signed application JWT
+     ▼
 Cloudflare Worker ───── Static Assets
      │
      ├── D1: accounts, curriculum, questions, plans, attempts, mastery
@@ -44,13 +47,11 @@ Modules may share one Worker and D1 database during the prototype. Boundaries ar
 
 ## Authentication direction
 
-The application uses native family credentials so a student does not need a stable email account. Passwords are never stored directly: the Worker verifies a deliberately slow, salted password-derived key and keeps only its encoded verifier in D1. Login errors do not reveal whether an account exists.
+Cloudflare Access authenticates the parent and students using email one-time PINs. Its application policy is deny-by-default and allows only explicitly listed email addresses. The application exposes no native login, password reset, or public registration endpoint.
 
-Sessions are opaque random tokens. D1 stores only a SHA-256 digest of each token, together with its user, expiry, and revocation state. The browser receives the original token in a `Secure`, `HttpOnly`, `SameSite=Strict` cookie. Authorization always loads the session and user from D1; it never trusts a role or student identifier supplied by the browser.
+The Worker independently verifies the Access application JWT: `RS256` signature, key ID, issuer, application audience, token type, and time claims. It then normalizes the verified email and resolves it to a pre-created active D1 user. A browser-supplied email header never grants a role. The test identity header works only when the local Miniflare-only `ACCESS_TEST_MODE` binding is set and that binding must never exist in production.
 
-Cloudflare’s Rate Limiting binding reduces repeated login attempts by edge-observed actor and a SHA-256 digest of the normalized sign-in name before password derivation. It is a permissive, per-location abuse control rather than an exact account lockout: short bursts can exceed the configured threshold before a later request receives HTTP 429. The first parent account is created only through an explicitly local-or-remote, interactive command with non-echoing password input. Student accounts will be parent-managed rather than bootstrapped from public registration.
-
-The parent/admin surface may receive an additional Cloudflare Access policy later as defence in depth. Parent-controlled student-password reset and parent recovery remain separate follow-up stories.
+Cloudflare Access proves identity; D1 remains the application authorization source. `parent_students` is the boundary for parent access to learner records, and students receive no route that enumerates sibling accounts. Unknown or inactive D1 identities remain unauthenticated even if they somehow reach the Worker with a valid Access token.
 
 ## Content provenance
 
