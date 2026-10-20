@@ -181,6 +181,25 @@
 			.roadmap-list {
 				grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 			}
+			.subject-tabs {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+				margin-bottom: 12px;
+			}
+			.subject-tab {
+				padding: 8px 16px;
+				border: 1px solid #c8d2de;
+				border-radius: 999px;
+				background: #fff;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.subject-tab[data-active='true'] {
+				background: #0b2b52;
+				border-color: #0b2b52;
+				color: #fff;
+			}
 			.roadmap-item {
 				display: grid;
 				grid-template-columns: auto 1fr;
@@ -415,6 +434,7 @@
 								</div>
 								<p id="roadmap-summary" class="meta"></p>
 							</div>
+							<div id="subject-tabs" class="subject-tabs" role="tablist" aria-label="Subjects"></div>
 							<div id="roadmap-list" class="roadmap-list" aria-live="polite">Loading chapters…</div>
 						</section>
 						<div id="learning-workspace" class="stack" aria-live="polite">
@@ -484,6 +504,7 @@
 			const progressView = document.querySelector('#progress-view');
 			const learningWorkspace = document.querySelector('#learning-workspace');
 			let currentAssignment = null;
+			let activeSubject = null;
 
 			function element(tag, text, className) {
 				const node = document.createElement(tag);
@@ -578,10 +599,15 @@
 				}
 			}
 
-			function renderRoadmap(roadmap) {
+			function renderRoadmap(roadmapBody) {
 				const list = document.querySelector('#roadmap-list');
 				const summary = document.querySelector('#roadmap-summary');
-				summary.textContent = `${roadmap.completed} of ${roadmap.total} completed`;
+				const roadmap = roadmapBody.tracks.find((track) => track.subject === activeSubject) || roadmapBody.tracks[0];
+				if (!roadmap) {
+					list.replaceChildren(element('p', 'No reviewed chapters are available yet.', 'notice'));
+					return;
+				}
+				summary.textContent = `${roadmap.subject} · ${roadmap.completed} of ${roadmap.total} completed`;
 				list.replaceChildren();
 				const labels = {
 					not_started: 'Not started',
@@ -604,15 +630,36 @@
 			async function loadRoadmap() {
 				const list = document.querySelector('#roadmap-list');
 				try {
-					const response = await fetch('/api/learning/roadmap');
+					const response = await fetch('/api/learning/roadmaps');
 					const result = await response.json();
 					if (!response.ok) {
 						list.replaceChildren(element('p', result.message || 'The chapter roadmap could not be loaded.', 'notice'));
 						return;
 					}
+					renderSubjectTabs(result.tracks);
 					renderRoadmap(result);
 				} catch {
 					list.replaceChildren(element('p', 'The chapter roadmap could not be loaded. Please reload.', 'notice'));
+				}
+			}
+
+			function renderSubjectTabs(tracks) {
+				const tabs = document.querySelector('#subject-tabs');
+				if (!tabs) return;
+				tabs.replaceChildren();
+				if (tracks.length < 2) return;
+				for (const track of tracks) {
+					const tab = element('button', track.subject, 'subject-tab');
+					tab.type = 'button';
+					tab.dataset.active = String(track.subject === activeSubject);
+					tab.addEventListener('click', async () => {
+						activeSubject = track.subject;
+						tabs.querySelectorAll('.subject-tab').forEach((node) => {
+							node.dataset.active = String(node === tab);
+						});
+						await loadLearning();
+					});
+					tabs.append(tab);
 				}
 			}
 
@@ -741,7 +788,8 @@
 				const button = document.querySelector('#next-assignment');
 				button.disabled = true;
 				try {
-					const response = await fetch('/api/learning/next', { method: 'POST' });
+					const query = activeSubject ? `?subject=${encodeURIComponent(activeSubject)}` : '';
+					const response = await fetch(`/api/learning/next${query}`, { method: 'POST' });
 					const result = await response.json();
 					if (!response.ok) {
 						button.disabled = false;
@@ -793,6 +841,7 @@
 
 			function renderLearning(assignment) {
 				currentAssignment = assignment;
+				activeSubject = assignment.subject;
 				const template = document.querySelector('#learning-template');
 				learningWorkspace.replaceChildren(template.content.cloneNode(true));
 				document.querySelector('[data-field="subject"]').textContent = `Class ${assignment.classLevel} · ${assignment.subject}`;
@@ -822,7 +871,8 @@
 
 			async function loadLearning() {
 				try {
-					const learningResponse = await fetch('/api/learning/current');
+					const query = activeSubject ? `?subject=${encodeURIComponent(activeSubject)}` : '';
+					const learningResponse = await fetch(`/api/learning/current${query}`);
 					const result = await learningResponse.json();
 					if (!learningResponse.ok) {
 						learningWorkspace.replaceChildren(element('p', result.message || 'Learning assignment could not be loaded.', 'notice'));

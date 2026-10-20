@@ -1,6 +1,6 @@
 # Home Study delivery roadmap
 
-Status: authentication foundation deployed; teaching and assessment workflows remain to be built.
+Status: authentication foundation and the reviewed teaching/assessment loop are deployed; rough-work review, reassessment, adaptation, and reporting remain to be built.
 
 This document separates what exists in production from what the product vision still requires. A database table or placeholder panel does not count as a working feature.
 
@@ -13,24 +13,24 @@ This document separates what exists in production from what the product vision s
 - D1 email-to-role mapping with no native password login or public registration.
 - Parent-to-student authorization relationship and parent-only learner listing.
 - Separate parent and student application shells.
+- Six reviewed subject tracks with complete chapter roadmaps: Class VIII Mathematics (11 chapters), Class X Mathematics (18), Class XII Accountancy (12), Class VIII Physics (8), Class X Physics (10), Class XII Commerce (12).
+- Student lesson, worked example, diagnostic, draft save/resume, deliberate submission, objective scoring, and corrections.
+- Per-subject sequential progression with subject tabs on the learner dashboard; progress in one subject never unlocks another.
+- Parent evidence view scoped to explicitly linked learners.
 - Health endpoint, automated tests, CI, manual deployment, and production smoke checks.
 
 ## Production reality
 
-The application is currently a secure authenticated shell, not yet a functional learning platform.
+The reviewed course is published for all six subject tracks; the learner dashboard teaches a chapter, saves a draft, scores a submission, and shows corrections. Chapter progression is sequential within each subject.
 
-These production tables contain no learning records yet:
+Still absent in production, and honestly absent in the interface:
 
-- `curriculum_topics`
-- `questions`
-- `assignments`
-- `assignment_items`
-- `attempts`
-- `uploads`
-- `mastery_events`
-- `report_deliveries`
+- no rough-work image can be uploaded, reviewed, or overridden (`uploads` stays empty);
+- no delayed reassessment or mastery transition is recorded (`mastery_events` stays empty);
+- no adaptive re-planning of tomorrow's work exists;
+- no parent or learner report has ever been delivered (`report_deliveries` stays empty).
 
-The current UI therefore cannot teach a lesson, run a diagnostic, accept an answer, score work, upload rough work, schedule revision, or report progress.
+The current UI therefore cannot accept method evidence, schedule revision, adapt workload automatically, or report progress outside the application.
 
 ## Remaining release gate for authentication
 
@@ -59,6 +59,8 @@ Required capabilities:
 - Topic-level evidence for the parent; no weak/strong label or sibling comparison.
 
 Acceptance: one student can complete one reviewed diagnostic, receive corrections, and the parent can inspect objective-level evidence.
+
+Status: shipped. Six subject tracks publish complete reviewed courses with per-subject sequential progression. Options are permuted server-side at publish time, so the correct choice is spread across all four positions rather than following the authored key. Content batches were independently reviewed and corrected before publication: a false claim about intermolecular spacing in melting ice, a duplicated question stem, an impossible shareholding in a worked example, a missing consumer-adjudication section, and omitted syllabus concepts (battery in series, household wire colour coding, staircase wiring, management as science/art/profession, formal versus informal organisation, public deposits and instalment credit) were all fixed in the released content.
 
 ### Slice 3 — daily learning plan
 

@@ -22,16 +22,17 @@ Product notes that contain family-specific information should stay outside the r
 - Worker-side Access JWT verification and D1 email-to-role mapping
 - Separate parent and student application shells
 - Parent-only listing of learners linked through `parent_students`
-- Reviewed complete course roadmaps: Class VIII Mathematics (11 chapters), Class X Mathematics (18 chapters), and Class XII Accountancy (12 chapters)
+- Reviewed complete course roadmaps across six subject tracks: Class VIII Mathematics (11 chapters), Class X Mathematics (18 chapters), Class XII Accountancy (12 chapters), Class VIII Physics (8 chapters), Class X Physics (10 chapters), and Class XII Commerce (12 chapters)
 - Student lesson, worked example, diagnostic, draft save/resume, submission, objective scoring, and corrections
-- Sequential chapter progression: the next chapter unlocks only after the current one is submitted
+- Per-subject sequential progression: a subject's next chapter unlocks only after the current one is submitted, and progress in one subject never unlocks another
+- Subject tabs on the learner dashboard for a class carrying more than one subject
 - Parent evidence view scoped to explicitly linked learners
 - D1 schema for source provenance, reviewed content, assignment templates, responses, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
 - Local Cloudflare integration tests
 - CI and production deployment workflows
 
-The first three diagnostic units are functional. Rough-work upload/review, broader syllabus coverage, delayed reassessment, and email reports remain later tested slices; the interface does not pretend those capabilities exist.
+The reviewed course roadmaps for all six subject tracks are functional. Rough-work upload/review, delayed reassessment, adaptive assignment, and email reports remain later tested slices; the interface does not pretend those capabilities exist.
 
 ## Stack
 

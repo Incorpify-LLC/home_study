@@ -44,32 +44,34 @@ beforeAll(async () => {
 describe('sequential chapter progression', () => {
 	it('publishes every reviewed chapter in a class-specific roadmap', async () => {
 		const expected = [
-			{ email: 'student-d@example.test', classLevel: 'VIII', subject: 'Mathematics', total: 11 },
-			{ email: 'student-b@example.test', classLevel: 'X', subject: 'Mathematics', total: 18 },
-			{ email: 'student-c@example.test', classLevel: 'XII', subject: 'Accountancy', total: 12 },
+			{ email: 'student-d@example.test', subject: 'Mathematics', total: 11 },
+			{ email: 'student-b@example.test', subject: 'Mathematics', total: 18 },
+			{ email: 'student-c@example.test', subject: 'Accountancy', total: 12 },
 		];
 
 		for (const track of expected) {
-			const response = await SELF.fetch('https://study.saneax.in/api/learning/roadmap', {
+			const response = await SELF.fetch('https://study.saneax.in/api/learning/roadmaps', {
 				headers: accessHeaders(track.email),
 			});
 			expect(response.status).toBe(200);
 			const payload = (await response.json()) as {
-				track: { classLevel: string; subject: string };
-				modules: Array<{ sequence: number; title: string; status: string }>;
-				completed: number;
-				total: number;
+				tracks: Array<{
+					subject: string;
+					total: number;
+					completed: number;
+					modules: Array<{ sequence: number; title: string; status: string }>;
+				}>;
 			};
-			expect(payload.track).toEqual({ classLevel: track.classLevel, subject: track.subject });
-			expect(payload.total).toBe(track.total);
-			expect(payload.modules).toHaveLength(track.total);
-			expect(payload.modules.map((module) => module.sequence)).toEqual(Array.from({ length: track.total }, (_, index) => index + 1));
-			expect(payload.modules.every((module) => module.status === 'not_started')).toBe(true);
+			const found = payload.tracks.find((candidate) => candidate.subject === track.subject);
+			expect(found).toBeDefined();
+			expect(found?.total).toBe(track.total);
+			expect(found?.modules).toHaveLength(track.total);
+			expect(found?.modules.map((module) => module.sequence)).toEqual(Array.from({ length: track.total }, (_, index) => index + 1));
 		}
 	});
 
 	it('does not unlock the next chapter before the current one is submitted', async () => {
-		const current = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const current = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders('student-d@example.test'),
 		});
 		expect(current.status).toBe(200);
@@ -77,7 +79,7 @@ describe('sequential chapter progression', () => {
 		expect(body.assignment.sequence).toBe(1);
 		expect(body.assignment.totalModules).toBe(11);
 
-		const blocked = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+		const blocked = await SELF.fetch('https://study.saneax.in/api/learning/next?subject=Mathematics', {
 			method: 'POST',
 			headers: accessHeaders('student-d@example.test'),
 		});
@@ -85,15 +87,19 @@ describe('sequential chapter progression', () => {
 	});
 
 	it('unlocks exactly the next chapter after submission', async () => {
-		const existing = await env.DB.prepare(`SELECT id FROM assignments WHERE student_id = 'student-d' ORDER BY created_at LIMIT 1`).first<{
-			id: string;
-		}>();
+		const existing = await env.DB.prepare(
+			`SELECT assignments.id
+			 FROM assignments
+			 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+			 WHERE assignments.student_id = 'student-d' AND assignment_templates.subject = 'Mathematics'
+			 ORDER BY assignments.created_at LIMIT 1`,
+		).first<{ id: string }>();
 		expect(existing).not.toBeNull();
 		await env.DB.prepare(`UPDATE assignments SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP WHERE id = ?`)
 			.bind(existing?.id)
 			.run();
 
-		const next = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+		const next = await SELF.fetch('https://study.saneax.in/api/learning/next?subject=Mathematics', {
 			method: 'POST',
 			headers: accessHeaders('student-d@example.test'),
 		});
@@ -105,22 +111,110 @@ describe('sequential chapter progression', () => {
 		expect(nextBody.assignment.totalModules).toBe(11);
 		expect(nextBody.assignment.title).toContain('Squares');
 
-		const repeated = await SELF.fetch('https://study.saneax.in/api/learning/next', {
+		const repeated = await SELF.fetch('https://study.saneax.in/api/learning/next?subject=Mathematics', {
 			method: 'POST',
 			headers: accessHeaders('student-d@example.test'),
 		});
 		expect(repeated.status).toBe(409);
 
-		const roadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmap', {
+		const roadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmaps', {
 			headers: accessHeaders('student-d@example.test'),
 		});
 		const roadmapBody = (await roadmap.json()) as {
-			completed: number;
-			modules: Array<{ sequence: number; status: string }>;
+			tracks: Array<{
+				subject: string;
+				completed: number;
+				modules: Array<{ sequence: number; status: string }>;
+			}>;
 		};
-		expect(roadmapBody.completed).toBe(1);
-		expect(roadmapBody.modules[0].status).toBe('submitted');
-		expect(roadmapBody.modules[1].status).toBe('assigned');
+		const mathematics = roadmapBody.tracks.find((track) => track.subject === 'Mathematics');
+		expect(mathematics?.completed).toBe(1);
+		expect(mathematics?.modules[0].status).toBe('submitted');
+		expect(mathematics?.modules[1].status).toBe('assigned');
+	});
+});
+
+describe('multi-subject tracks', () => {
+	it('serves independent per-subject roadmaps and progression for a learner with multiple subjects', async () => {
+		// student-d is a Class VIII learner: Mathematics (11) and Physics (8).
+		const roadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmaps', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(roadmap.status).toBe(200);
+		const body = (await roadmap.json()) as {
+			tracks: Array<{
+				subject: string;
+				total: number;
+				completed: number;
+				current: { sequence: number; title: string } | null;
+			}>;
+		};
+		expect(body.tracks.map((track) => track.subject).sort()).toEqual(['Mathematics', 'Physics']);
+		const mathematics = body.tracks.find((track) => track.subject === 'Mathematics');
+		const physics = body.tracks.find((track) => track.subject === 'Physics');
+		expect(mathematics?.total).toBe(11);
+		expect(mathematics?.current?.sequence).toBe(2);
+		expect(mathematics?.completed).toBe(1);
+		expect(physics?.total).toBe(8);
+		expect(physics?.completed).toBe(0);
+		expect(physics?.current?.sequence).toBe(1);
+
+		// Per-subject current assignment: Physics first chapter is served independently
+		// of the Mathematics assignment that is already open.
+		const physicsCurrent = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Physics', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(physicsCurrent.status).toBe(200);
+		const physicsBody = (await physicsCurrent.json()) as {
+			assignment: { subject: string; sequence: number; totalModules: number; questions: unknown[] };
+		};
+		expect(physicsBody.assignment.subject).toBe('Physics');
+		expect(physicsBody.assignment.sequence).toBe(1);
+		expect(physicsBody.assignment.totalModules).toBe(8);
+		expect(physicsBody.assignment.questions.length).toBeGreaterThanOrEqual(5);
+
+		// The next Physics chapter stays locked until the current Physics chapter is submitted.
+		const blockedNext = await SELF.fetch('https://study.saneax.in/api/learning/next?subject=Physics', {
+			method: 'POST',
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(blockedNext.status).toBe(409);
+
+		const physicsAssignment = await env.DB.prepare(
+			`SELECT assignments.id
+			 FROM assignments
+			 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+			 WHERE assignments.student_id = 'student-d' AND assignment_templates.subject = 'Physics'`,
+		).first<{ id: string }>();
+		expect(physicsAssignment).not.toBeNull();
+		await env.DB.prepare(`UPDATE assignments SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP WHERE id = ?`)
+			.bind(physicsAssignment?.id)
+			.run();
+
+		const advanced = await SELF.fetch('https://study.saneax.in/api/learning/next?subject=Physics', {
+			method: 'POST',
+			headers: accessHeaders('student-d@example.test'),
+		});
+		expect(advanced.status).toBe(200);
+		const advancedBody = (await advanced.json()) as { assignment: { subject: string; sequence: number } };
+		expect(advancedBody.assignment.subject).toBe('Physics');
+		expect(advancedBody.assignment.sequence).toBe(2);
+
+		// Mathematics progression is untouched by Physics submissions.
+		const mathematicsCurrent = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		const mathematicsBody = (await mathematicsCurrent.json()) as { assignment: { sequence: number } };
+		expect(mathematicsBody.assignment.sequence).toBe(2);
+
+		const updatedRoadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmaps', {
+			headers: accessHeaders('student-d@example.test'),
+		});
+		const updatedBody = (await updatedRoadmap.json()) as {
+			tracks: Array<{ subject: string; completed: number; current: { sequence: number } | null }>;
+		};
+		expect(updatedBody.tracks.find((track) => track.subject === 'Physics')?.completed).toBe(1);
+		expect(updatedBody.tracks.find((track) => track.subject === 'Mathematics')?.completed).toBe(1);
 	});
 });
 
