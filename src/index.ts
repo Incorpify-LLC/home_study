@@ -1,6 +1,7 @@
 interface Env {
 	ASSETS: Fetcher;
 	DB: D1Database;
+	LOGIN_RATE_LIMITER: RateLimit;
 	ROUGH_WORK: R2Bucket;
 }
 
@@ -177,6 +178,15 @@ async function login(request: Request, env: Env): Promise<Response> {
 	const identifier = body.identifier.trim().toLowerCase();
 	if (identifier.length === 0 || identifier.length > 128 || body.password.length === 0 || body.password.length > 256) {
 		return json({ error: 'invalid_request', message: 'The sign-in request is invalid.' }, 400);
+	}
+
+	const actor = request.headers.get('cf-connecting-ip') ?? 'unknown';
+	const identifierHash = toHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identifier)));
+	const { success: isWithinRateLimit } = await env.LOGIN_RATE_LIMITER.limit({ key: `${actor}:${identifierHash}` });
+	if (!isWithinRateLimit) {
+		const response = json({ error: 'rate_limited', message: 'Too many sign-in attempts. Please wait before trying again.' }, 429);
+		response.headers.set('retry-after', '60');
+		return response;
 	}
 
 	const user = await env.DB.prepare(

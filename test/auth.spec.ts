@@ -188,4 +188,27 @@ describe('family credential login', () => {
 			message: 'The identifier or password is incorrect.',
 		});
 	});
+
+	it('rate limits repeated login attempts for one actor and identifier', async () => {
+		const request = () =>
+			SELF.fetch('https://study.saneax.in/api/login', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					'cf-connecting-ip': '192.0.2.10',
+				},
+				body: JSON.stringify({ identifier: 'limited-a', password: 'incorrect password' }),
+			});
+
+		for (let attempt = 0; attempt < 5; attempt += 1) {
+			expect((await request()).status).toBe(401);
+		}
+		const limited = await request();
+		expect(limited.status).toBe(429);
+		expect(limited.headers.get('retry-after')).toBe('60');
+		expect(await limited.json()).toEqual({
+			error: 'rate_limited',
+			message: 'Too many sign-in attempts. Please wait before trying again.',
+		});
+	});
 });

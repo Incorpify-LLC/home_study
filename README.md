@@ -18,12 +18,14 @@ Product notes that contain family-specific information should stay outside the r
 
 - Cloudflare Worker API with `GET /api/health`
 - Responsive, privacy-safe landing page
+- Native family sign-in with revocable, eight-hour server-side sessions
+- Login rate limiting and a masked parent-account provisioning command
 - D1 baseline schema for users, curriculum, questions, assignments, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
 - Local Cloudflare integration tests
 - CI and production deployment workflows
 
-Authentication, student dashboards, assessments, uploads, and email are deliberately not stubbed as fake functionality. They will be added one tested vertical slice at a time.
+Parent and student dashboards, assessments, uploads, and email are deliberately not stubbed as fake functionality. They will be added one tested vertical slice at a time.
 
 ## Stack
 
@@ -75,6 +77,18 @@ npm run test:run               # all tests once
 npx vitest run test/file.ts    # one test file
 npm run check                  # formatting, lint, types, tests, dry-run build
 ```
+
+## Provision the first parent account
+
+Only run this from an interactive terminal on a trusted machine after production migrations are applied:
+
+```bash
+npm run provision:parent -- --remote
+```
+
+The command requires an explicit production confirmation, asks for the parent’s display name, private sign-in name, optional recovery email, and password. Password entry is hidden. The plaintext password is never written to disk, included in a command-line argument, printed, or sent to chat. A temporary owner-only SQL file contains only the derived password verifier and is deleted after Wrangler finishes.
+
+Use `--local` instead of `--remote` for a local test account. Do not invent or commit family credentials. Student accounts will be created later through the authenticated parent surface rather than this bootstrap command.
 
 Bug fixes require a failing regression test first. Tests assert behavior, not private implementation details.
 

@@ -9,16 +9,18 @@
 	"scripts": {
 		"build": "wrangler deploy --dry-run --outdir .wrangler-dist",
 		"cf-typegen": "wrangler types",
-		"check": "npm run format:check && npm run lint && npm run typecheck && npm run test:run && npm run build",
+		"check": "npm run format:check && npm run lint && npm run typecheck && npm run test:run && npm run test:tools && npm run build",
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"lint": "eslint .",
+		"provision:parent": "node scripts/provision-parent.mjs",
 		"start": "wrangler dev",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"test:remote": "REMOTE_SMOKE=1 vitest run test/deployment.spec.ts",
+		"test:tools": "node --test scripts/provisioning.node-test.mjs",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {

@@ -18,7 +18,7 @@ At the time this guide was updated:
 - The source code is in `Incorpify-LLC/home_study` on GitHub.
 - Production deployment is manual; a normal push to GitHub does not deploy the website.
 - The production Worker, D1 database, D1 schema, private R2 buckets, and custom domain have been verified.
-- Email reports and student logins are not enabled yet.
+- Family sign-in is deployed, but production accounts must be provisioned explicitly; email reports are not enabled yet.
 
 If the Cloudflare account or domain status changes later, use the decision path in Part A.
 
@@ -446,17 +446,36 @@ Cloudflare may rename permissions over time. Select the least-privilege equivale
 
 ---
 
-# Part H — Features intentionally left disabled
+# Part H — Provision the first parent account
 
-The first deployment is only a technical foundation.
+After the authentication deployment and migrations succeed, create the first parent account from a trusted interactive terminal:
 
-- No student account or password exists yet.
+```bash
+cd ~/workspace/personal/family/home_study
+npm run provision:parent -- --remote
+```
+
+The command asks for:
+
+1. the exact confirmation text shown in the terminal;
+2. a parent display name;
+3. a private sign-in name;
+4. an optional recovery email;
+5. a password entered twice without displaying it.
+
+Do not put the password in the command, a file, GitHub, or chat. If Wrangler reports that the sign-in name or email already exists, do not create a variation blindly; verify the existing account first.
+
+Use `--local` instead of `--remote` only when creating a disposable account in the local D1 database.
+
+## Features intentionally left disabled
+
+- Student account creation remains disabled until the authenticated parent surface is ready.
 - No progress email is sent yet.
 - No child’s name or academic profile appears on the public landing page.
 - Rough-work buckets remain private.
 - No automatic production deployment occurs on a normal GitHub push.
 
-Authentication is the next product slice. Progress email will be enabled only after the report format, sender, recipient, and schedule are approved.
+Progress email will be enabled only after the report format, sender, recipient, and schedule are approved.
 
 ---
 
