@@ -18,7 +18,7 @@
 		"start": "wrangler dev",
 		"test": "vitest",
 		"test:run": "vitest run",
-		"test:remote": "REMOTE_SMOKE=1 vitest run test/deployment.spec.ts",
+		"test:remote": "node scripts/remote-smoke.mjs",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
