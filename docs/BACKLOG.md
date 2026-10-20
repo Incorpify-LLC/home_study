@@ -28,7 +28,7 @@ Delivery order:
 - [x] Anonymous clients can inspect their session state without leaking account data.
 - [x] A valid native family credential creates a secure, time-bounded server-side session.
 - [x] Invalid credentials return one generic response for missing and incorrect accounts.
-- [x] Login attempts are rate-limited before password derivation.
+- [x] Login attempts pass through Cloudflare's permissive per-location limiter before password derivation.
 - [x] An authenticated client can resolve its identity and role from its session.
 - [x] Sign-out revokes the server-side session.
 - [x] The first parent can be provisioned from a masked, explicitly targeted local command.

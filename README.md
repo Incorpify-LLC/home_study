@@ -19,7 +19,7 @@ Product notes that contain family-specific information should stay outside the r
 - Cloudflare Worker API with `GET /api/health`
 - Responsive, privacy-safe landing page
 - Native family sign-in with revocable, eight-hour server-side sessions
-- Login rate limiting and a masked parent-account provisioning command
+- Per-location login abuse throttling and a masked parent-account provisioning command
 - D1 baseline schema for users, curriculum, questions, assignments, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images
 - Local Cloudflare integration tests

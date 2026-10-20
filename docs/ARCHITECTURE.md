@@ -48,7 +48,7 @@ The application uses native family credentials so a student does not need a stab
 
 Sessions are opaque random tokens. D1 stores only a SHA-256 digest of each token, together with its user, expiry, and revocation state. The browser receives the original token in a `Secure`, `HttpOnly`, `SameSite=Strict` cookie. Authorization always loads the session and user from D1; it never trusts a role or student identifier supplied by the browser.
 
-Cloudflare’s Rate Limiting binding limits repeated login attempts by edge-observed actor and a SHA-256 digest of the normalized sign-in name before password derivation. The first parent account is created only through an explicitly local-or-remote, interactive command with non-echoing password input. Student accounts will be parent-managed rather than bootstrapped from public registration.
+Cloudflare’s Rate Limiting binding reduces repeated login attempts by edge-observed actor and a SHA-256 digest of the normalized sign-in name before password derivation. It is a permissive, per-location abuse control rather than an exact account lockout: short bursts can exceed the configured threshold before a later request receives HTTP 429. The first parent account is created only through an explicitly local-or-remote, interactive command with non-echoing password input. Student accounts will be parent-managed rather than bootstrapped from public registration.
 
 The parent/admin surface may receive an additional Cloudflare Access policy later as defence in depth. Parent-controlled student-password reset and parent recovery remain separate follow-up stories.
 
