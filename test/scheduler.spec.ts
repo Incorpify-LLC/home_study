@@ -181,6 +181,26 @@ describe('buildSchedule', () => {
 		expect(result.entries.filter((entry) => entry.date === MONDAY)).toHaveLength(1);
 	});
 
+	it('schedules a realistic two-subject year inside a four-week horizon', () => {
+		const pending: ChapterRef[] = [...chapters('Mathematics', 10, 60, 'template-maths'), ...chapters('Physics', 8, 50, 'template-physics')];
+		const result = buildSchedule({
+			startDate: MONDAY,
+			days: 28,
+			weekdayMinutes: 120,
+			weekendMinutes: 300,
+			restWeekdays: [7],
+			pending,
+		});
+
+		expect(result.unscheduled).toEqual([]);
+		expect(result.entries).toHaveLength(18);
+		const subjects = new Set(result.entries.map((entry) => entry.subject));
+		expect([...subjects].sort()).toEqual(['Mathematics', 'Physics']);
+		const finish = result.entries.at(-1)?.date as string;
+		expect(finish < '2026-11-16').toBe(true);
+		for (const day of result.dailyTotals) expect(day.minutes).toBeLessThanOrEqual(day.capacity);
+	});
+
 	it('schedules a longer chapter when it is the only work left', () => {
 		const result = buildSchedule({
 			startDate: MONDAY,
