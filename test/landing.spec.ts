@@ -134,7 +134,7 @@ describe('Access-protected application shell', () => {
 
 		expect(page).toContain('id="student-workspace-tabs"');
 		expect(page).toContain('role="tablist" aria-label="Student workspace"');
-		for (const tab of ['student-tab-today', 'student-tab-course', 'student-tab-study', 'student-tab-review']) {
+		for (const tab of ['student-tab-today', 'student-tab-course', 'student-tab-study', 'student-tab-history']) {
 			expect(page).toContain(`id="${tab}"`);
 		}
 		expect(page).not.toContain('id="student-tab-learn"');
@@ -145,6 +145,21 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('data-workspace-panel="student"');
 		expect(page).toContain("setWorkspaceTab('student'");
 		expect(page).toContain("prepareWorkspaceTabs('student')");
+	});
+
+	it('gives the learner an always-available past-exercise review page', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="student-tab-history"');
+		expect(page).toContain('data-workspace-page="history"');
+		expect(page).toContain('id="history-summary"');
+		expect(page).toContain('id="history-list"');
+		expect(page).toContain('id="history-detail"');
+		expect(page).toContain('async function loadHistory(');
+		expect(page).toContain('async function openHistoryAssignment(');
+		expect(page).toContain("fetchJson('/api/learning/history')");
+		expect(page).not.toContain('id="student-tab-review"');
 	});
 
 	it('keeps subject choice and lesson focus controls inside Study', async () => {
@@ -220,7 +235,7 @@ describe('Access-protected application shell', () => {
 		// Interface affordances added in the UI review.
 		expect(page).toContain('id="today-progress"');
 		expect(page).toContain('id="roadmap-progress"');
-		expect(page).toContain('id="result-ring"');
+		expect(page).toContain("element('div', undefined, 'score-ring')");
 		expect(page).toContain('data-field="answer-count"');
 		expect(page).toContain('class="skip-link"');
 		expect(page).toContain('prefers-reduced-motion');

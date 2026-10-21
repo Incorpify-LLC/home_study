@@ -731,6 +731,61 @@
 			.correction-card p {
 				margin-bottom: var(--space-1);
 			}
+			.history-layout {
+				display: grid;
+				grid-template-columns: minmax(260px, 0.62fr) minmax(0, 1.38fr);
+				gap: var(--space-5);
+				align-items: start;
+			}
+			.history-list {
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-2);
+			}
+			.history-card {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) auto;
+				gap: var(--space-2);
+				width: 100%;
+				min-height: 0;
+				padding: var(--space-3);
+				text-align: left;
+				color: var(--ink);
+				background: var(--surface);
+				border-color: var(--line);
+			}
+			.history-card:hover:not(:disabled),
+			.history-card[aria-pressed='true'] {
+				transform: none;
+				border-color: var(--brand);
+				box-shadow: 0 0 0 3px var(--brand-tint);
+			}
+			.history-card small {
+				display: block;
+				margin-top: 3px;
+				color: var(--muted);
+				font-weight: 500;
+			}
+			.history-score {
+				font-size: 1rem;
+				font-weight: 750;
+				color: var(--brand-ink);
+				font-variant-numeric: tabular-nums;
+			}
+			.history-detail {
+				min-width: 0;
+				padding: var(--space-5);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--surface-sunken);
+			}
+			.history-detail-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-4);
+				margin-bottom: var(--space-4);
+			}
 
 			/* ---------- Student learning ---------- */
 			.study-workspace {
@@ -1167,7 +1222,8 @@
 				}
 			}
 			@media (max-width: 820px) {
-				.study-workbench {
+				.study-workbench,
+				.history-layout {
 					grid-template-columns: 1fr;
 				}
 				.lesson-reference {
@@ -1458,17 +1514,16 @@
 								Study
 							</button>
 							<button
-								id="student-tab-review"
+								id="student-tab-history"
 								class="workspace-tab"
 								type="button"
 								role="tab"
 								aria-selected="false"
-								aria-controls="corrections"
-								data-workspace-target="review"
+								aria-controls="history-page"
+								data-workspace-target="history"
 								tabindex="-1"
-								disabled
 							>
-								Review
+								History
 							</button>
 						</nav>
 						<div class="workspace-pages">
@@ -1581,36 +1636,36 @@
 										</section>
 									</div>
 								</section>
-
-								<section
-									id="corrections"
-									class="panel workspace-page"
-									role="tabpanel"
-									aria-labelledby="student-tab-review"
-									data-workspace-panel="student"
-									data-workspace-page="review"
-									hidden
-								>
-									<div class="panel-head">
-										<div>
-											<span class="eyebrow">Review</span>
-											<h2 id="corrections-title">Corrections</h2>
-										</div>
-									</div>
-									<div class="score-hero">
-										<div id="result-ring" class="score-ring" role="img" aria-label="Objective score">
-											<b id="result-score">–</b>
-										</div>
-										<p id="result-summary" class="muted"></p>
-									</div>
-									<p class="muted">Read every reason. A first diagnostic is evidence for planning, not a final judgement.</p>
-									<div id="correction-list" class="correction-list"></div>
-									<div class="actions" style="margin-top: 16px">
-										<button id="next-assignment" type="button">Back to today</button>
-										<span id="course-complete-message" class="muted" hidden>All reviewed chapters are complete.</span>
-									</div>
-								</section>
 							</template>
+
+							<section
+								id="history-page"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="student-tab-history"
+								data-workspace-panel="student"
+								data-workspace-page="history"
+								hidden
+							>
+								<div class="panel-head">
+									<div>
+										<span class="eyebrow">Reflect and improve</span>
+										<h2>Past exercises</h2>
+										<p class="muted">Revisit scores, answers, and explanations from completed chapters.</p>
+									</div>
+									<button id="next-assignment" class="secondary small" type="button">Back to today</button>
+								</div>
+								<div id="history-summary" class="stat-row" aria-live="polite"></div>
+								<div class="history-layout">
+									<div>
+										<h3>Completed chapters</h3>
+										<div id="history-list" class="history-list" aria-live="polite">Loading past exercises…</div>
+									</div>
+									<div id="history-detail" class="history-detail" aria-live="polite">
+										<p class="notice">Select a completed chapter to review its answers and explanations.</p>
+									</div>
+								</div>
+							</section>
 						</div>
 					</div>
 				</div>
@@ -1676,6 +1731,9 @@
 			const todayProgress = document.querySelector('#today-progress span');
 			const roadmapProgress = document.querySelector('#roadmap-progress span');
 			const learningWorkspace = document.querySelector('#learning-workspace');
+			const historySummary = document.querySelector('#history-summary');
+			const historyList = document.querySelector('#history-list');
+			const historyDetail = document.querySelector('#history-detail');
 			const demoBar = document.querySelector('#demo-bar');
 
 			const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -1710,6 +1768,13 @@
 				const parsed = new Date(`${date}T00:00:00Z`);
 				const weekday = WEEKDAY_NAMES[(parsed.getUTCDay() + 6) % 7];
 				return `${weekday} ${parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`;
+			}
+
+			function formatSubmittedAt(value) {
+				if (!value) return 'Completed';
+				const parsed = new Date(value.includes('T') ? value : `${value.replace(' ', 'T')}Z`);
+				if (Number.isNaN(parsed.getTime())) return 'Completed';
+				return parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 			}
 
 			function todayIso() {
@@ -1793,6 +1858,7 @@
 
 			prepareWorkspaceTabs('parent');
 			prepareWorkspaceTabs('student');
+			document.querySelector('#next-assignment').addEventListener('click', returnToToday);
 
 			/* ---------- Parent: learners ---------- */
 			function studentCard(student) {
@@ -2448,16 +2514,25 @@
 			}
 
 			function renderCorrections(assignment) {
-				const reviewTab = document.querySelector('#student-tab-review');
-				reviewTab.disabled = false;
 				const result = assignment.result;
 				const percent = result.possible ? Math.round((result.earned / result.possible) * 100) : 0;
-				document.querySelector('#result-score').textContent = `${percent}%`;
-				document.querySelector('#result-ring').style.setProperty('--pct', String(percent));
-				document.querySelector('#result-summary').textContent =
-					`${result.earned} of ${result.possible} questions correct · ${assignment.title}`;
-				const list = document.querySelector('#correction-list');
-				list.replaceChildren();
+				const heading = element('div', undefined, 'history-detail-head');
+				const title = element('div');
+				title.append(
+					element('span', `${assignment.subject} · Chapter ${assignment.sequence}`, 'eyebrow'),
+					element('h3', assignment.title),
+					element('p', `${result.earned} of ${result.possible} correct`, 'muted'),
+				);
+				const ring = element('div', undefined, 'score-ring');
+				ring.setAttribute('role', 'img');
+				ring.setAttribute('aria-label', `Score ${percent}%`);
+				ring.style.setProperty('--pct', String(percent));
+				ring.append(element('b', `${percent}%`));
+				heading.append(title, ring);
+
+				const intro = element('p', 'Corrections and explanations', 'eyebrow');
+				const guidance = element('p', 'Read every reason. A first result is evidence for improvement, not a final judgement.', 'muted');
+				const list = element('div', undefined, 'correction-list');
 				for (const item of result.corrections) {
 					const card = element('article', undefined, 'correction-card');
 					card.dataset.correct = String(item.score === 1);
@@ -2472,10 +2547,62 @@
 					card.append(element('p', item.rationale, 'muted'));
 					list.append(card);
 				}
-				const next = document.querySelector('#next-assignment');
-				const complete = document.querySelector('#course-complete-message');
-				next.hidden = false;
-				complete.hidden = !assignment.courseComplete;
+				historyDetail.replaceChildren(heading, intro, guidance, list);
+				if (assignment.courseComplete) historyDetail.append(element('p', 'All reviewed chapters in this subject are complete.', 'notice'));
+			}
+
+			async function openHistoryAssignment(assignmentId, moveFocus = false) {
+				historyList.querySelectorAll('.history-card').forEach((card) => {
+					card.setAttribute('aria-pressed', String(card.dataset.assignmentId === assignmentId));
+				});
+				skeleton(historyDetail, 3, 'Loading answers and explanations…');
+				const { ok, body } = await fetchJson(`/api/learning/history/${encodeURIComponent(assignmentId)}`);
+				if (!ok) {
+					historyDetail.replaceChildren(element('p', body?.message || 'That exercise could not be loaded.', 'notice'));
+					return;
+				}
+				renderCorrections(body.assignment);
+				if (moveFocus) historyDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+
+			async function loadHistory(selectedId) {
+				historySummary.replaceChildren();
+				skeleton(historyList, 2, 'Loading past exercises…');
+				const { ok, body } = await fetchJson('/api/learning/history');
+				if (!ok) {
+					historyList.replaceChildren(element('p', body?.message || 'Past exercises could not be loaded.', 'notice'));
+					return;
+				}
+				const exercises = body.exercises ?? [];
+				const average = exercises.length ? Math.round(exercises.reduce((sum, item) => sum + item.percentage, 0) / exercises.length) : null;
+				const best = exercises.length ? Math.max(...exercises.map((item) => item.percentage)) : null;
+				historySummary.append(
+					statTile(String(exercises.length), 'Completed'),
+					statTile(average === null ? '–' : `${average}%`, 'Average'),
+					statTile(best === null ? '–' : `${best}%`, 'Best result'),
+				);
+				historyList.replaceChildren();
+				if (exercises.length === 0) {
+					historyList.append(element('p', 'Completed exercises will appear here after the first chapter is submitted.', 'notice'));
+					historyDetail.replaceChildren(element('p', 'There is no past performance to review yet.', 'notice'));
+					return;
+				}
+				for (const exercise of exercises) {
+					const card = element('button', undefined, 'history-card');
+					card.type = 'button';
+					card.dataset.assignmentId = exercise.id;
+					card.setAttribute('aria-pressed', 'false');
+					const copy = element('span');
+					copy.append(
+						element('strong', exercise.title),
+						element('small', `${exercise.subject} · Chapter ${exercise.sequence} · ${formatSubmittedAt(exercise.submittedAt)}`),
+					);
+					card.append(copy, element('span', `${exercise.percentage}%`, 'history-score'));
+					card.addEventListener('click', () => openHistoryAssignment(exercise.id, true));
+					historyList.append(card);
+				}
+				const target = exercises.find((exercise) => exercise.id === selectedId) ?? exercises[0];
+				await openHistoryAssignment(target.id);
 			}
 
 			async function returnToToday() {
@@ -2521,12 +2648,12 @@
 				}
 				currentAssignment.status = 'submitted';
 				currentAssignment.result = body.result;
-				showMessage(feedback, 'Submitted. Review every correction below.', 'success');
+				showMessage(feedback, 'Submitted. Your result is now in History.', 'success');
 				document.querySelector('.action-bar').hidden = true;
 				for (const control of document.querySelectorAll('#question-form input, #question-form select, #question-form button'))
 					control.disabled = true;
-				renderCorrections(currentAssignment);
-				setWorkspaceTab('student', 'review', true);
+				await loadHistory(currentAssignment.id);
+				setWorkspaceTab('student', 'history', true);
 				await loadRoadmap();
 				// The remaining calendar changed the moment this chapter was submitted.
 				await loadTodaysPlan();
@@ -2566,21 +2693,15 @@
 				for (const [index, question] of assignment.questions.entries()) form.append(questionField(question, index, submitted));
 
 				document.querySelector('#submit-assignment').addEventListener('click', submitCurrentAssignment);
-				document.querySelector('#next-assignment').addEventListener('click', returnToToday);
 				document.querySelector('#toggle-reference').addEventListener('click', () => setReferenceVisible(!referenceVisible, true));
 				setReferenceVisible(referenceVisible);
 				updateAnswerCount();
 
 				const actionBar = document.querySelector('.action-bar');
-				const reviewTab = document.querySelector('#student-tab-review');
-				reviewTab.disabled = !submitted;
-				if (submitted) {
-					if (actionBar) actionBar.hidden = true;
-					renderCorrections(assignment);
-				}
+				if (submitted && actionBar) actionBar.hidden = true;
 
 				const selectedPage = document.querySelector('#student-workspace-tabs [aria-selected="true"]')?.dataset.workspaceTarget;
-				setWorkspaceTab('student', selectedPage === 'review' && !submitted ? 'study' : selectedPage || 'today');
+				setWorkspaceTab('student', selectedPage || 'today');
 			}
 
 			async function loadLearning() {
@@ -2686,6 +2807,7 @@
 				await loadDemoBar();
 				await loadTodaysPlan();
 				await loadLearning();
+				await loadHistory();
 			}
 
 			/* ---------- Session ---------- */

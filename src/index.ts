@@ -408,8 +408,10 @@ async function assignmentRecord(env: Env, studentId: string, assignmentId: strin
 		 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
 		 JOIN learning_modules ON learning_modules.id = assignment_templates.module_id
 		 JOIN curriculum_topics ON curriculum_topics.id = learning_modules.topic_id
+		 JOIN student_profiles ON student_profiles.user_id = assignments.student_id
 		 WHERE assignments.id = ?
 		   AND assignments.student_id = ?
+		   AND assignment_templates.class_level = student_profiles.class_level
 		   AND assignment_templates.review_status = 'reviewed'
 		   AND learning_modules.review_status = 'reviewed'
 		   AND curriculum_topics.review_status = 'reviewed'`,
@@ -607,6 +609,62 @@ async function currentLearning(request: Request, env: Env): Promise<Response> {
 		assignment = await createAssignment(env, user.id, template);
 	}
 	if (!assignment) return json({ error: 'internal_error', message: 'The assignment could not be prepared.' }, 500);
+	return json({ assignment: await assignmentPayload(env, assignment) });
+}
+
+async function learningHistory(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const exercises = await env.DB.prepare(
+		`SELECT assignments.id,
+		        assignment_templates.title,
+		        assignment_templates.subject,
+		        assignment_templates.sequence,
+		        assignments.submitted_at AS submittedAt,
+		        COUNT(attempts.id) AS possible,
+		        COALESCE(SUM(COALESCE(attempts.final_score, attempts.objective_score, 0)), 0) AS earned
+		 FROM assignments
+		 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+		 JOIN student_profiles ON student_profiles.user_id = assignments.student_id
+		 LEFT JOIN attempts ON attempts.assignment_id = assignments.id
+		 WHERE assignments.student_id = ?
+		   AND assignments.status IN ('submitted', 'reviewed')
+		   AND assignment_templates.class_level = student_profiles.class_level
+		 GROUP BY assignments.id, assignment_templates.id
+		 ORDER BY assignments.submitted_at DESC, assignments.created_at DESC`,
+	)
+		.bind(user.id)
+		.all<{
+			id: string;
+			title: string;
+			subject: string;
+			sequence: number;
+			submittedAt: string;
+			possible: number;
+			earned: number;
+		}>();
+
+	return json({
+		exercises: exercises.results.map((exercise) => ({
+			...exercise,
+			percentage: exercise.possible === 0 ? 0 : Math.round((exercise.earned / exercise.possible) * 100),
+		})),
+	});
+}
+
+async function learningHistoryDetail(request: Request, env: Env, assignmentId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const assignment = await assignmentRecord(env, user.id, assignmentId);
+	if (!assignment || (assignment.status !== 'submitted' && assignment.status !== 'reviewed')) {
+		return json({ error: 'not_found', message: 'That completed exercise was not found.' }, 404);
+	}
 	return json({ assignment: await assignmentPayload(env, assignment) });
 }
 
@@ -1261,6 +1319,10 @@ export default {
 			return currentLearning(request, env);
 		}
 
+		if (pathname === '/api/learning/history' && request.method === 'GET') {
+			return learningHistory(request, env);
+		}
+
 		if (pathname === '/api/learning/roadmaps' && request.method === 'GET') {
 			return learningRoadmaps(request, env);
 		}
@@ -1303,6 +1365,11 @@ export default {
 		const exercisesMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/exercises$/);
 		if (exercisesMatch && request.method === 'GET') {
 			return parentExercises(request, env, exercisesMatch[1]);
+		}
+
+		const historyMatch = pathname.match(/^\/api\/learning\/history\/([A-Za-z0-9-]+)$/);
+		if (historyMatch && request.method === 'GET') {
+			return learningHistoryDetail(request, env, historyMatch[1]);
 		}
 
 		const responseMatch = pathname.match(/^\/api\/learning\/assignments\/([A-Za-z0-9-]+)\/responses$/);

@@ -462,6 +462,56 @@ describe('reviewed learning assignment', () => {
 		});
 		expect(editAfterSubmit.status).toBe(409);
 	});
+
+	it('lets a learner list and reopen only their submitted exercises', async () => {
+		const history = await SELF.fetch('https://study.saneax.in/api/learning/history', {
+			headers: accessHeaders(studentEmail),
+		});
+		expect(history.status).toBe(200);
+		const historyBody = (await history.json()) as {
+			exercises: Array<{
+				id: string;
+				title: string;
+				subject: string;
+				sequence: number;
+				earned: number;
+				possible: number;
+				percentage: number;
+				submittedAt: string;
+			}>;
+		};
+		expect(historyBody.exercises).toHaveLength(1);
+		expect(historyBody.exercises[0]).toMatchObject({
+			title: 'Rational numbers and exponents · diagnostic 1',
+			subject: 'Mathematics',
+			sequence: 1,
+			earned: 5,
+			possible: 6,
+			percentage: 83,
+		});
+		expect(historyBody.exercises[0].submittedAt).toBeTruthy();
+
+		const detail = await SELF.fetch(`https://study.saneax.in/api/learning/history/${historyBody.exercises[0].id}`, {
+			headers: accessHeaders(studentEmail),
+		});
+		expect(detail.status).toBe(200);
+		const detailBody = (await detail.json()) as {
+			assignment: { title: string; status: string; result: { corrections: unknown[] } };
+		};
+		expect(detailBody.assignment.title).toBe('Rational numbers and exponents · diagnostic 1');
+		expect(detailBody.assignment.status).toBe('submitted');
+		expect(detailBody.assignment.result.corrections).toHaveLength(6);
+
+		const otherLearner = await SELF.fetch(`https://study.saneax.in/api/learning/history/${historyBody.exercises[0].id}`, {
+			headers: accessHeaders('student-b@example.test'),
+		});
+		expect(otherLearner.status).toBe(404);
+
+		const parent = await SELF.fetch('https://study.saneax.in/api/learning/history', {
+			headers: accessHeaders(parentEmail),
+		});
+		expect(parent.status).toBe(403);
+	});
 });
 
 describe('parent evidence view', () => {
