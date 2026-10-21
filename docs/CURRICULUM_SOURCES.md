@@ -107,6 +107,27 @@ The Class X scope comprises six units:
 5. **Heat** — calorimetry, specific heat capacity and thermal capacity, method of mixtures, latent heat of fusion, heating curve for water.
 6. **Modern Physics** — radioactivity and nuclear changes, α, β and γ radiations, decay equations, radio isotopes and safety precautions, background radiation, nuclear fission and fusion.
 
+**School-prescribed textbook controls sequencing**
+
+The learner’s school text is _Concise Physics — I.C.S.E., Part II (Class X)_ by R. P. Goyal and S. P. Tripathi, Selina Publishers, edition for the March 2027 examination.[12] Under review rule 6 its chapter list controls the grouping and order of the Home Study Physics track, while the CISCE syllabus above remains the authority on examinable scope. Its twelve chapters, and the Home Study chapter that serves each, are:
+
+| Book chapter                             | Home Study chapter                    |
+| ---------------------------------------- | ------------------------------------- |
+| 1. Force                                 | Force                                 |
+| 2. Work, Energy and Power                | Work, Energy and Power                |
+| 3. Machines                              | Machines                              |
+| 4. Refraction of Light at Plane Surfaces | Refraction of Light at Plane Surfaces |
+| 5. Refraction through a Lens             | Refraction through a Lens             |
+| 6. Spectrum                              | Spectrum                              |
+| 7. Sound                                 | Sound                                 |
+| 8. Current Electricity                   | Current Electricity                   |
+| 9. Household Circuits                    | Household Circuits                    |
+| 10. Electro-magnetism                    | Electro-magnetism                     |
+| 11. Calorimetry                          | Calorimetry                           |
+| 12. Radioactivity                        | Radioactivity                         |
+
+The book's solved question papers (Science Paper 1 2025, specimen paper 2026 and the model papers) are revision material and are deliberately not published as chapters; Home Study writes its own questions.
+
 ### Class XII Commerce — ISC Examination Year 2027
 
 **Authoritative syllabus**
@@ -147,7 +168,7 @@ Every chapter now publishes an original lesson, worked example, and diagnostic; 
 **Second release — Physics and Commerce**
 
 - **Class VIII Physics (CISCE Upper Primary, 8 chapters):** matter and kinetic theory; density and floatation; moment of force and pressure; work, energy and power; refraction, curved mirrors and dispersion; heat transfer and thermal expansion; sound, pitch and loudness; household electricity, static electricity and safety.
-- **Class X Physics (ICSE 2027, 10 chapters):** the full Force/Work/Power/Energy, Light, Sound, Electricity and Magnetism, Heat and Modern Physics scope.
+- **Class X Physics (ICSE 2027, 12 chapters):** the full Force/Work/Power/Energy, Light, Sound, Electricity and Magnetism, Heat and Modern Physics scope, grouped and ordered to match the learner's prescribed textbook (see the Class X Physics section above).
 - **Class XII Commerce (ISC 2027, 12 chapters):** the full Business Environment, Financing, Management, and Marketing scope including the Consumer Protection Act 2019.
 
 Content batches were independently reviewed against the official CISCE documents. First-release review findings (a defective cryptarithm, an out-of-scope square-root decimal, missing modal-class and non-axial reflection coverage, a garbled cash-flow step) were corrected before publication. Rough-work upload/review, reassessment, adaptation, and email reports remain future slices.
@@ -175,3 +196,4 @@ Content batches were independently reviewed against the official CISCE documents
 [9] https://ncert.nic.in/textbook/pdf/leac2ps.pdf — NCERT Accountancy Class XII Part II
 [10] https://cisce.org/wp-content/uploads/2025/03/10.-Physics.pdf — ICSE Science 52 Physics Examination Year 2027 (Class IX and Class X sections)
 [11] https://cisce.org/wp-content/uploads/2025/04/14.-ISC-Commerce.doc.pdf — ISC Commerce 857 Examination Year 2027
+[12] https://selinapublishers.in/ — Selina Publishers; prescribed text _Concise Physics — I.C.S.E., Part II (Class X)_ by R. P. Goyal and S. P. Tripathi, March 2027 edition

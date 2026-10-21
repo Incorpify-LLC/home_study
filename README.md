@@ -22,7 +22,7 @@ Product notes that contain family-specific information should stay outside the r
 - Worker-side Access JWT verification and D1 email-to-role mapping
 - Separate parent and student application shells
 - Parent-only listing of learners linked through `parent_students`
-- Reviewed complete course roadmaps across six subject tracks: Class VIII Mathematics (11 chapters), Class X Mathematics (18 chapters), Class XII Accountancy (12 chapters), Class VIII Physics (8 chapters), Class X Physics (10 chapters), and Class XII Commerce (12 chapters)
+- Reviewed complete course roadmaps across six subject tracks: Class VIII Mathematics (11 chapters), Class X Mathematics (18 chapters), Class XII Accountancy (12 chapters), Class VIII Physics (8 chapters), Class X Physics (12 chapters, grouped and ordered to the prescribed textbook), and Class XII Commerce (12 chapters)
 - Student lesson, worked example, diagnostic, draft save/resume, submission, objective scoring, and corrections
 - Per-subject sequential progression: a subject's next chapter unlocks only after the current one is submitted, and progress in one subject never unlocks another
 - Subject tabs on the learner dashboard for a class carrying more than one subject

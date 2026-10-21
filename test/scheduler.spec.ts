@@ -201,6 +201,31 @@ describe('buildSchedule', () => {
 		for (const day of result.dailyTotals) expect(day.minutes).toBeLessThanOrEqual(day.capacity);
 	});
 
+	it('schedules a two-subject year at two hours every day with no rest days', () => {
+		const pending: ChapterRef[] = [...chapters('Mathematics', 10, 60, 'template-maths'), ...chapters('Physics', 8, 50, 'template-physics')];
+		const result = buildSchedule({
+			startDate: MONDAY,
+			days: 28,
+			weekdayMinutes: 120,
+			weekendMinutes: 120,
+			restWeekdays: [],
+			pending,
+		});
+
+		// Two hours every day, seven days a week, carries eighteen chapters comfortably.
+		expect(result.unscheduled).toEqual([]);
+		expect(result.entries).toHaveLength(18);
+		expect(result.dailyTotals.every((day) => day.capacity === 120)).toBe(true);
+		expect(result.dailyTotals.every((day) => day.minutes <= 120)).toBe(true);
+		const finish = result.entries.at(-1)?.date as string;
+		expect(finish <= '2026-11-04').toBe(true);
+		// Every day carries work until the course is finished, and both subjects progress.
+		const workingDays = result.dailyTotals.filter((day) => day.minutes > 0).length;
+		expect(workingDays).toBeLessThanOrEqual(14);
+		const subjects = new Set(result.entries.map((entry) => entry.subject));
+		expect([...subjects].sort()).toEqual(['Mathematics', 'Physics']);
+	});
+
 	it('schedules a longer chapter when it is the only work left', () => {
 		const result = buildSchedule({
 			startDate: MONDAY,
