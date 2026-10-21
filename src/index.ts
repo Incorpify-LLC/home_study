@@ -1044,12 +1044,15 @@ async function demoSwitchClass(request: Request, env: Env): Promise<Response> {
 	} catch {
 		return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
 	}
-	const classLevel = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).classLevel : undefined;
+	const payload = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+	const classLevel = payload.classLevel;
 	if (typeof classLevel !== 'string' || classLevel.trim().length === 0) {
 		return json({ error: 'invalid_request', message: 'A class level is required.' }, 400);
 	}
+	// Progress is kept by default; startFresh clears the target class first.
+	const startFresh = payload.startFresh === true;
 	try {
-		return json(await switchDemoClass(env as PlanEnv, user.id, classLevel.trim().toUpperCase()));
+		return json(await switchDemoClass(env as PlanEnv, user.id, classLevel.trim().toUpperCase(), { startFresh }));
 	} catch {
 		return json({ error: 'unknown_class', message: 'That class has no reviewed content yet.' }, 400);
 	}

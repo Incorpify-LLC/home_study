@@ -4,22 +4,24 @@ The demo learner exists so the platform can be evaluated from a student's chair 
 
 ## What the demo learner can do
 
-- **Sit in any class with reviewed content.** Class VIII (Mathematics, Physics), Class X (Mathematics, Physics) and Class XII (Accountancy, Commerce) are selectable. Switching class rewrites the learner's class and clears its progress, so the new class starts at chapter one.
+- **Sit in any class with reviewed content.** Class VIII (Mathematics, Physics), Class X (Mathematics, Physics) and Class XII (Accountancy, Commerce) are selectable, and each chip shows that class's progress (`Class X · 1/30`).
+- **Keep or clear progress per class.** Switching class keeps that class's work by default, so a demonstration can carry on from where it stopped. The **Start fresh when switching** toggle, or the **Clear this class** button, resets the class you are entering or standing in. Clearing is scoped to one class — other classes keep their progress.
 - **Work a chapter end to end.** Lesson, key points, worked example, every question with a confidence rating, save-as-you-go, one deliberate submission, then the corrections with the reviewed answer and the reason for each mark.
 - **See the calendar.** Today's planned chapters and the whole horizon, exactly as a real learner does.
-- **Start fresh at any time.** A single button clears the demo's assignments, answers, attempts, mastery events and calendar, then rebuilds the calendar from scratch.
+- **Be reviewed from the parent side.** The demo learner is linked to the family parent account, so it appears in the parent's learner list and its evidence and exercises can be opened there like any child's. Its rows are clearly its own — nothing is mixed with a real learner's record.
 
 ## What it deliberately cannot do
 
-- It cannot see or change any real learner's data. It is not linked to the parent account through `parent_students`, so it never appears in the parent's learner list.
+- It cannot change any real learner's data. Switching class or clearing affects only `demo-student`.
 - It cannot switch another account's class, and no non-demo identity can call the demo routes: a real student or a parent receives `403`.
 - It cannot be mistaken for a child's record: the interface shows an "Evaluation demo account" badge, and `users.is_demo` marks the row.
 
 ## Using it
 
 1. Sign in at `https://study.saneax.in` with `private-address@example.test` and complete the Cloudflare Access one-time PIN.
-2. The dashboard shows the demo bar: the current class, how many chapters are done, a button per class, and **Start fresh**.
+2. The dashboard shows the demo bar: the current class and its progress, a chip per class, the **Start fresh when switching** toggle, and **Clear this class**.
 3. Pick a class and work the chapter as a child would.
+4. To review the parent side, sign in as the parent and open **Progress** or **Calendar & exercises** for the demo learner.
 
 ## Requirement: the address must be allowed by Cloudflare Access
 

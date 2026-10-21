@@ -52,6 +52,9 @@ beforeAll(async () => {
 		),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-demo', 'CISCE', 'VIII', NULL)`),
 		env.DB.prepare(`INSERT INTO parent_students (parent_id, student_id) VALUES ('parent-demo', 'student-demo')`),
+		// Mirrors production, where the demo learner is linked to the family parent
+		// so the parent side of a demonstration can be reviewed as well.
+		env.DB.prepare(`INSERT OR IGNORE INTO parent_students (parent_id, student_id) VALUES ('parent-demo', 'demo-student')`),
 	]);
 });
 
@@ -206,9 +209,12 @@ describe('demo learner switches class and resets', () => {
 		const tracks = await roadmapSubjects();
 		expect(tracks.every((track) => track.completed === 0)).toBe(true);
 
-		const leftovers = await env.DB.prepare(`SELECT COUNT(*) AS total FROM assignments WHERE student_id = 'demo-student'`).first<{
-			total: number;
-		}>();
+		const leftovers = await env.DB.prepare(
+			`SELECT COUNT(*) AS total
+			 FROM assignments
+			 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+			 WHERE assignments.student_id = 'demo-student' AND assignment_templates.class_level = 'VIII'`,
+		).first<{ total: number }>();
 		expect(leftovers?.total).toBe(0);
 	});
 
@@ -231,9 +237,89 @@ describe('demo learner switches class and resets', () => {
 			total: number;
 		}>();
 		expect(before?.total).toBe(1);
-		const demoClass = await env.DB.prepare(`SELECT class_level FROM student_profiles WHERE user_id = 'demo-student'`).first<{
-			class_level: string;
-		}>();
-		expect(demoClass?.class_level).toBe('VIII');
+	});
+
+	it("keeps each class's progress and lets the reviewer choose to clear it", async () => {
+		// Work one Class X chapter, then switch to Class VIII and work one there.
+		await SELF.fetch('https://study.saneax.in/api/demo/class', {
+			method: 'POST',
+			headers: accessHeaders(demoEmail, true),
+			body: JSON.stringify({ classLevel: 'X', startFresh: true }),
+		});
+		const physics = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Physics', {
+			headers: accessHeaders(demoEmail),
+		});
+		const assignment = (await physics.json()) as {
+			assignment: { id: string; questions: Array<{ id: string; type: string }> };
+		};
+		for (const question of assignment.assignment.questions) {
+			await SELF.fetch(`https://study.saneax.in/api/learning/assignments/${assignment.assignment.id}/responses`, {
+				method: 'PUT',
+				headers: accessHeaders(demoEmail, true),
+				body: JSON.stringify({
+					questionId: question.id,
+					answer: question.type === 'single_choice' ? { choice: 'a' } : { value: 1 },
+					confidence: 3,
+				}),
+			});
+		}
+		await SELF.fetch(`https://study.saneax.in/api/learning/assignments/${assignment.assignment.id}/submit`, {
+			method: 'POST',
+			headers: accessHeaders(demoEmail),
+		});
+
+		// Switching keeps progress by default.
+		const switched = await SELF.fetch('https://study.saneax.in/api/demo/class', {
+			method: 'POST',
+			headers: accessHeaders(demoEmail, true),
+			body: JSON.stringify({ classLevel: 'VIII' }),
+		});
+		expect(switched.status).toBe(200);
+		const switchedBody = (await switched.json()) as {
+			current: { classLevel: string };
+			progress: { completed: number; total: number };
+			progressByClass: Array<{ classLevel: string; completed: number }>;
+		};
+		expect(switchedBody.current.classLevel).toBe('VIII');
+		expect(switchedBody.progressByClass.find((entry) => entry.classLevel === 'X')?.completed).toBe(1);
+		expect(switchedBody.progress.completed).toBe(0);
+
+		// Coming back to Class X shows the earlier chapter still done.
+		const back = await SELF.fetch('https://study.saneax.in/api/demo/class', {
+			method: 'POST',
+			headers: accessHeaders(demoEmail, true),
+			body: JSON.stringify({ classLevel: 'X' }),
+		});
+		const backBody = (await back.json()) as { current: { classLevel: string }; progress: { completed: number } };
+		expect(backBody.progress.completed).toBe(1);
+
+		// Starting fresh is a choice: it clears only the class being entered.
+		const fresh = await SELF.fetch('https://study.saneax.in/api/demo/class', {
+			method: 'POST',
+			headers: accessHeaders(demoEmail, true),
+			body: JSON.stringify({ classLevel: 'X', startFresh: true }),
+		});
+		const freshBody = (await fresh.json()) as {
+			progress: { completed: number };
+			progressByClass: Array<{ classLevel: string; completed: number }>;
+		};
+		expect(freshBody.progress.completed).toBe(0);
+		expect(freshBody.progressByClass.find((entry) => entry.classLevel === 'X')?.completed).toBe(0);
+	});
+
+	it("appears in the linked parent's learner list", async () => {
+		const response = await SELF.fetch('https://study.saneax.in/api/students', {
+			headers: accessHeaders(parentEmail),
+		});
+		expect(response.status).toBe(200);
+		const body = (await response.json()) as { students: Array<{ id: string; displayName: string; classLevel: string }> };
+		const demo = body.students.find((student) => student.id === 'demo-student');
+		expect(demo).toBeDefined();
+		expect(demo?.displayName).toBe('Demo Learner');
+		// The parent can also open the demo learner's evidence and exercises.
+		const progress = await SELF.fetch('https://study.saneax.in/api/students/demo-student/progress', {
+			headers: accessHeaders(parentEmail),
+		});
+		expect(progress.status).toBe(200);
 	});
 });

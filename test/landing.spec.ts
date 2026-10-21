@@ -87,6 +87,8 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain("'/api/demo/class'");
 		expect(page).toContain("'/api/demo/reset'");
 		expect(page).toContain('Evaluation demo');
+		expect(page).toContain('Start fresh when switching');
+		expect(page).toContain('Clear this class');
 
 		// Interface affordances added in the UI review.
 		expect(page).toContain('id="today-progress"');

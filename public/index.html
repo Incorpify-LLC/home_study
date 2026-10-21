@@ -1958,6 +1958,8 @@
 			}
 
 			/* ---------- Demo controls ---------- */
+			let demoStartFresh = false;
+
 			async function loadDemoBar() {
 				if (!sessionUser?.demo) return;
 				demoBar.hidden = false;
@@ -1979,7 +1981,8 @@
 
 				const classes = element('div', undefined, 'chip-row');
 				for (const entry of body.classes) {
-					const chip = element('button', `Act as Class ${entry.classLevel}`, 'chip small');
+					const done = body.progressByClass?.find((row) => row.classLevel === entry.classLevel)?.completed ?? 0;
+					const chip = element('button', `Class ${entry.classLevel} · ${done}/${entry.chapters}`, 'chip small');
 					chip.type = 'button';
 					chip.setAttribute('aria-pressed', String(entry.classLevel === body.current.classLevel));
 					chip.addEventListener('click', async () => {
@@ -1987,7 +1990,7 @@
 						const result = await fetchJson('/api/demo/class', {
 							method: 'POST',
 							headers: { 'content-type': 'application/json' },
-							body: JSON.stringify({ classLevel: entry.classLevel }),
+							body: JSON.stringify({ classLevel: entry.classLevel, startFresh: demoStartFresh }),
 						});
 						chip.disabled = false;
 						if (!result.ok) {
@@ -1998,22 +2001,32 @@
 					});
 					classes.append(chip);
 				}
-				const reset = element('button', 'Start fresh', 'secondary small');
+
+				const controls = element('div', undefined, 'actions');
+				const choice = element('button', 'Start fresh when switching', 'chip small');
+				choice.type = 'button';
+				choice.setAttribute('aria-pressed', String(demoStartFresh));
+				choice.title = 'Off keeps the progress you already made; on clears the class you switch into.';
+				choice.addEventListener('click', () => {
+					demoStartFresh = !demoStartFresh;
+					choice.setAttribute('aria-pressed', String(demoStartFresh));
+				});
+
+				const reset = element('button', 'Clear this class', 'secondary small');
 				reset.type = 'button';
 				reset.addEventListener('click', async () => {
-					if (!window.confirm('Clear the demo progress and start this class from the first chapter?')) return;
+					if (!window.confirm('Clear the demo progress in this class and start from its first chapter?')) return;
 					reset.disabled = true;
 					const result = await fetchJson('/api/demo/reset', { method: 'POST' });
 					reset.disabled = false;
 					if (!result.ok) {
-						window.alert(result.body?.message || 'The demo could not be reset.');
+						window.alert(result.body?.message || 'The demo could not be cleared.');
 						return;
 					}
 					await refreshStudentWorkspace();
 				});
 
-				const controls = element('div', undefined, 'actions');
-				controls.append(classes, reset);
+				controls.append(classes, choice, reset);
 				demoBar.replaceChildren(label, controls);
 			}
 
