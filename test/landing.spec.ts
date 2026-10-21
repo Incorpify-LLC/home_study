@@ -88,7 +88,7 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('id="next-assignment"');
 		expect(page).toContain('id="progress-view"');
 		expect(page).toContain('Corrections');
-		expect(page).toContain('Save answer');
+		expect(page).not.toContain('Save answer');
 		expect(page).not.toContain('Your first reviewed learning plan will appear here.');
 	});
 
@@ -128,37 +128,43 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain("setWorkspaceTab('parent'");
 	});
 
-	it('presents the student workflow as accessible pages instead of one long flow', async () => {
+	it('presents a unified student study workspace', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
 
 		expect(page).toContain('id="student-workspace-tabs"');
 		expect(page).toContain('role="tablist" aria-label="Student workspace"');
-		for (const tab of ['student-tab-today', 'student-tab-course', 'student-tab-learn', 'student-tab-practice', 'student-tab-review']) {
+		for (const tab of ['student-tab-today', 'student-tab-course', 'student-tab-study', 'student-tab-review']) {
 			expect(page).toContain(`id="${tab}"`);
 		}
+		expect(page).not.toContain('id="student-tab-learn"');
+		expect(page).not.toContain('id="student-tab-practice"');
+		expect(page).toContain('id="study-page"');
+		expect(page).toContain('class="study-workbench"');
+		expect(page).toContain('data-workspace-page="study"');
 		expect(page).toContain('data-workspace-panel="student"');
 		expect(page).toContain("setWorkspaceTab('student'");
 		expect(page).toContain("prepareWorkspaceTabs('student')");
 	});
 
-	it('pages practice questions one at a time', async () => {
+	it('shows every practice question together with one final submission', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
 
-		expect(page).toContain('id="question-pager"');
-		expect(page).toContain('id="question-previous"');
-		expect(page).toContain('id="question-next"');
-		expect(page).toContain('id="question-position"');
-		expect(page).toContain('function showQuestion(');
+		expect(page).not.toContain('id="question-pager"');
+		expect(page).not.toContain('id="question-previous"');
+		expect(page).not.toContain('id="question-next"');
+		expect(page).not.toContain('function showQuestion(');
+		expect(page).not.toContain('Save answer');
+		expect(page).toContain('id="submit-assignment"');
 	});
 
-	it('takes the learner to the first unanswered question on submit', async () => {
+	it('marks the first unanswered question on submit', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
 
 		expect(page).toContain('for (const [index, question] of currentAssignment.questions.entries())');
-		expect(page).toContain('showQuestion(index, true)');
+		expect(page).toContain('markIncompleteQuestion(index)');
 	});
 
 	it('exposes the study calendar controls and the exercise review view', async () => {
