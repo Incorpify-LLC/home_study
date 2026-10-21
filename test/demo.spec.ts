@@ -162,6 +162,21 @@ describe('demo learner switches class and resets', () => {
 		expect(tracks.map((track) => track.subject).sort()).toEqual(['Mathematics', 'Physics']);
 		expect(tracks.find((track) => track.subject === 'Physics')?.total).toBe(8);
 		expect(tracks.every((track) => track.completed === 0)).toBe(true);
+
+		// The chapter served must belong to the class the learner is in now, never
+		// to the class they were switched out of.
+		for (const subject of ['Mathematics', 'Physics']) {
+			const current = await SELF.fetch(`https://study.saneax.in/api/learning/current?subject=${encodeURIComponent(subject)}`, {
+				headers: accessHeaders(demoEmail),
+			});
+			expect(current.status).toBe(200);
+			const assignment = (await current.json()) as {
+				assignment: { classLevel: string; subject: string; sequence: number };
+			};
+			expect(assignment.assignment.classLevel).toBe('VIII');
+			expect(assignment.assignment.subject).toBe(subject);
+			expect(assignment.assignment.sequence).toBe(1);
+		}
 	});
 
 	it('rejects a class with no reviewed content', async () => {

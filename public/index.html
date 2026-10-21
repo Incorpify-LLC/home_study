@@ -832,8 +832,20 @@
 				flex-wrap: wrap;
 				justify-content: space-between;
 			}
+			.demo-bar-label {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 200px;
+			}
 			.demo-bar strong {
 				color: var(--brand-ink);
+			}
+			.demo-bar-controls {
+				display: flex;
+				gap: var(--space-2);
+				align-items: center;
+				flex-wrap: wrap;
 			}
 
 			/* ---------- Feedback ---------- */
@@ -1125,6 +1137,41 @@
 				</div>
 			</section>
 		</main>
+
+		<section id="demo-signin" class="panel" hidden>
+			<h2 id="demo-signin-title">Evaluation demo sign-in</h2>
+			<p class="meta">
+				Used to review this workspace as the demonstration learner or parent. Family accounts sign in through Cloudflare Access with an
+				emailed code instead.
+			</p>
+			<form id="demo-signin-form" autocomplete="off" novalidate>
+				<label class="field"
+					>Demo identifier
+					<input id="demo-identifier" name="identifier" type="text" autocomplete="username" value="demo-student" />
+				</label>
+				<label class="field"
+					>Password
+					<input id="demo-password" name="password" type="password" autocomplete="current-password" />
+				</label>
+				<div class="actions">
+					<button id="demo-signin-submit" type="submit">Sign in</button>
+				</div>
+			</form>
+			<form id="demo-enrol-form" autocomplete="off" novalidate hidden>
+				<label class="field"
+					>Account
+					<input id="demo-enrol-identifier" type="text" autocomplete="username" value="demo-student" />
+				</label>
+				<label class="field"
+					>Choose the demo password
+					<input id="demo-enrol-password" type="password" autocomplete="new-password" />
+				</label>
+				<div class="actions">
+					<button id="demo-enrol-submit" type="submit">Set demo password</button>
+				</div>
+			</form>
+			<p id="demo-signin-status" class="notice" hidden aria-live="polite"></p>
+		</section>
 
 		<footer>Protected by Cloudflare Access · Designed around privacy, progress, and wellbeing.</footer>
 
@@ -1645,13 +1692,17 @@
 			async function loadRoadmap() {
 				const list = document.querySelector('#roadmap-list');
 				skeleton(list, 2, 'Loading chapters…');
-				const { ok, body } = await fetchJson('/api/learning/roadmaps');
-				if (!ok) {
-					list.replaceChildren(element('p', body?.message || 'The chapter roadmap could not be loaded.', 'notice'));
-					return;
+				try {
+					const { ok, body } = await fetchJson('/api/learning/roadmaps');
+					if (!ok) {
+						list.replaceChildren(element('p', body?.message || 'The chapter roadmap could not be loaded.', 'notice'));
+						return;
+					}
+					renderSubjectTabs(body.tracks);
+					renderRoadmap(body);
+				} catch (error) {
+					list.replaceChildren(element('p', `The chapter roadmap could not be displayed (${error}). Please reload.`, 'notice'));
 				}
-				renderSubjectTabs(body.tracks);
-				renderRoadmap(body);
 			}
 
 			function renderSubjectTabs(tracks) {
@@ -1953,7 +2004,20 @@
 					learningWorkspace.replaceChildren(element('p', body?.message || 'Learning assignment could not be loaded.', 'notice'));
 					return;
 				}
-				renderLearning(body.assignment);
+				try {
+					renderLearning(body.assignment);
+				} catch (error) {
+					// Never leave a panel silently blank: say what failed so it can be reported.
+					learningWorkspace.replaceChildren(
+						element('h2', 'This chapter could not be displayed'),
+						element(
+							'p',
+							`The lesson arrived but the screen could not be built (${error}). Please reload; if it repeats, report it.`,
+							'notice',
+						),
+					);
+					return;
+				}
 				await loadRoadmap();
 			}
 
@@ -1969,7 +2033,7 @@
 					demoBar.replaceChildren(element('span', body?.message || 'Demo controls unavailable.', 'meta'));
 					return;
 				}
-				const label = element('div');
+				const label = element('div', undefined, 'demo-bar-label');
 				label.append(element('strong', 'Evaluation demo'));
 				label.append(
 					element(
@@ -2002,7 +2066,7 @@
 					classes.append(chip);
 				}
 
-				const controls = element('div', undefined, 'actions');
+				const controls = element('div', undefined, 'demo-bar-controls');
 				const choice = element('button', 'Start fresh when switching', 'chip small');
 				choice.type = 'button';
 				choice.setAttribute('aria-pressed', String(demoStartFresh));
@@ -2064,17 +2128,92 @@
 				}
 			}
 
-			logout.addEventListener('click', () => {
-				window.location.assign('/cdn-cgi/access/logout');
+			logout.addEventListener('click', async () => {
+				try {
+					await fetch('/api/auth/logout', { method: 'POST' });
+				} catch {
+					// Fall through: the Access logout below still clears the family session.
+				}
+				if (location.hostname === 'study.saneax.in') {
+					window.location.assign('/cdn-cgi/access/logout');
+				} else {
+					window.location.assign('/');
+				}
+			});
+
+			/* ---------- Evaluation demo sign-in ---------- */
+			const demoSignin = document.querySelector('#demo-signin');
+			const demoSigninForm = document.querySelector('#demo-signin-form');
+			const demoEnrolForm = document.querySelector('#demo-enrol-form');
+			const demoStatus = document.querySelector('#demo-signin-status');
+			const demoEnrolCode = new URLSearchParams(location.search).get('demo-enrol');
+
+			function demoStatusMessage(message, tone) {
+				demoStatus.textContent = message;
+				demoStatus.hidden = !message;
+				if (tone) demoStatus.dataset.tone = tone;
+				else delete demoStatus.dataset.tone;
+			}
+
+			function showDemoSignin() {
+				demoSignin.hidden = false;
+				demoSigninForm.hidden = Boolean(demoEnrolCode);
+				demoEnrolForm.hidden = !demoEnrolCode;
+				checking.hidden = true;
+			}
+
+			async function postDemo(path, payload) {
+				const response = await fetch(path, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				let body = null;
+				try {
+					body = await response.json();
+				} catch {
+					body = null;
+				}
+				return { ok: response.ok, status: response.status, body };
+			}
+
+			demoSigninForm.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				demoStatusMessage('Signing in…');
+				const { ok, body } = await postDemo('/api/auth/demo-login', {
+					identifier: document.querySelector('#demo-identifier').value,
+					password: document.querySelector('#demo-password').value,
+				});
+				if (!ok) {
+					demoStatusMessage(body?.message || 'Those sign-in details were not accepted.', 'bad');
+					return;
+				}
+				window.location.assign(location.pathname);
+			});
+
+			demoEnrolForm.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const password = document.querySelector('#demo-enrol-password').value;
+				const identifier = document.querySelector('#demo-enrol-identifier').value;
+				demoStatusMessage('Setting the demo password…');
+				const enrolled = await postDemo('/api/auth/demo-enrol', { identifier, code: demoEnrolCode, password });
+				if (!enrolled.ok) {
+					demoStatusMessage(enrolled.body?.message || 'The one-time code was not accepted.', 'bad');
+					return;
+				}
+				const signedIn = await postDemo('/api/auth/demo-login', { identifier, password });
+				if (!signedIn.ok) {
+					demoStatusMessage('Password set. Reload the page and sign in.', 'good');
+					return;
+				}
+				window.location.assign(location.pathname);
 			});
 
 			(async function boot() {
 				try {
 					const { ok, body } = await fetchJson('/api/session');
 					if (!ok || !body?.authenticated) {
-						const status = checking.querySelector('.status-line');
-						if (status) status.textContent = 'This workspace is limited to approved identities. Ask the owner for access.';
-						checking.querySelector('.spinner')?.remove();
+						showDemoSignin();
 						return;
 					}
 					await showSession(body);
@@ -2082,6 +2221,7 @@
 					const status = checking.querySelector('.status-line');
 					if (status) status.textContent = 'The workspace could not be reached. Please reload.';
 					checking.querySelector('.spinner')?.remove();
+					showDemoSignin();
 				}
 			})();
 		</script>

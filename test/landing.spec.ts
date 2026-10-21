@@ -12,15 +12,24 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('Checking secure access');
 	});
 
-	it('contains no family identities or native password form', async () => {
+	it('contains no family identities, and no password form outside the demo panel', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
-		const page = (await response.text()).toLowerCase();
+		const page = await response.text();
+		const lower = page.toLowerCase();
 
 		for (const privateTerm of ['@gmail.com', 'weak in']) {
-			expect(page).not.toContain(privateTerm);
+			expect(lower).not.toContain(privateTerm);
 		}
-		expect(page).not.toContain('/api/login');
-		expect(page).not.toContain('type="password"');
+		// The family path stays code-based: no native family login endpoint.
+		expect(lower).not.toContain('/api/login');
+
+		// Password inputs exist only for the evaluation demo, and only inside its
+		// panel, which is hidden until the page finds no session.
+		const passwordFields = page.match(/type="password"/g) ?? [];
+		expect(passwordFields).toHaveLength(2);
+		const panel = page.slice(page.indexOf('id="demo-signin"'), page.indexOf('<footer'));
+		expect(panel.match(/type="password"/g) ?? []).toHaveLength(2);
+		expect(page).toContain('id="demo-signin" class="panel" hidden');
 	});
 
 	it('contains an accessible learning workflow and parent evidence view', async () => {
@@ -83,6 +92,13 @@ describe('Access-protected application shell', () => {
 
 		// Demo learner controls.
 		expect(page).toContain('id="demo-bar"');
+		// The evaluation demo signs in with a password; the family uses Access OTP.
+		expect(page).toContain('id="demo-signin"');
+		expect(page).toContain('id="demo-signin-form"');
+		expect(page).toContain('id="demo-enrol-form"');
+		expect(page).toContain('id="demo-password"');
+		expect(page).toContain('/api/auth/demo-login');
+		expect(page).toContain('/api/auth/demo-enrol');
 		expect(page).toContain("'/api/demo/classes'");
 		expect(page).toContain("'/api/demo/class'");
 		expect(page).toContain("'/api/demo/reset'");

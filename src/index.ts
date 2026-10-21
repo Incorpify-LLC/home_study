@@ -9,6 +9,18 @@ import {
 	type PlanEnv,
 } from './plan';
 import { demoState, switchDemoClass, resetDemoProgress } from './demo';
+import {
+	checkThrottle,
+	clearFailures,
+	clearedSessionCookie,
+	createSession,
+	hashEnrolmentCode,
+	hashPassword,
+	recordFailure,
+	revokeSession,
+	userFromCookieSession,
+	verifyPassword,
+} from './demo-auth';
 
 interface Env {
 	ACCESS_AUD: string;
@@ -194,14 +206,18 @@ async function accessEmail(request: Request, env: Env): Promise<string | null> {
 
 async function authenticatedUser(request: Request, env: Env): Promise<SessionUser | null> {
 	const email = await accessEmail(request, env);
-	if (!email) return null;
-	return env.DB.prepare(
-		`SELECT id, role, display_name, is_demo
-		 FROM users
-		 WHERE active = 1 AND lower(email) = ?`,
-	)
-		.bind(email)
-		.first<SessionUser>();
+	if (email) {
+		return env.DB.prepare(
+			`SELECT id, role, display_name, is_demo
+			 FROM users
+			 WHERE active = 1 AND lower(email) = ?`,
+		)
+			.bind(email)
+			.first<SessionUser>();
+	}
+	// No Access identity: fall back to a demo-account cookie session. Cookie sign-in
+	// is only ever issued to, and honoured for, `is_demo = 1` accounts.
+	return userFromCookieSession(env, request) as Promise<SessionUser | null>;
 }
 
 async function sessionState(request: Request, env: Env): Promise<Response> {
@@ -543,11 +559,15 @@ async function createAssignment(env: Env, studentId: string, template: LearningT
 }
 
 async function latestAssignmentForStudent(env: Env, studentId: string, subject?: string | null): Promise<AssignmentRecord | null> {
+	// Scoped to the learner's current class: after a class change, an open assignment
+	// from the previous class must never be served as the current chapter.
 	const row = await env.DB.prepare(
 		`SELECT assignments.id
 		 FROM assignments
 		 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+		 JOIN student_profiles ON student_profiles.user_id = assignments.student_id
 		 WHERE assignments.student_id = ?
+		   AND assignment_templates.class_level = student_profiles.class_level
 		   AND (? IS NULL OR assignment_templates.subject = ?)
 		 ORDER BY CASE WHEN assignments.status IN ('assigned', 'in_progress') THEN 0 ELSE 1 END,
 		          assignment_templates.sequence DESC
@@ -1066,6 +1086,130 @@ async function demoReset(request: Request, env: Env): Promise<Response> {
 	return json(await resetDemoProgress(env as PlanEnv, user.id));
 }
 
+type DemoCredentialUser = {
+	id: string;
+	role: 'parent' | 'student' | 'reviewer';
+	display_name: string;
+	password_hash: string | null;
+};
+
+async function demoCredentialUser(env: Env, identifier: string): Promise<DemoCredentialUser | null> {
+	return env.DB.prepare(
+		`SELECT id, role, display_name, password_hash
+		 FROM users
+		 WHERE active = 1 AND is_demo = 1 AND lower(login_identifier) = ?`,
+	)
+		.bind(identifier)
+		.first<DemoCredentialUser>();
+}
+
+async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+	try {
+		const parsed: unknown = await request.json();
+		if (typeof parsed !== 'object' || parsed === null) return null;
+		return parsed as Record<string, unknown>;
+	} catch {
+		return null;
+	}
+}
+
+function textField(body: Record<string, unknown>, key: string): string {
+	const value = body[key];
+	return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * One-time enrolment: sets the demo password, and only while the account has no
+ * password yet. The code is single use, so nobody can claim an unenrolled demo
+ * account by arriving first.
+ */
+async function demoEnrol(request: Request, env: Env): Promise<Response> {
+	const body = await readJsonBody(request);
+	if (!body) return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
+	const identifier = textField(body, 'identifier').toLowerCase();
+	const enrolmentCode = textField(body, 'code');
+	const password = typeof body.password === 'string' ? body.password : '';
+	if (!identifier || !enrolmentCode || !password) {
+		return json({ error: 'invalid_request', message: 'An identifier, one-time code and password are required.' }, 400);
+	}
+
+	const user = await demoCredentialUser(env, identifier);
+	if (!user || user.password_hash) {
+		// Already enrolled, or not a demo account: the same answer either way.
+		return json({ error: 'enrolment_closed', message: 'This account cannot be enrolled.' }, 403);
+	}
+
+	const record = await env.DB.prepare(
+		`SELECT id, code_hash FROM demo_enrolment WHERE lower(identifier) = ? AND used_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+	)
+		.bind(identifier)
+		.first<{ id: string; code_hash: string }>();
+	const submitted = await hashEnrolmentCode(enrolmentCode);
+	if (!record || record.code_hash !== submitted) {
+		return json({ error: 'invalid_code', message: 'The one-time code was not accepted.' }, 403);
+	}
+
+	await env.DB.batch([
+		env.DB.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).bind(await hashPassword(password), user.id),
+		env.DB.prepare(`UPDATE demo_enrolment SET used_at = ? WHERE id = ?`).bind(new Date().toISOString(), record.id),
+	]);
+	return json({ enrolled: true });
+}
+
+async function demoLogin(request: Request, env: Env): Promise<Response> {
+	const body = await readJsonBody(request);
+	if (!body) return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
+	const identifier = textField(body, 'identifier').toLowerCase();
+	const supplied = typeof body.password === 'string' ? body.password : '';
+	if (!identifier || !supplied) {
+		return json({ error: 'invalid_request', message: 'An identifier and password are required.' }, 400);
+	}
+
+	const scope = `demo-login:${identifier}`;
+	const throttle = await checkThrottle(env, scope);
+	if (throttle.limited) {
+		return new Response(
+			JSON.stringify({
+				error: 'too_many_attempts',
+				message: `Too many failed attempts. Try again in ${Math.ceil(throttle.retryAfterSeconds / 60)} minute(s).`,
+			}),
+			{ status: 429, headers: { ...jsonHeaders, 'retry-after': String(throttle.retryAfterSeconds) } },
+		);
+	}
+
+	const user = await demoCredentialUser(env, identifier);
+	if (!user) {
+		await verifyPassword(supplied, null);
+		await recordFailure(env, scope);
+		return json({ error: 'invalid_credentials', message: 'Those sign-in details were not accepted.' }, 401);
+	}
+	if (!user.password_hash) {
+		await verifyPassword(supplied, null);
+		return json({ error: 'enrolment_required', message: 'This demo account has no password yet. Use its one-time enrolment link.' }, 403);
+	}
+
+	const accepted = await verifyPassword(supplied, user.password_hash);
+	if (!accepted) {
+		await recordFailure(env, scope);
+		return json({ error: 'invalid_credentials', message: 'Those sign-in details were not accepted.' }, 401);
+	}
+
+	await clearFailures(env, scope);
+	const cookie = await createSession(env, user.id);
+	return new Response(JSON.stringify({ signedIn: true, user: { displayName: user.display_name, role: user.role, demo: true } }), {
+		status: 200,
+		headers: { ...jsonHeaders, 'set-cookie': cookie },
+	});
+}
+
+async function demoLogout(request: Request, env: Env): Promise<Response> {
+	await revokeSession(env, request);
+	return new Response(null, {
+		status: 204,
+		headers: { 'cache-control': 'no-store', 'set-cookie': clearedSessionCookie() },
+	});
+}
+
 function json(body: unknown, status = 200): Response {
 	return new Response(JSON.stringify(body), {
 		status,
@@ -1087,6 +1231,18 @@ export default {
 
 		if (pathname === '/api/session' && request.method === 'GET') {
 			return sessionState(request, env);
+		}
+
+		if (pathname === '/api/auth/demo-login' && request.method === 'POST') {
+			return demoLogin(request, env);
+		}
+
+		if (pathname === '/api/auth/demo-enrol' && request.method === 'POST') {
+			return demoEnrol(request, env);
+		}
+
+		if (pathname === '/api/auth/logout' && request.method === 'POST') {
+			return demoLogout(request, env);
 		}
 
 		if (pathname === '/api/students' && request.method === 'GET') {
