@@ -369,6 +369,11 @@ async function resolveSubject(request: Request, env: Env, studentId: string): Pr
 	if (requested) return requested;
 	const subjects = await availableSubjects(env, studentId);
 	if (subjects.length === 0) return null;
+	// The published calendar is the default learning path. An off-schedule chapter
+	// may already be open, but it must not displace work explicitly planned for today.
+	const planned = await todaysTemplateIds(env as PlanEnv, studentId);
+	const scheduled = planned.keys().next().value;
+	if (scheduled) return scheduled;
 	const open = await env.DB.prepare(
 		`SELECT assignment_templates.subject
 		 FROM assignments
@@ -586,15 +591,18 @@ async function currentLearning(request: Request, env: Env): Promise<Response> {
 
 	const subject = await resolveSubject(request, env, user.id);
 	if (!subject) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this class yet.' }, 404);
-	let assignment = await latestAssignmentForStudent(env, user.id, subject);
+	// When the calendar names a chapter for today, serve that exact chapter. A
+	// previous submission or an off-schedule open assignment must not displace it.
+	const planned = await todaysTemplateIds(env as PlanEnv, user.id);
+	const templateId = planned.get(subject);
+	let assignment: AssignmentRecord | null = null;
+	if (templateId) {
+		const template = await templateForStudent(env, user.id, templateId);
+		if (template) assignment = await createAssignment(env, user.id, template);
+	}
+	if (!assignment) assignment = await latestAssignmentForStudent(env, user.id, subject);
 	if (!assignment) {
-		// Prefer today's scheduled chapter so the learner follows the published calendar,
-		// then fall back to the next chapter in course order.
-		const planned = await todaysTemplateIds(env as PlanEnv, user.id);
-		const templateId = planned.get(subject);
-		const template =
-			(templateId ? await templateForStudent(env, user.id, templateId) : null) ??
-			(await reviewedTemplateForStudent(env, user.id, 0, subject));
+		const template = await reviewedTemplateForStudent(env, user.id, 0, subject);
 		if (!template) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this subject yet.' }, 404);
 		assignment = await createAssignment(env, user.id, template);
 	}

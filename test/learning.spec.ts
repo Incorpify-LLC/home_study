@@ -1,5 +1,6 @@
 import { applyD1Migrations, env, SELF } from 'cloudflare:test';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { istToday } from '../src/plan';
 
 declare module 'cloudflare:test' {
 	interface ProvidedEnv {
@@ -32,10 +33,14 @@ beforeAll(async () => {
 		env.DB.prepare(
 			`INSERT INTO users (id, role, display_name, email) VALUES ('student-d', 'student', 'Student D', 'student-d@example.test')`,
 		),
+		env.DB.prepare(
+			`INSERT INTO users (id, role, display_name, email) VALUES ('student-e', 'student', 'Student E', 'student-e@example.test')`,
+		),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-a', 'CISCE', 'VIII', NULL)`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-b', 'CISCE', 'X', 2027)`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-c', 'CISCE', 'XII', 2027)`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-d', 'CISCE', 'VIII', NULL)`),
+		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level, exam_year) VALUES ('student-e', 'CISCE', 'X', 2027)`),
 		env.DB.prepare(`INSERT INTO parent_students (parent_id, student_id) VALUES ('parent-a', 'student-a')`),
 		env.DB.prepare(`INSERT INTO parent_students (parent_id, student_id) VALUES ('parent-b', 'student-b')`),
 	]);
@@ -215,6 +220,55 @@ describe('multi-subject tracks', () => {
 		};
 		expect(updatedBody.tracks.find((track) => track.subject === 'Physics')?.completed).toBe(1);
 		expect(updatedBody.tracks.find((track) => track.subject === 'Mathematics')?.completed).toBe(1);
+	});
+
+	it("opens today's scheduled subject before an off-schedule assigned chapter", async () => {
+		const today = istToday();
+		const templates = await env.DB.prepare(
+			`SELECT id, subject, sequence, estimated_minutes AS estimatedMinutes
+			 FROM assignment_templates
+			 WHERE class_level = 'X'
+			   AND ((subject = 'Mathematics' AND sequence IN (1, 5)) OR (subject = 'Physics' AND sequence = 2))`,
+		).all<{ id: string; subject: string; sequence: number; estimatedMinutes: number }>();
+		const mathematics = templates.results.find((template) => template.subject === 'Mathematics' && template.sequence === 1);
+		const previousMathematics = templates.results.find((template) => template.subject === 'Mathematics' && template.sequence === 5);
+		const physics = templates.results.find((template) => template.subject === 'Physics');
+		expect(mathematics).toBeDefined();
+		expect(previousMathematics).toBeDefined();
+		expect(physics).toBeDefined();
+
+		await env.DB.batch([
+			env.DB.prepare(
+				`INSERT INTO study_plans
+				   (id, student_id, revision, start_date, end_date, weekday_minutes, weekend_minutes, rest_weekdays, change_reason, active)
+				 VALUES ('student-e-plan', 'student-e', 1, ?, ?, 120, 120, '[]', 'initial', 1)`,
+			).bind(today, today),
+			env.DB.prepare(
+				`INSERT INTO study_plan_entries
+				   (id, plan_id, student_id, scheduled_for, subject, sequence, template_id, allocated_minutes, position)
+				 VALUES ('student-e-math-today', 'student-e-plan', 'student-e', ?, 'Mathematics', 1, ?, ?, 0)`,
+			).bind(today, mathematics?.id, mathematics?.estimatedMinutes),
+			env.DB.prepare(
+				`INSERT INTO assignments (id, student_id, assigned_for, status, estimated_minutes, template_id, submitted_at)
+				 VALUES ('student-e-old-math', 'student-e', ?, 'submitted', ?, ?, CURRENT_TIMESTAMP)`,
+			).bind(today, previousMathematics?.estimatedMinutes, previousMathematics?.id),
+			env.DB.prepare(
+				`INSERT INTO assignments (id, student_id, assigned_for, status, estimated_minutes, template_id)
+				 VALUES ('student-e-physics-2', 'student-e', ?, 'assigned', ?, ?)`,
+			).bind(today, physics?.estimatedMinutes, physics?.id),
+			env.DB.prepare(
+				`INSERT INTO assignment_items (assignment_id, question_id, position)
+				 SELECT 'student-e-physics-2', question_id, position
+				 FROM assignment_template_items WHERE template_id = ?`,
+			).bind(physics?.id),
+		]);
+
+		const response = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+			headers: accessHeaders('student-e@example.test'),
+		});
+		expect(response.status).toBe(200);
+		const body = (await response.json()) as { assignment: { subject: string; sequence: number } };
+		expect(body.assignment).toMatchObject({ subject: 'Mathematics', sequence: 1 });
 	});
 });
 

@@ -147,6 +147,20 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain("prepareWorkspaceTabs('student')");
 	});
 
+	it('keeps subject choice and lesson focus controls inside Study', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="study-subject-tabs"');
+		expect(page).toContain('aria-label="Choose a subject to study"');
+		expect(page).toContain('id="toggle-reference"');
+		expect(page).toContain('Focus on questions');
+		expect(page).toContain('function setReferenceVisible(');
+		expect(page).toContain('openStudySubject(entry.subject)');
+		expect(page).toContain('Back to today');
+		expect(page).not.toContain('Open next chapter');
+	});
+
 	it('shows every practice question together with one final submission', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

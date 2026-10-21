@@ -148,7 +148,7 @@
 				border-bottom: 1px solid var(--line);
 			}
 			.app-bar-inner {
-				width: min(1120px, calc(100% - 32px));
+				width: min(1440px, calc(100% - 32px));
 				margin: 0 auto;
 				display: flex;
 				align-items: center;
@@ -214,7 +214,7 @@
 				flex: none;
 			}
 			main {
-				width: min(1120px, calc(100% - 32px));
+				width: min(1440px, calc(100% - 32px));
 				margin: 0 auto;
 				padding: var(--space-5) 0 var(--space-6);
 			}
@@ -232,7 +232,7 @@
 				align-self: start;
 			}
 			footer {
-				width: min(1120px, calc(100% - 32px));
+				width: min(1440px, calc(100% - 32px));
 				margin: 0 auto;
 				padding: var(--space-5) 0 var(--space-6);
 				color: var(--muted);
@@ -636,6 +636,22 @@
 				padding: var(--space-3) var(--space-4);
 				background: var(--surface);
 			}
+			.today-entry {
+				display: block;
+				width: 100%;
+				min-height: 0;
+				color: var(--ink);
+				text-align: left;
+				font-weight: 500;
+			}
+			.today-entry:hover:not(:disabled) {
+				transform: none;
+				border-color: var(--brand);
+				box-shadow: 0 0 0 3px var(--brand-tint);
+			}
+			.today-entry p {
+				margin: 4px 0 0;
+			}
 			.plan-day[data-rest='true'] {
 				background: var(--surface-sunken);
 				border-style: dashed;
@@ -750,10 +766,28 @@
 				font-weight: 700;
 				white-space: nowrap;
 			}
+			.study-toolbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-3);
+				padding: var(--space-3) var(--space-5);
+				border-bottom: 1px solid var(--line);
+				background: var(--surface);
+			}
+			.study-toolbar .subject-tabs {
+				margin: 0;
+			}
 			.study-workbench {
 				display: grid;
-				grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+				grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
 				align-items: start;
+			}
+			.study-workbench[data-reference='collapsed'] {
+				grid-template-columns: minmax(0, 1fr);
+			}
+			.study-workbench[data-reference='collapsed'] .lesson-reference {
+				display: none;
 			}
 			.lesson-reference,
 			.practice-sheet {
@@ -762,11 +796,8 @@
 			.lesson-reference {
 				position: sticky;
 				top: 82px;
-				max-height: calc(100vh - 104px);
-				overflow-y: auto;
 				border-right: 1px solid var(--line);
 				background: color-mix(in srgb, var(--surface-sunken) 88%, var(--brand-tint));
-				scrollbar-width: thin;
 			}
 			.lesson-reference h3,
 			.practice-sheet h3 {
@@ -1141,8 +1172,6 @@
 				}
 				.lesson-reference {
 					position: static;
-					max-height: none;
-					overflow: visible;
 					border-right: 0;
 					border-bottom: 1px solid var(--line);
 				}
@@ -1163,10 +1192,16 @@
 				.progress-card {
 					padding: var(--space-3);
 				}
-				.study-hero {
+				.study-hero,
+				.study-toolbar {
 					align-items: flex-start;
 					flex-direction: column;
 					padding: var(--space-4);
+				}
+				.study-toolbar,
+				.study-toolbar .subject-tabs,
+				#toggle-reference {
+					width: 100%;
 				}
 				.lesson-reference,
 				.practice-sheet {
@@ -1499,8 +1534,20 @@
 										</div>
 										<p class="study-time" data-field="estimated-time"></p>
 									</header>
-									<div class="study-workbench">
-										<article class="lesson-reference" aria-labelledby="lesson-title">
+									<div class="study-toolbar">
+										<nav id="study-subject-tabs" class="subject-tabs" aria-label="Choose a subject to study"></nav>
+										<button
+											id="toggle-reference"
+											class="secondary small"
+											type="button"
+											aria-expanded="true"
+											aria-controls="lesson-reference"
+										>
+											Focus on questions
+										</button>
+									</div>
+									<div class="study-workbench" data-reference="visible">
+										<article id="lesson-reference" class="lesson-reference" aria-labelledby="lesson-title">
 											<div class="section-kicker"><span>01</span> Understand</div>
 											<h3 id="lesson-title" data-field="lesson-title"></h3>
 											<p class="lesson-overview" data-field="overview"></p>
@@ -1559,7 +1606,7 @@
 									<p class="muted">Read every reason. A first diagnostic is evidence for planning, not a final judgement.</p>
 									<div id="correction-list" class="correction-list"></div>
 									<div class="actions" style="margin-top: 16px">
-										<button id="next-assignment" type="button">Open next chapter</button>
+										<button id="next-assignment" type="button">Back to today</button>
 										<span id="course-complete-message" class="muted" hidden>All reviewed chapters are complete.</span>
 									</div>
 								</section>
@@ -1634,6 +1681,7 @@
 			const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 			let currentAssignment = null;
 			let activeSubject = null;
+			let referenceVisible = true;
 			let sessionUser = null;
 
 			/* ---------- Utilities ---------- */
@@ -2127,7 +2175,10 @@
 					return;
 				}
 				for (const entry of body.today.entries) {
-					const card = element('article', undefined, 'plan-day');
+					const card = element('button', undefined, 'plan-day today-entry');
+					card.type = 'button';
+					card.setAttribute('aria-label', `Study ${entry.subject}: ${entry.title}`);
+					card.addEventListener('click', () => openStudySubject(entry.subject));
 					const head = element('div', undefined, 'plan-day-head');
 					head.append(element('strong', `${entry.subject} · Chapter ${entry.sequence}`));
 					const stateChip = element('span', `${entry.minutes} min · ${entry.state}`, 'badge');
@@ -2184,26 +2235,45 @@
 				}
 			}
 
+			async function openStudySubject(subject) {
+				activeSubject = subject;
+				document.querySelectorAll('[data-study-subject]').forEach((node) => {
+					const active = node.dataset.studySubject === subject;
+					node.dataset.active = String(active);
+					node.setAttribute('aria-pressed', String(active));
+				});
+				await loadLearning();
+				setWorkspaceTab('student', 'study', true);
+			}
+
 			function renderSubjectTabs(tracks) {
-				const tabs = document.querySelector('#subject-tabs');
-				if (!tabs) return;
-				tabs.replaceChildren();
-				if (tracks.length < 2) return;
-				for (const track of tracks) {
-					const tab = element('button', `${track.subject} · ${track.completed}/${track.total}`, 'chip');
-					tab.type = 'button';
-					tab.dataset.active = String(track.subject === activeSubject);
-					tab.setAttribute('aria-pressed', String(track.subject === activeSubject));
-					tab.addEventListener('click', async () => {
-						activeSubject = track.subject;
-						tabs.querySelectorAll('.chip').forEach((node) => {
-							const active = node === tab;
-							node.dataset.active = String(active);
-							node.setAttribute('aria-pressed', String(active));
-						});
-						await loadLearning();
-					});
-					tabs.append(tab);
+				const tabSets = document.querySelectorAll('#subject-tabs, #study-subject-tabs');
+				for (const tabs of tabSets) {
+					tabs.replaceChildren();
+					if (tracks.length < 2) continue;
+					for (const track of tracks) {
+						const tab = element('button', `${track.subject} · ${track.completed}/${track.total}`, 'chip');
+						tab.type = 'button';
+						tab.dataset.studySubject = track.subject;
+						tab.dataset.active = String(track.subject === activeSubject);
+						tab.setAttribute('aria-pressed', String(track.subject === activeSubject));
+						tab.addEventListener('click', () => openStudySubject(track.subject));
+						tabs.append(tab);
+					}
+				}
+			}
+
+			function setReferenceVisible(visible, moveFocus = false) {
+				referenceVisible = visible;
+				const workbench = document.querySelector('.study-workbench');
+				const toggle = document.querySelector('#toggle-reference');
+				if (!workbench || !toggle) return;
+				workbench.dataset.reference = visible ? 'visible' : 'collapsed';
+				toggle.setAttribute('aria-expanded', String(visible));
+				toggle.textContent = visible ? 'Focus on questions' : 'Show lesson';
+				if (moveFocus) {
+					const target = document.querySelector(visible ? '#lesson-reference' : '#practice-title');
+					target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				}
 			}
 
@@ -2404,34 +2474,20 @@
 				}
 				const next = document.querySelector('#next-assignment');
 				const complete = document.querySelector('#course-complete-message');
-				next.hidden = Boolean(assignment.courseComplete);
+				next.hidden = false;
 				complete.hidden = !assignment.courseComplete;
 			}
 
-			async function openNextChapter() {
+			async function returnToToday() {
 				const button = document.querySelector('#next-assignment');
 				button.disabled = true;
-				button.textContent = 'Opening…';
-				try {
-					const query = activeSubject ? `?subject=${encodeURIComponent(activeSubject)}` : '';
-					const { ok, body } = await fetchJson(`/api/learning/next${query}`, { method: 'POST' });
-					if (!ok) {
-						if (body?.error === 'course_complete') {
-							document.querySelector('#course-complete-message').hidden = false;
-							button.hidden = true;
-							return;
-						}
-						window.alert(body?.message || 'The next chapter could not be opened.');
-						return;
-					}
-					renderLearning(body.assignment);
-					setWorkspaceTab('student', 'study');
-					await loadRoadmap();
-					await loadTodaysPlan();
-				} finally {
-					button.disabled = false;
-					button.textContent = 'Open next chapter';
-				}
+				button.textContent = 'Loading today…';
+				activeSubject = null;
+				await loadTodaysPlan();
+				setWorkspaceTab('student', 'today', true);
+				await loadLearning();
+				button.disabled = false;
+				button.textContent = 'Back to today';
 			}
 
 			async function submitCurrentAssignment() {
@@ -2510,7 +2566,9 @@
 				for (const [index, question] of assignment.questions.entries()) form.append(questionField(question, index, submitted));
 
 				document.querySelector('#submit-assignment').addEventListener('click', submitCurrentAssignment);
-				document.querySelector('#next-assignment').addEventListener('click', openNextChapter);
+				document.querySelector('#next-assignment').addEventListener('click', returnToToday);
+				document.querySelector('#toggle-reference').addEventListener('click', () => setReferenceVisible(!referenceVisible, true));
+				setReferenceVisible(referenceVisible);
 				updateAnswerCount();
 
 				const actionBar = document.querySelector('.action-bar');
@@ -2651,7 +2709,7 @@
 						sessionBadge.dataset.tone = 'warn';
 						dashboardNote.textContent = 'This is a demonstration learner. Its progress is kept separate from the family accounts.';
 					} else {
-						dashboardNote.textContent = 'Learn, save your work, submit, and correct.';
+						dashboardNote.textContent = 'Read the lesson, answer the questions, and submit once when ready.';
 					}
 					await refreshStudentWorkspace();
 				}
