@@ -32,6 +32,51 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('id="demo-signin" class="panel" hidden');
 	});
 
+	it('builds every element from a real tag name', async () => {
+		// A call like element('Save answer', …) creates a bogus tag, throws
+		// InvalidCharacterError inside the render loop, and takes the question list
+		// and the roadmap down with it. Only a browser run catches that, so the
+		// page source is checked directly here.
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+		const knownTags = new Set([
+			'a',
+			'article',
+			'b',
+			'button',
+			'div',
+			'fieldset',
+			'footer',
+			'form',
+			'h1',
+			'h2',
+			'h3',
+			'h4',
+			'header',
+			'input',
+			'label',
+			'legend',
+			'li',
+			'ol',
+			'option',
+			'p',
+			'section',
+			'select',
+			'small',
+			'span',
+			'strong',
+			'time',
+			'ul',
+		]);
+
+		const tags = [...page.matchAll(/element\(\s*'([^']*)'/g)].map((match) => match[1]);
+		expect(tags.length).toBeGreaterThan(20);
+		for (const tag of tags) {
+			expect(tag, `element('${tag}') is not a valid tag name`).toMatch(/^[a-z][a-z0-9]*$/);
+			expect(knownTags, `element('${tag}') is not a known element`).toContain(tag);
+		}
+	});
+
 	it('contains an accessible learning workflow and parent evidence view', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

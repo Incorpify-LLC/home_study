@@ -1832,7 +1832,7 @@
 				if (!submitted) {
 					const actions = element('div', undefined, 'actions question-actions');
 					actions.style.marginTop = '12px';
-					const save = element('Save answer', undefined, 'secondary small');
+					const save = element('button', 'Save answer', 'secondary small');
 					save.type = 'button';
 					save.addEventListener('click', () => saveQuestion(question));
 					const confidence = element('label', 'How confident?', 'field');
