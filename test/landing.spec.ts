@@ -42,7 +42,8 @@ describe('Access-protected application shell', () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
 
-		expect(page).toContain("fetch('/api/session'");
+		// The page routes its calls through one fetch wrapper, so the endpoint path is the contract.
+		expect(page).toContain("'/api/session'");
 		expect(page).toContain("window.location.assign('/cdn-cgi/access/logout')");
 	});
 
@@ -54,7 +55,7 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('data-role="parent"');
 		expect(page).toContain('data-role="student"');
 		expect(page).toContain('id="student-list"');
-		expect(page).toContain("fetch('/api/students'");
+		expect(page).toContain("'/api/students'");
 		expect(page).toContain("result.user.role === 'parent'");
 		expect(page).not.toContain('Add a learner');
 		expect(page).not.toContain('Reset password');
@@ -70,9 +71,30 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('Rest days');
 		expect(page).toContain('Save hours and reschedule');
 		expect(page).toContain('Rebuild calendar now');
-		expect(page).toContain("fetch('/api/learning/plan'");
+		expect(page).toContain("'/api/learning/plan'");
 		expect(page).toContain('/plan/reschedule');
 		expect(page).toContain('/study-settings');
 		expect(page).toContain('/exercises');
+	});
+
+	it('supports the evaluation demo learner and the reviewed interface', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		// Demo learner controls.
+		expect(page).toContain('id="demo-bar"');
+		expect(page).toContain("'/api/demo/classes'");
+		expect(page).toContain("'/api/demo/class'");
+		expect(page).toContain("'/api/demo/reset'");
+		expect(page).toContain('Evaluation demo');
+
+		// Interface affordances added in the UI review.
+		expect(page).toContain('id="today-progress"');
+		expect(page).toContain('id="roadmap-progress"');
+		expect(page).toContain('id="result-ring"');
+		expect(page).toContain('data-field="answer-count"');
+		expect(page).toContain('class="skip-link"');
+		expect(page).toContain('prefers-reduced-motion');
+		expect(page).toContain('prefers-color-scheme: dark');
 	});
 });

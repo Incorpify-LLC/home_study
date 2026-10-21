@@ -8,6 +8,7 @@ import {
 	validateSettings,
 	type PlanEnv,
 } from './plan';
+import { demoState, switchDemoClass, resetDemoProgress } from './demo';
 
 interface Env {
 	ACCESS_AUD: string;
@@ -27,6 +28,7 @@ type SessionUser = {
 	id: string;
 	role: 'parent' | 'student' | 'reviewer';
 	display_name: string;
+	is_demo: number;
 };
 
 type StudentSummary = {
@@ -194,7 +196,7 @@ async function authenticatedUser(request: Request, env: Env): Promise<SessionUse
 	const email = await accessEmail(request, env);
 	if (!email) return null;
 	return env.DB.prepare(
-		`SELECT id, role, display_name
+		`SELECT id, role, display_name, is_demo
 		 FROM users
 		 WHERE active = 1 AND lower(email) = ?`,
 	)
@@ -204,7 +206,12 @@ async function authenticatedUser(request: Request, env: Env): Promise<SessionUse
 
 async function sessionState(request: Request, env: Env): Promise<Response> {
 	const user = await authenticatedUser(request, env);
-	return user ? json({ authenticated: true, user: { displayName: user.display_name, role: user.role } }) : json({ authenticated: false });
+	return user
+		? json({
+				authenticated: true,
+				user: { displayName: user.display_name, role: user.role, demo: user.is_demo === 1 },
+			})
+		: json({ authenticated: false });
 }
 
 function parentOnly(user: SessionUser | null): Response | null {
@@ -1009,6 +1016,53 @@ async function learnerPlan(request: Request, env: Env): Promise<Response> {
 	});
 }
 
+function demoOnly(user: SessionUser | null): Response | null {
+	if (!user) return json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	if (user.is_demo !== 1) {
+		return json({ error: 'forbidden', message: 'This action is available only to the evaluation demo learner.' }, 403);
+	}
+	return null;
+}
+
+async function demoClassesRoute(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = demoOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	return json(await demoState(env as PlanEnv, user.id));
+}
+
+async function demoSwitchClass(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = demoOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
+	}
+	const classLevel = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).classLevel : undefined;
+	if (typeof classLevel !== 'string' || classLevel.trim().length === 0) {
+		return json({ error: 'invalid_request', message: 'A class level is required.' }, 400);
+	}
+	try {
+		return json(await switchDemoClass(env as PlanEnv, user.id, classLevel.trim().toUpperCase()));
+	} catch {
+		return json({ error: 'unknown_class', message: 'That class has no reviewed content yet.' }, 400);
+	}
+}
+
+async function demoReset(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = demoOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	return json(await resetDemoProgress(env as PlanEnv, user.id));
+}
+
 function json(body: unknown, status = 200): Response {
 	return new Response(JSON.stringify(body), {
 		status,
@@ -1050,6 +1104,18 @@ export default {
 
 		if (pathname === '/api/learning/plan' && request.method === 'GET') {
 			return learnerPlan(request, env);
+		}
+
+		if (pathname === '/api/demo/classes' && request.method === 'GET') {
+			return demoClassesRoute(request, env);
+		}
+
+		if (pathname === '/api/demo/class' && request.method === 'POST') {
+			return demoSwitchClass(request, env);
+		}
+
+		if (pathname === '/api/demo/reset' && request.method === 'POST') {
+			return demoReset(request, env);
 		}
 
 		const parentPlanMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/plan$/);

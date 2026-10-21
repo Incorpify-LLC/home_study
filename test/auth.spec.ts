@@ -40,7 +40,7 @@ describe('Cloudflare Access identity', () => {
 	])('maps the verified email %s to its private role', async (email, displayName, role) => {
 		const response = await SELF.fetch('https://study.saneax.in/api/session', { headers: accessHeaders(email) });
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ authenticated: true, user: { displayName, role } });
+		expect(await response.json()).toEqual({ authenticated: true, user: { displayName, role, demo: false } });
 	});
 
 	it('does not authenticate an Access email without an active application profile', async () => {

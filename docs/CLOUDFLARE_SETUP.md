@@ -451,7 +451,7 @@ Cloudflare may rename permissions over time. Select the least-privilege equivale
 
 1. In **Zero Trust → Access controls → Applications**, create a **Self-hosted and private** application for the complete `study.saneax.in` hostname. Leave the path empty.
 2. Enable only **One-time PIN** and use instant authentication when offered.
-3. Create one **Allow** policy using the **Emails** selector with only the approved family addresses. Do not use Everyone, an email-domain selector, or Bypass.
+3. Create one **Allow** policy using the **Emails** selector with only the approved family addresses, plus the evaluation demo address `private-address@example.test` (see `docs/DEMO_USER.md`). Do not use Everyone, an email-domain selector, or Bypass.
 4. Pre-create matching active users in D1 and link each student through `parent_students`. Keep real family identities out of Git history and fixtures.
 5. Configure `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` in the Worker. Never configure `ACCESS_TEST_MODE` in production.
 
