@@ -187,6 +187,108 @@
 				flex-wrap: wrap;
 				margin-bottom: 12px;
 			}
+			.plan-view {
+				grid-column: 1 / -1;
+			}
+			.plan-list {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.plan-day {
+				border: 1px solid #dbe3ec;
+				border-radius: 12px;
+				padding: 10px 12px;
+				background: #fbfcfe;
+			}
+			.plan-day[data-rest='true'] {
+				background: #f6f7f9;
+				border-style: dashed;
+			}
+			.plan-day-head {
+				display: flex;
+				justify-content: space-between;
+				gap: 12px;
+				align-items: baseline;
+				flex-wrap: wrap;
+			}
+			.plan-entry {
+				display: flex;
+				justify-content: space-between;
+				gap: 12px;
+				align-items: center;
+				width: 100%;
+				margin-top: 8px;
+				padding: 8px 10px;
+				text-align: left;
+				border: 1px solid #c8d2de;
+				border-radius: 10px;
+				background: #fff;
+				cursor: pointer;
+			}
+			.plan-entry[data-state='done'] {
+				border-color: #1f7a4d;
+				background: #f2fbf6;
+			}
+			.plan-entry[data-state='missed'] {
+				border-color: #b45309;
+				background: #fff8ed;
+			}
+			.plan-settings {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 14px;
+				align-items: flex-end;
+				margin: 12px 0;
+			}
+			.plan-settings label {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				font-weight: 600;
+				font-size: 0.9rem;
+			}
+			.plan-settings input[type='number'],
+			.plan-settings select {
+				padding: 8px;
+				border: 1px solid #c8d2de;
+				border-radius: 8px;
+				font: inherit;
+				min-width: 96px;
+			}
+			.rest-days {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+			.rest-days label {
+				flex-direction: row;
+				align-items: center;
+				font-weight: 500;
+				gap: 5px;
+			}
+			.exercise-question {
+				border: 1px solid #dbe3ec;
+				border-radius: 12px;
+				padding: 12px;
+				margin-bottom: 10px;
+				background: #fff;
+			}
+			.exercise-question[data-correct='true'] {
+				border-color: #1f7a4d;
+			}
+			.exercise-question[data-correct='false'] {
+				border-color: #b42318;
+			}
+			.exercise-option {
+				display: block;
+				padding: 4px 0;
+				color: #3c4a5a;
+			}
+			.exercise-option[data-correct='true'] {
+				color: #1f7a4d;
+				font-weight: 700;
+			}
 			.subject-tab {
 				padding: 8px 16px;
 				border: 1px solid #c8d2de;
@@ -422,10 +524,28 @@
 								<h2 id="progress-title">Progress evidence</h2>
 								<p class="notice">Select a learner to review completion, objective scores, and corrections.</p>
 							</section>
+							<section id="plan-view" class="panel plan-view" aria-labelledby="plan-title" aria-live="polite">
+								<h2 id="plan-title">Study calendar</h2>
+								<p class="notice">Select a learner to set their daily study time and review the generated assessment calendar.</p>
+							</section>
+							<section id="exercise-view" class="panel plan-view" aria-labelledby="exercise-title" hidden>
+								<h2 id="exercise-title">Exercise review</h2>
+								<div id="exercise-body"></div>
+							</section>
 						</div>
 					</div>
 
 					<div data-role="student" hidden>
+						<section id="today-plan" class="panel" aria-labelledby="today-title" aria-live="polite">
+							<div class="assignment-heading">
+								<div>
+									<span class="eyebrow">Your assessment calendar</span>
+									<h2 id="today-title">Today’s plan</h2>
+								</div>
+								<p id="today-summary" class="meta"></p>
+							</div>
+							<div id="today-list" class="plan-list">Loading your calendar…</div>
+						</section>
 						<section id="course-roadmap" class="panel" aria-labelledby="roadmap-title">
 							<div class="assignment-heading">
 								<div>
@@ -502,6 +622,11 @@
 			const studentShell = document.querySelector('[data-role="student"]');
 			const studentList = document.querySelector('#student-list');
 			const progressView = document.querySelector('#progress-view');
+			const planView = document.querySelector('#plan-view');
+			const exerciseView = document.querySelector('#exercise-view');
+			const exerciseBody = document.querySelector('#exercise-body');
+			const todayList = document.querySelector('#today-list');
+			const todaySummary = document.querySelector('#today-summary');
 			const learningWorkspace = document.querySelector('#learning-workspace');
 			let currentAssignment = null;
 			let activeSubject = null;
@@ -534,6 +659,10 @@
 				viewButton.type = 'button';
 				viewButton.addEventListener('click', () => loadProgress(student));
 				card.append(viewButton);
+				const planButton = element('button', 'Calendar & exercises', 'secondary');
+				planButton.type = 'button';
+				planButton.addEventListener('click', () => loadLearnerPlan(student));
+				card.append(planButton);
 				return card;
 			}
 
@@ -569,6 +698,303 @@
 					card.append(list);
 				}
 				return card;
+			}
+
+			const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+			function formatDay(date) {
+				const parsed = new Date(`${date}T00:00:00Z`);
+				const weekday = WEEKDAY_NAMES[(parsed.getUTCDay() + 6) % 7];
+				return `${weekday} ${parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`;
+			}
+
+			function planEntryButton(entry, student) {
+				const button = element('button', undefined, 'plan-entry');
+				button.type = 'button';
+				button.dataset.state = entry.state;
+				const left = element('span');
+				left.append(element('strong', `${entry.subject} · Chapter ${entry.sequence}`), element('small', entry.title));
+				const right = element(
+					'span',
+					`${entry.minutes} min${entry.state === 'done' ? ' · completed' : entry.state === 'missed' ? ' · not submitted' : ''}`,
+				);
+				button.append(left, right);
+				button.addEventListener('click', () => loadExercise(student, entry));
+				return button;
+			}
+
+			function planCalendar(student, view) {
+				const container = element('div');
+				const settings = element('form', undefined, 'plan-settings');
+				settings.id = 'plan-settings-form';
+				const field = (labelText, input) => {
+					const label = element('label', labelText);
+					label.append(input);
+					return label;
+				};
+				const weekday = document.createElement('input');
+				weekday.type = 'number';
+				weekday.min = '30';
+				weekday.max = '480';
+				weekday.step = '15';
+				weekday.value = String(view.settings.weekdayMinutes);
+				weekday.id = 'plan-weekday-minutes';
+				const weekend = document.createElement('input');
+				weekend.type = 'number';
+				weekend.min = '30';
+				weekend.max = '480';
+				weekend.step = '15';
+				weekend.value = String(view.settings.weekendMinutes);
+				weekend.id = 'plan-weekend-minutes';
+				const horizon = document.createElement('select');
+				horizon.id = 'plan-horizon-days';
+				for (const days of [7, 14, 21, 28, 42]) {
+					const option = document.createElement('option');
+					option.value = String(days);
+					option.textContent = `${days} days`;
+					option.selected = days === view.settings.horizonDays;
+					horizon.append(option);
+				}
+				const rest = element('div', undefined, 'rest-days');
+				WEEKDAY_NAMES.forEach((name, index) => {
+					const dayNumber = index + 1;
+					const label = element('label', name);
+					const input = document.createElement('input');
+					input.type = 'checkbox';
+					input.value = String(dayNumber);
+					input.dataset.restDay = String(dayNumber);
+					input.checked = view.settings.restWeekdays.includes(dayNumber);
+					label.prepend(input);
+					rest.append(label);
+				});
+				const restWrapper = element('label', 'Rest days');
+				restWrapper.append(rest);
+				settings.append(
+					field('Weekday study time (minutes)', weekday),
+					field('Weekend study time (minutes)', weekend),
+					field('Planning horizon', horizon),
+					restWrapper,
+				);
+				const actions = element('div', undefined, 'submit-row');
+				const save = element('button', 'Save hours and reschedule', 'secondary');
+				save.type = 'submit';
+				const reschedule = element('button', 'Rebuild calendar now', 'secondary');
+				reschedule.type = 'button';
+				actions.append(save, reschedule);
+				settings.append(actions);
+				settings.addEventListener('submit', async (event) => {
+					event.preventDefault();
+					await saveStudySettings(student, {
+						weekdayMinutes: Number(weekday.value),
+						weekendMinutes: Number(weekend.value),
+						horizonDays: Number(horizon.value),
+						restWeekdays: [...settings.querySelectorAll('[data-rest-day]')]
+							.filter((input) => input.checked)
+							.map((input) => Number(input.value)),
+					});
+				});
+				reschedule.addEventListener('click', () => rescheduleLearner(student));
+				container.append(settings);
+
+				const unscheduledNote = element(
+					'p',
+					view.plan.unscheduled.length === 0
+						? 'Every outstanding chapter fits inside this calendar.'
+						: `${view.plan.unscheduled.length} chapter(s) do not fit inside this horizon — extend the horizon or raise the daily hours.`,
+					'notice',
+				);
+				container.append(unscheduledNote);
+
+				const list = element('div', undefined, 'plan-list');
+				for (const day of view.plan.days) {
+					const card = element('article', undefined, 'plan-day');
+					card.dataset.rest = String(day.capacityMinutes === 0);
+					const head = element('div', undefined, 'plan-day-head');
+					head.append(
+						element('strong', formatDay(day.date)),
+						element(
+							'span',
+							day.capacityMinutes === 0 ? 'Rest day' : `${day.allocatedMinutes} of ${day.capacityMinutes} planned minutes`,
+							'muted',
+						),
+					);
+					card.append(head);
+					for (const entry of day.entries) card.append(planEntryButton(entry, student));
+					list.append(card);
+				}
+				container.append(list);
+				return container;
+			}
+
+			async function loadLearnerPlan(student) {
+				planView.replaceChildren(
+					element('h2', `${student.displayName} · study calendar`),
+					element('p', 'Building the calendar…', 'notice'),
+				);
+				try {
+					const response = await fetch(`/api/parent/learners/${encodeURIComponent(student.id)}/plan`);
+					const result = await response.json();
+					if (!response.ok) {
+						planView.replaceChildren(
+							element('h2', `${student.displayName} · study calendar`),
+							element('p', result.message || 'The study calendar could not be loaded.', 'notice'),
+						);
+						return;
+					}
+					planView.replaceChildren(element('h2', `${student.displayName} · study calendar`));
+					planView.append(
+						element(
+							'p',
+							`Revision ${result.plan.revision} · ${result.plan.changeReason.replaceAll('_', ' ')} · ${result.plan.totalPlannedMinutes} planned minutes`,
+							'muted',
+						),
+					);
+					planView.append(planCalendar(student, result));
+				} catch {
+					planView.replaceChildren(
+						element('h2', `${student.displayName} · study calendar`),
+						element('p', 'The study calendar could not be loaded. Please reload.', 'notice'),
+					);
+				}
+			}
+
+			async function saveStudySettings(student, payload) {
+				const response = await fetch(`/api/parent/learners/${encodeURIComponent(student.id)}/study-settings`, {
+					method: 'PUT',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				const result = await response.json();
+				if (!response.ok) {
+					window.alert(result.message || 'The study hours could not be saved.');
+					return;
+				}
+				await loadLearnerPlan(student);
+			}
+
+			async function rescheduleLearner(student) {
+				const response = await fetch(`/api/parent/learners/${encodeURIComponent(student.id)}/plan/reschedule`, {
+					method: 'POST',
+				});
+				const result = await response.json();
+				if (!response.ok) {
+					window.alert(result.message || 'The calendar could not be rebuilt.');
+					return;
+				}
+				await loadLearnerPlan(student);
+			}
+
+			function answerText(answer) {
+				if (answer === null || answer === undefined) return 'Not answered yet';
+				if (typeof answer === 'object' && 'choice' in answer) return `Option ${answer.choice}`;
+				if (typeof answer === 'object' && 'value' in answer) return String(answer.value);
+				return JSON.stringify(answer);
+			}
+
+			function renderExercise(student, exercise) {
+				exerciseView.hidden = false;
+				exerciseView.querySelector('#exercise-title').textContent =
+					`${student.displayName} · ${exercise.subject} chapter ${exercise.sequence}`;
+				const body = element('div');
+				body.append(element('h3', exercise.title));
+				body.append(element('p', exercise.lesson.overview, 'muted'));
+				const points = element('ul');
+				for (const point of exercise.lesson.keyPoints) points.append(element('li', point));
+				body.append(points);
+				const example = exercise.lesson.workedExample;
+				const worked = element('div', undefined, 'worked-example');
+				worked.append(element('h4', 'Worked example'), element('p', example.prompt));
+				const steps = element('ol');
+				for (const step of example.steps) steps.append(element('li', step));
+				worked.append(steps, element('p', `Answer: ${example.answer}`));
+				body.append(worked);
+
+				const statusLine =
+					exercise.status === 'submitted'
+						? 'Submitted by the learner — answers and scores below.'
+						: exercise.status === 'in_progress'
+							? 'In progress — the learner has started but not submitted yet.'
+							: exercise.status === 'reviewed'
+								? 'Reviewed.'
+								: 'Not started by the learner yet. Answers shown are the reviewed answer key.';
+				body.append(element('p', statusLine, 'notice'));
+
+				for (const [index, question] of exercise.questions.entries()) {
+					const card = element('article', undefined, 'exercise-question');
+					if (question.score !== null) card.dataset.correct = String(question.score === 1);
+					card.append(element('strong', `${index + 1}. ${question.prompt}`));
+					if (Array.isArray(question.options)) {
+						for (const option of question.options) {
+							const line = element('span', `${option.id.toUpperCase()}. ${option.label}`, 'exercise-option');
+							line.dataset.correct = String(question.correctAnswer && question.correctAnswer.choice === option.id);
+							card.append(line);
+						}
+					} else if (question.correctAnswer && 'value' in question.correctAnswer) {
+						card.append(element('p', `Expected answer: ${question.correctAnswer.value}`));
+					}
+					card.append(element('p', `Learner answer: ${answerText(question.studentAnswer)}`));
+					if (question.score !== null) card.append(element('p', question.score === 1 ? 'Correct' : 'Needs correction'));
+					card.append(element('p', `Why: ${question.rationale}`, 'muted'));
+					body.append(card);
+				}
+				exerciseBody.replaceChildren(body);
+				exerciseView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+
+			async function loadExercise(student, entry) {
+				exerciseView.hidden = false;
+				exerciseBody.replaceChildren(element('p', 'Loading the reviewed exercise…', 'notice'));
+				try {
+					const response = await fetch(
+						`/api/parent/learners/${encodeURIComponent(student.id)}/exercises?subject=${encodeURIComponent(entry.subject)}&sequence=${entry.sequence}`,
+					);
+					const result = await response.json();
+					if (!response.ok) {
+						exerciseBody.replaceChildren(element('p', result.message || 'This exercise could not be loaded.', 'notice'));
+						return;
+					}
+					renderExercise(student, result.exercise);
+				} catch {
+					exerciseBody.replaceChildren(element('p', 'This exercise could not be loaded. Please reload.', 'notice'));
+				}
+			}
+
+			async function loadTodaysPlan() {
+				try {
+					const response = await fetch('/api/learning/plan');
+					const result = await response.json();
+					if (!response.ok) {
+						todayList.replaceChildren(element('p', result.message || 'Your calendar could not be loaded.', 'notice'));
+						return;
+					}
+					todaySummary.textContent = `${result.today.allocatedMinutes} of ${result.today.capacityMinutes} planned minutes today`;
+					todayList.replaceChildren();
+					if (result.today.entries.length === 0) {
+						const upcoming = result.plan.days.find((day) => day.entries.length > 0);
+						todayList.append(
+							element(
+								'p',
+								upcoming
+									? `Nothing is scheduled today. Next work is on ${formatDay(upcoming.date)}.`
+									: 'Nothing is scheduled. Ask your parent to set study hours.',
+								'notice',
+							),
+						);
+						return;
+					}
+					for (const entry of result.today.entries) {
+						const card = element('article', undefined, 'plan-day');
+						const head = element('div', undefined, 'plan-day-head');
+						head.append(
+							element('strong', `${entry.subject} · Chapter ${entry.sequence}`),
+							element('span', `${entry.minutes} min · ${entry.state}`, 'muted'),
+						);
+						card.append(head, element('p', entry.title, 'muted'));
+						todayList.append(card);
+					}
+				} catch {
+					todayList.replaceChildren(element('p', 'Your calendar could not be loaded. Please reload.', 'notice'));
+				}
 			}
 
 			async function loadProgress(student) {
@@ -836,6 +1262,8 @@
 					control.disabled = true;
 				renderCorrections(currentAssignment);
 				await loadRoadmap();
+				// The remaining calendar changed the moment this chapter was submitted.
+				await loadTodaysPlan();
 				document.querySelector('#corrections').scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 
@@ -897,6 +1325,7 @@
 					await loadStudents();
 				} else {
 					dashboardNote.textContent = 'Learn, save your work, submit, and correct.';
+					await loadTodaysPlan();
 					await loadLearning();
 				}
 			}

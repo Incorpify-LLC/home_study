@@ -74,6 +74,8 @@ Required capabilities:
 
 Acceptance: the system can generate and complete one bounded daily plan from reviewed diagnostic evidence.
 
+Status: shipped for scheduling. `docs/STUDY_SCHEDULER.md` records the engine rules. A parent sets weekday and weekend minutes, rest days, and a planning horizon; the calendar is generated from the outstanding chapters and rebuilt when any input changes (hours, subjects, completed work, missed days, or the horizon expiring). Subjects rotate so every subject progresses, chapters are never split across days, and chapters that do not fit the horizon are reported rather than dropped. The learner sees the same calendar and is asked to open the chapter the calendar schedules for today. Still missing from this slice: a parent pause switch, and adapting the _content_ of a day (explanation, guided practice, independent check) rather than its chapter allocation.
+
 ### Slice 4 — private rough-work upload and review
 
 Required capabilities:

@@ -26,6 +26,9 @@ Product notes that contain family-specific information should stay outside the r
 - Student lesson, worked example, diagnostic, draft save/resume, submission, objective scoring, and corrections
 - Per-subject sequential progression: a subject's next chapter unlocks only after the current one is submitted, and progress in one subject never unlocks another
 - Subject tabs on the learner dashboard for a class carrying more than one subject
+- Parent-set study hours (weekday, weekend, rest days, horizon) with a generated assessment calendar per learner
+- A deterministic scheduler that rebuilds the calendar whenever hours, subjects, finished work, or missed days change, rotating fairly across subjects and never splitting a chapter across days
+- Parent exercise review: every chapter opens with the lesson, the answer key, rationales, and the learner's own answers and scores
 - Parent evidence view scoped to explicitly linked learners
 - D1 schema for source provenance, reviewed content, assignment templates, responses, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images

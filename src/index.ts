@@ -1,3 +1,14 @@
+import {
+	ensureFreshPlan,
+	exerciseForParent,
+	istToday,
+	reschedulePlan,
+	saveSettings,
+	todaysTemplateIds,
+	validateSettings,
+	type PlanEnv,
+} from './plan';
+
 interface Env {
 	ACCESS_AUD: string;
 	ACCESS_TEAM_DOMAIN: string;
@@ -278,6 +289,37 @@ async function reviewedTemplateForStudent(
 		.first<LearningTemplate>();
 }
 
+async function templateForStudent(env: Env, studentId: string, templateId: string): Promise<LearningTemplate | null> {
+	return env.DB.prepare(
+		`SELECT assignment_templates.id AS templateId,
+		        assignment_templates.sequence,
+		        assignment_templates.class_level AS classLevel,
+		        assignment_templates.subject,
+		        assignment_templates.title,
+		        assignment_templates.instructions,
+		        assignment_templates.estimated_minutes AS estimatedMinutes,
+		        learning_modules.title AS moduleTitle,
+		        learning_modules.overview,
+		        learning_modules.key_points_json AS keyPointsJson,
+		        learning_modules.worked_example_json AS workedExampleJson,
+		        learning_modules.practice_advice AS practiceAdvice
+		 FROM student_profiles
+		 JOIN assignment_templates ON assignment_templates.class_level = student_profiles.class_level
+		 JOIN learning_modules ON learning_modules.id = assignment_templates.module_id
+		 JOIN curriculum_topics ON curriculum_topics.id = learning_modules.topic_id
+		 WHERE student_profiles.user_id = ?
+		   AND assignment_templates.id = ?
+		   AND assignment_templates.active = 1
+		   AND assignment_templates.review_status = 'reviewed'
+		   AND learning_modules.review_status = 'reviewed'
+		   AND curriculum_topics.review_status = 'reviewed'
+		   AND (curriculum_topics.board IS NULL OR lower(curriculum_topics.board) = lower(student_profiles.board))
+		   AND (curriculum_topics.exam_year IS NULL OR curriculum_topics.exam_year = student_profiles.exam_year)`,
+	)
+		.bind(studentId, templateId)
+		.first<LearningTemplate>();
+}
+
 async function availableSubjects(env: Env, studentId: string): Promise<string[]> {
 	const result = await env.DB.prepare(
 		`SELECT DISTINCT assignment_templates.subject
@@ -519,7 +561,13 @@ async function currentLearning(request: Request, env: Env): Promise<Response> {
 	if (!subject) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this class yet.' }, 404);
 	let assignment = await latestAssignmentForStudent(env, user.id, subject);
 	if (!assignment) {
-		const template = await reviewedTemplateForStudent(env, user.id, 0, subject);
+		// Prefer today's scheduled chapter so the learner follows the published calendar,
+		// then fall back to the next chapter in course order.
+		const planned = await todaysTemplateIds(env as PlanEnv, user.id);
+		const templateId = planned.get(subject);
+		const template =
+			(templateId ? await templateForStudent(env, user.id, templateId) : null) ??
+			(await reviewedTemplateForStudent(env, user.id, 0, subject));
 		if (!template) return json({ error: 'not_found', message: 'No reviewed learning assignment is available for this subject yet.' }, 404);
 		assignment = await createAssignment(env, user.id, template);
 	}
@@ -772,7 +820,16 @@ async function submitAssignment(request: Request, env: Env, assignmentId: string
 		).bind(crypto.randomUUID(), user.id, attempted[0].topicId, masteryState, attempted[0].attemptId),
 	);
 	await env.DB.batch(statements);
-	return json({ result: await resultForAssignment(env, assignment.id) });
+	// Finishing a chapter changes the outstanding work, so the calendar is rebuilt
+	// around what is left. A failure here must not lose the submission.
+	let rescheduled = false;
+	try {
+		await reschedulePlan(env as PlanEnv, user.id, 'roll_forward');
+		rescheduled = true;
+	} catch (error) {
+		console.error('study plan reschedule failed after submission', error);
+	}
+	return json({ result: await resultForAssignment(env, assignment.id), rescheduled });
 }
 
 async function studentProgress(request: Request, env: Env, studentId: string): Promise<Response> {
@@ -837,6 +894,121 @@ async function studentProgress(request: Request, env: Env, studentId: string): P
 	return json({ student, assignments: payload });
 }
 
+async function linkedLearner(env: Env, parentId: string, learnerId: string): Promise<StudentSummary | null> {
+	return env.DB.prepare(
+		`SELECT users.id,
+		        users.display_name AS displayName,
+		        student_profiles.class_level AS classLevel,
+		        student_profiles.board,
+		        student_profiles.exam_year AS examYear
+		 FROM parent_students
+		 JOIN users ON users.id = parent_students.student_id
+		 JOIN student_profiles ON student_profiles.user_id = users.id
+		 WHERE parent_students.parent_id = ? AND parent_students.student_id = ? AND users.active = 1`,
+	)
+		.bind(parentId, learnerId)
+		.first<StudentSummary>();
+}
+
+function planDenied(user: SessionUser | null): Response | null {
+	const denied = parentOnly(user);
+	if (denied) return denied;
+	return null;
+}
+
+async function parentLearnerPlan(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = planDenied(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+
+	const view = await ensureFreshPlan(env as PlanEnv, learnerId);
+	return json({ learner, ...view });
+}
+
+async function updateStudySettings(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = planDenied(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
+	}
+	const { settings, error } = validateSettings(body);
+	if (!settings) return json({ error: 'invalid_settings', message: error ?? 'The study settings are not valid.' }, 400);
+
+	await saveSettings(env as PlanEnv, learnerId, user.id, settings);
+	const hadPlan = await env.DB.prepare(`SELECT 1 AS present FROM study_plans WHERE student_id = ? AND active = 1`)
+		.bind(learnerId)
+		.first<{ present: number }>();
+	const view = await reschedulePlan(env as PlanEnv, learnerId, hadPlan ? 'hours_changed' : 'initial', settings);
+	return json({ learner, ...view });
+}
+
+async function rescheduleParentPlan(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = planDenied(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+
+	const view = await reschedulePlan(env as PlanEnv, learnerId, 'manual');
+	return json({ learner, ...view });
+}
+
+async function parentExercises(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = planDenied(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+
+	const url = new URL(request.url);
+	const subject = url.searchParams.get('subject');
+	const sequence = Number(url.searchParams.get('sequence'));
+	if (!subject || !Number.isInteger(sequence) || sequence < 1) {
+		return json({ error: 'invalid_request', message: 'A subject and a chapter number are required.' }, 400);
+	}
+
+	const exercise = await exerciseForParent(env as PlanEnv, learnerId, subject, sequence);
+	if (!exercise) return json({ error: 'not_found', message: 'No reviewed exercise matches that subject and chapter.' }, 404);
+	return json({ learner, exercise });
+}
+
+async function learnerPlan(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+
+	const view = (await ensureFreshPlan(env as PlanEnv, user.id)) as Awaited<ReturnType<typeof ensureFreshPlan>>;
+	const today = istToday();
+	const day = view.plan.days.find((candidate) => candidate.date === today);
+	return json({
+		plan: {
+			revision: view.plan.revision,
+			startDate: view.plan.startDate,
+			endDate: view.plan.endDate,
+			days: view.plan.days,
+		},
+		today: day ?? { date: today, capacityMinutes: 0, allocatedMinutes: 0, entries: [] },
+	});
+}
+
 function json(body: unknown, status = 200): Response {
 	return new Response(JSON.stringify(body), {
 		status,
@@ -874,6 +1046,30 @@ export default {
 
 		if (pathname === '/api/learning/next' && request.method === 'POST') {
 			return nextLearning(request, env);
+		}
+
+		if (pathname === '/api/learning/plan' && request.method === 'GET') {
+			return learnerPlan(request, env);
+		}
+
+		const parentPlanMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/plan$/);
+		if (parentPlanMatch && request.method === 'GET') {
+			return parentLearnerPlan(request, env, parentPlanMatch[1]);
+		}
+
+		const rescheduleMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/plan\/reschedule$/);
+		if (rescheduleMatch && request.method === 'POST') {
+			return rescheduleParentPlan(request, env, rescheduleMatch[1]);
+		}
+
+		const settingsMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/study-settings$/);
+		if (settingsMatch && request.method === 'PUT') {
+			return updateStudySettings(request, env, settingsMatch[1]);
+		}
+
+		const exercisesMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/exercises$/);
+		if (exercisesMatch && request.method === 'GET') {
+			return parentExercises(request, env, exercisesMatch[1]);
 		}
 
 		const responseMatch = pathname.match(/^\/api\/learning\/assignments\/([A-Za-z0-9-]+)\/responses$/);

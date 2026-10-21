@@ -3,6 +3,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(async () => ({
 	test: {
+		// Test files share one D1 instance; running them in parallel lets concurrent
+		// writes interfere and produces flaky failures, so they run in sequence.
+		fileParallelism: false,
 		env: {
 			REMOTE_SMOKE: process.env.REMOTE_SMOKE ?? '',
 			STUDY_BASE_URL: process.env.STUDY_BASE_URL ?? '',

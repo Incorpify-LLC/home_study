@@ -59,4 +59,20 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('Add a learner');
 		expect(page).not.toContain('Reset password');
 	});
+
+	it('exposes the study calendar controls and the exercise review view', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="plan-view"');
+		expect(page).toContain('id="exercise-view"');
+		expect(page).toContain('id="today-plan"');
+		expect(page).toContain('Rest days');
+		expect(page).toContain('Save hours and reschedule');
+		expect(page).toContain('Rebuild calendar now');
+		expect(page).toContain("fetch('/api/learning/plan'");
+		expect(page).toContain('/plan/reschedule');
+		expect(page).toContain('/study-settings');
+		expect(page).toContain('/exercises');
+	});
 });
