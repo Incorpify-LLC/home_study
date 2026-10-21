@@ -115,6 +115,52 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('Reset password');
 	});
 
+	it('presents the parent workspace as accessible pages instead of one long column', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="parent-workspace-tabs"');
+		expect(page).toContain('role="tablist" aria-label="Parent workspace"');
+		for (const tab of ['parent-tab-learners', 'parent-tab-progress', 'parent-tab-calendar', 'parent-tab-exercise']) {
+			expect(page).toContain(`id="${tab}"`);
+		}
+		expect(page).toContain('data-workspace-panel="parent"');
+		expect(page).toContain("setWorkspaceTab('parent'");
+	});
+
+	it('presents the student workflow as accessible pages instead of one long flow', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="student-workspace-tabs"');
+		expect(page).toContain('role="tablist" aria-label="Student workspace"');
+		for (const tab of ['student-tab-today', 'student-tab-course', 'student-tab-learn', 'student-tab-practice', 'student-tab-review']) {
+			expect(page).toContain(`id="${tab}"`);
+		}
+		expect(page).toContain('data-workspace-panel="student"');
+		expect(page).toContain("setWorkspaceTab('student'");
+		expect(page).toContain("prepareWorkspaceTabs('student')");
+	});
+
+	it('pages practice questions one at a time', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="question-pager"');
+		expect(page).toContain('id="question-previous"');
+		expect(page).toContain('id="question-next"');
+		expect(page).toContain('id="question-position"');
+		expect(page).toContain('function showQuestion(');
+	});
+
+	it('takes the learner to the first unanswered question on submit', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('for (const [index, question] of currentAssignment.questions.entries())');
+		expect(page).toContain('showQuestion(index, true)');
+	});
+
 	it('exposes the study calendar controls and the exercise review view', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

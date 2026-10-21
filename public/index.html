@@ -438,6 +438,62 @@
 				flex: 1 1 auto;
 			}
 
+			/* ---------- Workspace navigation ---------- */
+			.workspace-tabs {
+				display: flex;
+				gap: var(--space-2);
+				margin: 0 0 var(--space-4);
+				padding: 5px;
+				border: 1px solid var(--line);
+				border-radius: calc(var(--radius) + 2px);
+				background: var(--surface-sunken);
+				overflow-x: auto;
+				scrollbar-width: thin;
+			}
+			.workspace-tab {
+				flex: 1 0 auto;
+				min-height: 42px;
+				border: 0;
+				border-radius: var(--radius-sm);
+				background: transparent;
+				color: var(--muted);
+				box-shadow: none;
+				white-space: nowrap;
+			}
+			.workspace-tab:hover:not(:disabled) {
+				background: color-mix(in srgb, var(--surface) 76%, transparent);
+				color: var(--ink);
+			}
+			.workspace-tab[aria-selected='true'] {
+				background: var(--surface);
+				color: var(--brand-ink);
+				box-shadow: var(--shadow-sm);
+			}
+			.workspace-tab:disabled {
+				opacity: 0.45;
+			}
+			.workspace-pages {
+				min-height: 420px;
+			}
+			.workspace-page[hidden] {
+				display: none;
+			}
+
+			.question-pager {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-3);
+				margin: var(--space-4) 0;
+				padding-top: var(--space-3);
+				border-top: 1px solid var(--line);
+			}
+			.question-pager .meta {
+				font-weight: 700;
+				color: var(--ink-soft);
+				text-align: center;
+			}
+
 			/* ---------- Chips, progress, stats ---------- */
 			.chip-row {
 				display: flex;
@@ -702,6 +758,9 @@
 				margin: 0 0 var(--space-3);
 				background: var(--surface);
 				min-inline-size: 0;
+			}
+			.question[hidden] {
+				display: none;
 			}
 			.question-head {
 				display: flex;
@@ -1005,8 +1064,65 @@
 					</div>
 
 					<div data-role="parent" hidden>
-						<div class="grid parent-grid">
-							<section class="panel" aria-labelledby="students-title">
+						<nav id="parent-workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Parent workspace">
+							<button
+								id="parent-tab-learners"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="true"
+								aria-controls="learners-view"
+								data-workspace-target="learners"
+							>
+								Learners
+							</button>
+							<button
+								id="parent-tab-progress"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="progress-view"
+								data-workspace-target="progress"
+								tabindex="-1"
+							>
+								Progress
+							</button>
+							<button
+								id="parent-tab-calendar"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="plan-view"
+								data-workspace-target="calendar"
+								tabindex="-1"
+							>
+								Calendar
+							</button>
+							<button
+								id="parent-tab-exercise"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="exercise-view"
+								data-workspace-target="exercise"
+								tabindex="-1"
+								disabled
+							>
+								Exercise
+							</button>
+						</nav>
+						<div class="workspace-pages">
+							<section
+								id="learners-view"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="parent-tab-learners"
+								data-workspace-panel="parent"
+								data-workspace-page="learners"
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Family</span>
@@ -1020,7 +1136,16 @@
 								<div id="student-list" class="card-list" aria-live="polite"></div>
 							</section>
 
-							<section id="progress-view" class="panel" aria-labelledby="progress-title" aria-live="polite">
+							<section
+								id="progress-view"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="parent-tab-progress"
+								aria-live="polite"
+								data-workspace-panel="parent"
+								data-workspace-page="progress"
+								hidden
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Evidence</span>
@@ -1030,7 +1155,16 @@
 								<p class="notice">Select a learner to review completion, objective scores, and corrections.</p>
 							</section>
 
-							<section id="plan-view" class="panel plan-view" aria-labelledby="plan-title" aria-live="polite">
+							<section
+								id="plan-view"
+								class="panel plan-view workspace-page"
+								role="tabpanel"
+								aria-labelledby="parent-tab-calendar"
+								aria-live="polite"
+								data-workspace-panel="parent"
+								data-workspace-page="calendar"
+								hidden
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Assessment calendar</span>
@@ -1040,7 +1174,15 @@
 								<p class="notice">Select a learner to set their daily study time and review the generated assessment calendar.</p>
 							</section>
 
-							<section id="exercise-view" class="panel plan-view" aria-labelledby="exercise-title" hidden>
+							<section
+								id="exercise-view"
+								class="panel plan-view workspace-page"
+								role="tabpanel"
+								aria-labelledby="parent-tab-exercise"
+								data-workspace-panel="parent"
+								data-workspace-page="exercise"
+								hidden
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Exercise review</span>
@@ -1054,8 +1196,78 @@
 					</div>
 
 					<div data-role="student" hidden>
-						<div class="stack">
-							<section id="today-plan" class="panel" aria-labelledby="today-title" aria-live="polite">
+						<nav id="student-workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Student workspace">
+							<button
+								id="student-tab-today"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="true"
+								aria-controls="today-plan"
+								data-workspace-target="today"
+							>
+								Today
+							</button>
+							<button
+								id="student-tab-course"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="course-roadmap"
+								data-workspace-target="course"
+								tabindex="-1"
+							>
+								Course
+							</button>
+							<button
+								id="student-tab-learn"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="lesson-page"
+								data-workspace-target="learn"
+								tabindex="-1"
+							>
+								Learn
+							</button>
+							<button
+								id="student-tab-practice"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="practice-page"
+								data-workspace-target="practice"
+								tabindex="-1"
+							>
+								Practice
+							</button>
+							<button
+								id="student-tab-review"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="corrections"
+								data-workspace-target="review"
+								tabindex="-1"
+								disabled
+							>
+								Review
+							</button>
+						</nav>
+						<div class="workspace-pages">
+							<section
+								id="today-plan"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="student-tab-today"
+								aria-live="polite"
+								data-workspace-panel="student"
+								data-workspace-page="today"
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Your assessment calendar</span>
@@ -1067,7 +1279,15 @@
 								<div id="today-list" class="card-list" style="margin-top: 14px">Loading your calendar…</div>
 							</section>
 
-							<section id="course-roadmap" class="panel" aria-labelledby="roadmap-title">
+							<section
+								id="course-roadmap"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="student-tab-course"
+								data-workspace-panel="student"
+								data-workspace-page="course"
+								hidden
+							>
 								<div class="panel-head">
 									<div>
 										<span class="eyebrow">Complete course</span>
@@ -1085,7 +1305,15 @@
 							</div>
 
 							<template id="learning-template">
-								<section class="panel lesson" aria-labelledby="lesson-title">
+								<section
+									id="lesson-page"
+									class="panel lesson workspace-page"
+									role="tabpanel"
+									aria-labelledby="student-tab-learn"
+									data-workspace-panel="student"
+									data-workspace-page="learn"
+									hidden
+								>
 									<span class="eyebrow">Learn first</span>
 									<h2 id="lesson-title"></h2>
 									<p data-field="overview"></p>
@@ -1099,7 +1327,15 @@
 									<p class="callout" data-field="practice-advice"></p>
 								</section>
 
-								<section class="panel" aria-labelledby="assignment-title">
+								<section
+									id="practice-page"
+									class="panel workspace-page"
+									role="tabpanel"
+									aria-labelledby="student-tab-practice"
+									data-workspace-panel="student"
+									data-workspace-page="practice"
+									hidden
+								>
 									<div class="panel-head">
 										<div>
 											<span class="eyebrow" data-field="subject"></span>
@@ -1110,6 +1346,11 @@
 									<p class="muted" data-field="instructions"></p>
 									<div id="assignment-feedback" class="feedback" role="status" hidden></div>
 									<form id="question-form" novalidate></form>
+									<nav id="question-pager" class="question-pager" aria-label="Practice questions">
+										<button id="question-previous" class="secondary small" type="button">Previous</button>
+										<span id="question-position" class="meta" aria-live="polite">Question 1</span>
+										<button id="question-next" class="secondary small" type="button">Next</button>
+									</nav>
 									<div class="action-bar">
 										<span class="status-line" data-field="answer-count"></span>
 										<span class="spacer"></span>
@@ -1118,7 +1359,15 @@
 									</div>
 								</section>
 
-								<section id="corrections" class="panel" aria-labelledby="corrections-title" hidden>
+								<section
+									id="corrections"
+									class="panel workspace-page"
+									role="tabpanel"
+									aria-labelledby="student-tab-review"
+									data-workspace-panel="student"
+									data-workspace-page="review"
+									hidden
+								>
 									<div class="panel-head">
 										<div>
 											<span class="eyebrow">Review</span>
@@ -1208,6 +1457,7 @@
 
 			const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 			let currentAssignment = null;
+			let activeQuestionIndex = 0;
 			let activeSubject = null;
 			let sessionUser = null;
 
@@ -1276,6 +1526,50 @@
 				if (typeof answer === 'object' && 'value' in answer) return String(answer.value);
 				return JSON.stringify(answer);
 			}
+
+			function setWorkspaceTab(scope, page, focus = false) {
+				const shell = document.querySelector(`[data-role="${scope}"]`);
+				if (!shell) return;
+				const tabs = [...shell.querySelectorAll('[data-workspace-target]')];
+				const target = tabs.find((tab) => tab.dataset.workspaceTarget === page && !tab.disabled);
+				if (!target) return;
+
+				for (const tab of tabs) {
+					const selected = tab === target;
+					tab.setAttribute('aria-selected', String(selected));
+					tab.tabIndex = selected ? 0 : -1;
+				}
+				for (const panel of shell.querySelectorAll(`[data-workspace-panel="${scope}"]`)) {
+					panel.hidden = panel.dataset.workspacePage !== page;
+				}
+				if (focus) target.focus();
+			}
+
+			function prepareWorkspaceTabs(scope) {
+				const shell = document.querySelector(`[data-role="${scope}"]`);
+				const tablist = shell?.querySelector('.workspace-tabs');
+				if (!tablist) return;
+				tablist.addEventListener('click', (event) => {
+					const tab = event.target.closest('[data-workspace-target]');
+					if (tab && !tab.disabled) setWorkspaceTab(scope, tab.dataset.workspaceTarget);
+				});
+				tablist.addEventListener('keydown', (event) => {
+					if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+					const tabs = [...tablist.querySelectorAll('[data-workspace-target]:not(:disabled)')];
+					const active = tabs.indexOf(document.activeElement);
+					if (active < 0) return;
+					event.preventDefault();
+					let next = active;
+					if (event.key === 'ArrowRight') next = (active + 1) % tabs.length;
+					if (event.key === 'ArrowLeft') next = (active - 1 + tabs.length) % tabs.length;
+					if (event.key === 'Home') next = 0;
+					if (event.key === 'End') next = tabs.length - 1;
+					setWorkspaceTab(scope, tabs[next].dataset.workspaceTarget, true);
+				});
+			}
+
+			prepareWorkspaceTabs('parent');
+			prepareWorkspaceTabs('student');
 
 			/* ---------- Parent: learners ---------- */
 			function studentCard(student) {
@@ -1357,6 +1651,7 @@
 			}
 
 			async function loadProgress(student) {
+				setWorkspaceTab('parent', 'progress');
 				skeleton(progressView, 3, 'Loading evidence…');
 				const { ok, body } = await fetchJson(`/api/students/${encodeURIComponent(student.id)}/progress`);
 				const heading = element('h2', `${student.displayName} · progress evidence`);
@@ -1517,6 +1812,7 @@
 			}
 
 			async function loadLearnerPlan(student) {
+				setWorkspaceTab('parent', 'calendar');
 				skeleton(planView, 3, 'Building the calendar…');
 				const { ok, body } = await fetchJson(`/api/parent/learners/${encodeURIComponent(student.id)}/plan`);
 				const heading = element('h2', `${student.displayName} · study calendar`);
@@ -1610,11 +1906,12 @@
 					body.append(card);
 				}
 				exerciseBody.replaceChildren(body);
-				exerciseView.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 
 			async function loadExercise(student, entry) {
-				exerciseView.hidden = false;
+				const exerciseTab = document.querySelector('#parent-tab-exercise');
+				exerciseTab.disabled = false;
+				setWorkspaceTab('parent', 'exercise');
 				skeleton(exerciseBody, 2, 'Loading the reviewed exercise…');
 				const { ok, body } = await fetchJson(
 					`/api/parent/learners/${encodeURIComponent(student.id)}/exercises?subject=${encodeURIComponent(entry.subject)}&sequence=${entry.sequence}`,
@@ -1627,7 +1924,7 @@
 			}
 
 			document.querySelector('#exercise-close').addEventListener('click', () => {
-				exerciseView.hidden = true;
+				setWorkspaceTab('parent', 'calendar', true);
 			});
 
 			/* ---------- Student: today and roadmap ---------- */
@@ -1760,6 +2057,21 @@
 				counter.textContent = `${answered} of ${currentAssignment.questions.length} answered`;
 			}
 
+			function showQuestion(index, focus = false) {
+				const questions = [...document.querySelectorAll('#question-form .question')];
+				if (questions.length === 0) return;
+				activeQuestionIndex = Math.max(0, Math.min(index, questions.length - 1));
+				for (const [position, question] of questions.entries()) question.hidden = position !== activeQuestionIndex;
+
+				const previous = document.querySelector('#question-previous');
+				const next = document.querySelector('#question-next');
+				const position = document.querySelector('#question-position');
+				previous.disabled = activeQuestionIndex === 0;
+				next.disabled = activeQuestionIndex === questions.length - 1;
+				position.textContent = `Question ${activeQuestionIndex + 1} of ${questions.length}`;
+				if (focus) questions[activeQuestionIndex].querySelector('input, select, button')?.focus();
+			}
+
 			async function saveQuestion(question, quiet = false) {
 				const fieldset = document.querySelector(`[data-question-id="${question.id}"]`);
 				if (!fieldset) return false;
@@ -1866,8 +2178,8 @@
 			}
 
 			function renderCorrections(assignment) {
-				const corrections = document.querySelector('#corrections');
-				corrections.hidden = false;
+				const reviewTab = document.querySelector('#student-tab-review');
+				reviewTab.disabled = false;
 				const result = assignment.result;
 				const percent = result.possible ? Math.round((result.earned / result.possible) * 100) : 0;
 				document.querySelector('#result-score').textContent = `${percent}%`;
@@ -1913,9 +2225,9 @@
 						return;
 					}
 					renderLearning(body.assignment);
+					setWorkspaceTab('student', 'learn');
 					await loadRoadmap();
 					await loadTodaysPlan();
-					document.querySelector('#learning-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
 				} finally {
 					button.disabled = false;
 					button.textContent = 'Open next chapter';
@@ -1927,9 +2239,10 @@
 				const submit = document.querySelector('#submit-assignment');
 				submit.disabled = true;
 				submit.textContent = 'Submitting…';
-				for (const question of currentAssignment.questions) {
+				for (const [index, question] of currentAssignment.questions.entries()) {
 					if (!savedAnswerFor(question) && !(await saveQuestion(question, true))) {
-						showMessage(feedback, 'Answer every question before submitting.', 'error');
+						showQuestion(index, true);
+						showMessage(feedback, `Answer question ${index + 1} before submitting.`, 'error');
 						submit.disabled = false;
 						submit.textContent = 'Submit all answers';
 						return;
@@ -1949,10 +2262,10 @@
 				for (const control of document.querySelectorAll('#question-form input, #question-form select, #question-form button'))
 					control.disabled = true;
 				renderCorrections(currentAssignment);
+				setWorkspaceTab('student', 'review', true);
 				await loadRoadmap();
 				// The remaining calendar changed the moment this chapter was submitted.
 				await loadTodaysPlan();
-				document.querySelector('#corrections').scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 
 			function renderLearning(assignment) {
@@ -1987,20 +2300,25 @@
 				const form = document.querySelector('#question-form');
 				form.replaceChildren();
 				for (const [index, question] of assignment.questions.entries()) form.append(questionField(question, index, submitted));
+				activeQuestionIndex = 0;
+				document.querySelector('#question-previous').addEventListener('click', () => showQuestion(activeQuestionIndex - 1, true));
+				document.querySelector('#question-next').addEventListener('click', () => showQuestion(activeQuestionIndex + 1, true));
+				showQuestion(0);
 
 				document.querySelector('#submit-assignment').addEventListener('click', submitCurrentAssignment);
 				document.querySelector('#next-assignment').addEventListener('click', openNextChapter);
 				updateAnswerCount();
 
-				const corrections = document.querySelector('#corrections');
 				const actionBar = document.querySelector('.action-bar');
+				const reviewTab = document.querySelector('#student-tab-review');
+				reviewTab.disabled = !submitted;
 				if (submitted) {
 					if (actionBar) actionBar.hidden = true;
 					renderCorrections(assignment);
-					corrections.hidden = false;
-				} else {
-					corrections.hidden = true;
 				}
+
+				const selectedPage = document.querySelector('#student-workspace-tabs [aria-selected="true"]')?.dataset.workspaceTarget;
+				setWorkspaceTab('student', selectedPage === 'review' && !submitted ? 'learn' : selectedPage || 'today');
 			}
 
 			async function loadLearning() {
