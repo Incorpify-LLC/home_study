@@ -2855,7 +2855,8 @@
 			const demoSigninForm = document.querySelector('#demo-signin-form');
 			const demoEnrolForm = document.querySelector('#demo-enrol-form');
 			const demoStatus = document.querySelector('#demo-signin-status');
-			const demoEnrolCode = new URLSearchParams(location.search).get('demo-enrol');
+			const demoEnrolCode = new URLSearchParams(location.hash.slice(1)).get('demo-enrol');
+			if (demoEnrolCode) history.replaceState(null, '', location.pathname);
 
 			function demoStatusMessage(message, tone) {
 				demoStatus.textContent = message;

@@ -60,6 +60,118 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 describe('demo credential sign-in', () => {
+	it('rejects cross-origin credential requests', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/api/auth/demo-login', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', origin: 'https://attacker.example' },
+			body: JSON.stringify({ identifier: 'demo-student', password: demoPassphrase }),
+		});
+
+		expect(response.status).toBe(403);
+		expect((await response.json()) as { error: string }).toMatchObject({ error: 'forbidden_origin' });
+	});
+
+	it('requires JSON for credential requests', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/api/auth/demo-login', {
+			method: 'POST',
+			headers: { 'content-type': 'text/plain' },
+			body: JSON.stringify({ identifier: 'demo-student', password: demoPassphrase }),
+		});
+
+		expect(response.status).toBe(415);
+		expect((await response.json()) as { error: string }).toMatchObject({ error: 'unsupported_media_type' });
+	});
+
+	it('rejects oversized credential requests before password hashing', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/api/auth/demo-login', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ identifier: 'demo-student', password: 'x'.repeat(20_000) }),
+		});
+
+		expect(response.status).toBe(413);
+		expect((await response.json()) as { error: string }).toMatchObject({ error: 'payload_too_large' });
+	});
+
+	it('rejects weak demo passwords during enrolment', async () => {
+		await env.DB.batch([
+			env.DB.prepare(
+				`INSERT INTO users (id, role, display_name, is_demo, active, login_identifier)
+				 VALUES ('demo-weak-password', 'student', 'Demo Student', 1, 1, 'demo-weak-password')`,
+			),
+			env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('demo-weak-password', 'CISCE', 'X')`),
+			env.DB.prepare(`INSERT INTO demo_enrolment (id, identifier, code_hash) VALUES ('enrol-weak-password', 'demo-weak-password', ?)`).bind(
+				await sha256Hex(enrolCode),
+			),
+		]);
+
+		const response = await enrol('demo-weak-password', enrolCode, 'short');
+		expect(response.status).toBe(400);
+		expect((await response.json()) as { error: string }).toMatchObject({ error: 'weak_password' });
+	});
+
+	it('rejects enrolment codes older than one day', async () => {
+		await env.DB.batch([
+			env.DB.prepare(
+				`INSERT INTO users (id, role, display_name, is_demo, active, login_identifier)
+				 VALUES ('demo-expired-code', 'student', 'Demo Student', 1, 1, 'demo-expired-code')`,
+			),
+			env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('demo-expired-code', 'CISCE', 'X')`),
+			env.DB.prepare(
+				`INSERT INTO demo_enrolment (id, identifier, code_hash, created_at)
+				 VALUES ('enrol-expired-code', 'demo-expired-code', ?, datetime('now', '-25 hours'))`,
+			).bind(await sha256Hex(enrolCode)),
+		]);
+
+		const response = await enrol('demo-expired-code', enrolCode);
+		expect(response.status).toBe(403);
+		expect((await response.json()) as { error: string }).toMatchObject({ error: 'invalid_code' });
+	});
+
+	it('rate-limits repeated enrolment-code guesses', async () => {
+		await env.DB.batch([
+			env.DB.prepare(
+				`INSERT INTO users (id, role, display_name, is_demo, active, login_identifier)
+				 VALUES ('demo-enrol-limit', 'student', 'Demo Student', 1, 1, 'demo-enrol-limit')`,
+			),
+			env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('demo-enrol-limit', 'CISCE', 'X')`),
+			env.DB.prepare(`INSERT INTO demo_enrolment (id, identifier, code_hash) VALUES ('enrol-limit', 'demo-enrol-limit', ?)`).bind(
+				await sha256Hex(enrolCode),
+			),
+		]);
+
+		for (let attempt = 0; attempt < 8; attempt += 1) {
+			expect((await enrol('demo-enrol-limit', `wrong-${attempt}`)).status).toBe(403);
+		}
+		const limited = await enrol('demo-enrol-limit', 'wrong-again');
+		expect(limited.status).toBe(429);
+		expect(limited.headers.get('retry-after')).toMatch(/^\d+$/);
+	});
+
+	it('allows only one concurrent use of an enrolment code', async () => {
+		await env.DB.batch([
+			env.DB.prepare(
+				`INSERT INTO users (id, role, display_name, is_demo, active, login_identifier)
+				 VALUES ('demo-enrol-race', 'student', 'Demo Student', 1, 1, 'demo-enrol-race')`,
+			),
+			env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('demo-enrol-race', 'CISCE', 'X')`),
+			env.DB.prepare(`INSERT INTO demo_enrolment (id, identifier, code_hash) VALUES ('enrol-race', 'demo-enrol-race', ?)`).bind(
+				await sha256Hex(enrolCode),
+			),
+		]);
+
+		const [first, second] = await Promise.all([
+			enrol('demo-enrol-race', enrolCode, 'first-secure-passphrase'),
+			enrol('demo-enrol-race', enrolCode, 'second-secure-passphrase'),
+		]);
+		expect([first.status, second.status].sort()).toEqual([200, 403]);
+		const sessions = await Promise.all([
+			login('demo-enrol-race', 'first-secure-passphrase'),
+			login('demo-enrol-race', 'second-secure-passphrase'),
+		]);
+		expect(sessions.filter((response) => response.status === 200)).toHaveLength(1);
+	});
+
 	it('reports no session without a cookie', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/api/session');
 		expect(response.status).toBe(200);
@@ -96,6 +208,7 @@ describe('demo credential sign-in', () => {
 		expect(signedIn.status).toBe(200);
 		const cookie = cookieFrom(signedIn);
 		expect(cookie).toContain('home_study_session=');
+		expect(signedIn.headers.get('set-cookie')).toContain('Secure; HttpOnly; SameSite=Strict');
 
 		const session = await SELF.fetch('https://study.saneax.in/api/session', { headers: { cookie } });
 		expect(await session.json()).toEqual({
@@ -135,7 +248,9 @@ describe('demo credential sign-in', () => {
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
 			.replace(/=+$/, '');
-		const tokenHash = await sha256Hex(token);
+		const tokenHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', tokenBytes))]
+			.map((byte) => byte.toString(16).padStart(2, '0'))
+			.join('');
 		await env.DB.prepare(`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, 'student-auth', ?)`)
 			.bind(tokenHash, new Date(Date.now() + 3600_000).toISOString())
 			.run();

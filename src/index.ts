@@ -31,10 +31,30 @@ interface Env {
 	ROUGH_WORK: R2Bucket;
 }
 
+const securityHeaders = {
+	'content-security-policy':
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-RN1br/WJstsBfYeZm5SHkKMQ2oQ/ejfgXsEnn0YPWJ0='; style-src 'self' 'sha256-6xp6Pn182pOkVpIbvhrvynpYMRbQppNYkyRuPp0uQcA='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+	'cross-origin-opener-policy': 'same-origin',
+	'cross-origin-resource-policy': 'same-origin',
+	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
+	'referrer-policy': 'no-referrer',
+	'strict-transport-security': 'max-age=31536000; includeSubDomains',
+	'x-content-type-options': 'nosniff',
+	'x-frame-options': 'DENY',
+};
+
 const jsonHeaders = {
+	...securityHeaders,
 	'cache-control': 'no-store',
 	'content-type': 'application/json; charset=utf-8',
 };
+
+function secureAssetResponse(response: Response): Response {
+	const headers = new Headers(response.headers);
+	for (const [name, value] of Object.entries(securityHeaders)) headers.set(name, value);
+	headers.set('cache-control', 'no-store');
+	return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
 
 type SessionUser = {
 	id: string;
@@ -1169,13 +1189,19 @@ async function demoCredentialUser(env: Env, identifier: string): Promise<DemoCre
 		.first<DemoCredentialUser>();
 }
 
-async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+const MAX_AUTH_BODY_BYTES = 16 * 1024;
+
+async function readJsonBody(request: Request): Promise<{ body: Record<string, unknown> | null; tooLarge: boolean }> {
+	const declaredBytes = Number(request.headers.get('content-length'));
+	if (Number.isFinite(declaredBytes) && declaredBytes > MAX_AUTH_BODY_BYTES) return { body: null, tooLarge: true };
 	try {
-		const parsed: unknown = await request.json();
-		if (typeof parsed !== 'object' || parsed === null) return null;
-		return parsed as Record<string, unknown>;
+		const source = await request.text();
+		if (new TextEncoder().encode(source).byteLength > MAX_AUTH_BODY_BYTES) return { body: null, tooLarge: true };
+		const parsed: unknown = JSON.parse(source);
+		if (typeof parsed !== 'object' || parsed === null) return { body: null, tooLarge: false };
+		return { body: parsed as Record<string, unknown>, tooLarge: false };
 	} catch {
-		return null;
+		return { body: null, tooLarge: false };
 	}
 }
 
@@ -1184,13 +1210,24 @@ function textField(body: Record<string, unknown>, key: string): string {
 	return typeof value === 'string' ? value.trim() : '';
 }
 
+function requireJsonRequest(request: Request): Response | null {
+	const mediaType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
+	return mediaType === 'application/json'
+		? null
+		: json({ error: 'unsupported_media_type', message: 'This endpoint accepts application/json only.' }, 415);
+}
+
 /**
  * One-time enrolment: sets the demo password, and only while the account has no
  * password yet. The code is single use, so nobody can claim an unenrolled demo
  * account by arriving first.
  */
 async function demoEnrol(request: Request, env: Env): Promise<Response> {
-	const body = await readJsonBody(request);
+	const unsupported = requireJsonRequest(request);
+	if (unsupported) return unsupported;
+	const parsed = await readJsonBody(request);
+	if (parsed.tooLarge) return json({ error: 'payload_too_large', message: 'The request body is too large.' }, 413);
+	const { body } = parsed;
 	if (!body) return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
 	const identifier = textField(body, 'identifier').toLowerCase();
 	const enrolmentCode = textField(body, 'code');
@@ -1198,20 +1235,40 @@ async function demoEnrol(request: Request, env: Env): Promise<Response> {
 	if (!identifier || !enrolmentCode || !password) {
 		return json({ error: 'invalid_request', message: 'An identifier, one-time code and password are required.' }, 400);
 	}
+	const passwordLength = Array.from(password).length;
+	if (passwordLength < 12 || passwordLength > 128 || password.trim().length === 0) {
+		return json({ error: 'weak_password', message: 'Use a demo password between 12 and 128 characters.' }, 400);
+	}
+	const scope = `demo-enrol:${identifier}`;
+	const throttle = await checkThrottle(env, scope);
+	if (throttle.limited) {
+		return new Response(JSON.stringify({ error: 'too_many_attempts', message: 'Too many failed attempts. Try again later.' }), {
+			status: 429,
+			headers: { ...jsonHeaders, 'retry-after': String(throttle.retryAfterSeconds) },
+		});
+	}
 
 	const user = await demoCredentialUser(env, identifier);
 	if (!user || user.password_hash) {
 		// Already enrolled, or not a demo account: the same answer either way.
+		await recordFailure(env, scope);
 		return json({ error: 'enrolment_closed', message: 'This account cannot be enrolled.' }, 403);
 	}
 
 	const record = await env.DB.prepare(
-		`SELECT id, code_hash FROM demo_enrolment WHERE lower(identifier) = ? AND used_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+		`SELECT id, code_hash
+		 FROM demo_enrolment
+		 WHERE lower(identifier) = ?
+		   AND used_at IS NULL
+		   AND created_at > datetime('now', '-24 hours')
+		 ORDER BY created_at DESC
+		 LIMIT 1`,
 	)
 		.bind(identifier)
 		.first<{ id: string; code_hash: string }>();
 	const submitted = await hashEnrolmentCode(enrolmentCode);
 	if (!record || record.code_hash !== submitted) {
+		await recordFailure(env, scope);
 		return json({ error: 'invalid_code', message: 'The one-time code was not accepted.' }, 403);
 	}
 
@@ -1219,11 +1276,16 @@ async function demoEnrol(request: Request, env: Env): Promise<Response> {
 		env.DB.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).bind(await hashPassword(password), user.id),
 		env.DB.prepare(`UPDATE demo_enrolment SET used_at = ? WHERE id = ?`).bind(new Date().toISOString(), record.id),
 	]);
+	await clearFailures(env, scope);
 	return json({ enrolled: true });
 }
 
 async function demoLogin(request: Request, env: Env): Promise<Response> {
-	const body = await readJsonBody(request);
+	const unsupported = requireJsonRequest(request);
+	if (unsupported) return unsupported;
+	const parsed = await readJsonBody(request);
+	if (parsed.tooLarge) return json({ error: 'payload_too_large', message: 'The request body is too large.' }, 413);
+	const { body } = parsed;
 	if (!body) return json({ error: 'invalid_body', message: 'A JSON body is required.' }, 400);
 	const identifier = textField(body, 'identifier').toLowerCase();
 	const supplied = typeof body.password === 'string' ? body.password : '';
@@ -1272,7 +1334,7 @@ async function demoLogout(request: Request, env: Env): Promise<Response> {
 	await revokeSession(env, request);
 	return new Response(null, {
 		status: 204,
-		headers: { 'cache-control': 'no-store', 'set-cookie': clearedSessionCookie() },
+		headers: { ...securityHeaders, 'cache-control': 'no-store', 'set-cookie': clearedSessionCookie() },
 	});
 }
 
@@ -1285,7 +1347,12 @@ function json(body: unknown, status = 200): Response {
 
 export default {
 	async fetch(request, env): Promise<Response> {
-		const { pathname } = new URL(request.url);
+		const requestUrl = new URL(request.url);
+		const { pathname } = requestUrl;
+		const origin = request.headers.get('origin');
+		if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && origin && origin !== requestUrl.origin) {
+			return json({ error: 'forbidden_origin', message: 'Cross-origin state changes are not allowed.' }, 403);
+		}
 
 		if (pathname === '/api/health') {
 			return json({
@@ -1397,6 +1464,6 @@ export default {
 			);
 		}
 
-		return env.ASSETS.fetch(request);
+		return secureAssetResponse(await env.ASSETS.fetch(request));
 	},
 } satisfies ExportedHandler<Env>;

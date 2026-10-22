@@ -7,7 +7,7 @@ declare module 'cloudflare:test' {
 	}
 }
 
-// the learner's school-prescribed text: Selina Concise Physics, Part II (Class X),
+// The learner's prescribed text: Selina Concise Physics, Part II (Class X),
 // "For March 2027 Examination of Class-X". Its chapter list controls how the
 // Class X Physics track is grouped and ordered.
 const BOOK_CHAPTERS = [

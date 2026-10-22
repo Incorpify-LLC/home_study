@@ -125,7 +125,7 @@ export function cookieValue(request: Request, name: string): string | null {
 }
 
 function sessionCookie(token: string, maxAge: number): string {
-	return `${SESSION_COOKIE}=${token}; Max-Age=${maxAge}; Path=/; Secure; HttpOnly; SameSite=Lax`;
+	return `${SESSION_COOKIE}=${token}; Max-Age=${maxAge}; Path=/; Secure; HttpOnly; SameSite=Strict`;
 }
 
 export function clearedSessionCookie(): string {

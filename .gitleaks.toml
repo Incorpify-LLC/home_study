@@ -1,0 +1,8 @@
+title = "Home Study gitleaks configuration"
+
+[allowlist]
+description = "Cloudflare Access audience IDs are public application identifiers, not credentials."
+regexTarget = "match"
+regexes = [
+  '''ACCESS_AUD["']?\s*[:=]\s*["'][0-9a-f]{64}["']''',
+]

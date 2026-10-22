@@ -1,6 +1,6 @@
 # Evaluation demo learner
 
-The demo learner exists so the platform can be evaluated from a student's chair without touching a child's account. One identity — `private-address@example.test` — can act as a learner in any class that has reviewed content, work a chapter exactly as a child would, and be reset between demonstrations.
+The demo learner exists so the platform can be evaluated from a student's chair without touching a child's account. The repository-safe identity `demo-student` can act as a learner in any class that has reviewed content, work a chapter exactly as a child would, and be reset between demonstrations.
 
 ## What the demo learner can do
 
@@ -8,7 +8,7 @@ The demo learner exists so the platform can be evaluated from a student's chair 
 - **Keep or clear progress per class.** Switching class keeps that class's work by default, so a demonstration can carry on from where it stopped. The **Start fresh when switching** toggle, or the **Clear this class** button, resets the class you are entering or standing in. Clearing is scoped to one class — other classes keep their progress.
 - **Work a chapter end to end.** Lesson, key points, worked example, every question with a confidence rating, save-as-you-go, one deliberate submission, then the corrections with the reviewed answer and the reason for each mark.
 - **See the calendar.** Today's planned chapters and the whole horizon, exactly as a real learner does.
-- **Be reviewed from the parent side.** The demo learner is linked to the family parent account, so it appears in the parent's learner list and its evidence and exercises can be opened there like any child's. Its rows are clearly its own — nothing is mixed with a real learner's record.
+- **Be reviewed from the demo parent side.** The demo learner is linked only to `demo-parent`, so its evidence and exercises can be reviewed without exposing it to any family account. Its rows are clearly its own — nothing is mixed with a real learner's record.
 
 ## What it deliberately cannot do
 
@@ -18,16 +18,18 @@ The demo learner exists so the platform can be evaluated from a student's chair 
 
 ## Using it
 
-1. Sign in at `https://study.saneax.in` with `private-address@example.test` and complete the Cloudflare Access one-time PIN.
+1. Open `https://study.saneax.in` and use the evaluation demo sign-in panel with the `demo-student` identifier.
 2. The dashboard shows the demo bar: the current class and its progress, a chip per class, the **Start fresh when switching** toggle, and **Clear this class**.
 3. Pick a class and work the chapter as a child would.
-4. To review the parent side, sign in as the parent and open **Progress** or **Calendar & exercises** for the demo learner.
+4. To review the parent side, sign in with the `demo-parent` identifier and open **Progress** or **Calendar & exercises** for the demo learner.
 
-## Requirement: the address must be allowed by Cloudflare Access
+## Authentication boundary
 
-Access only admits the addresses listed in its policy for the hostname, so `private-address@example.test` must be added there. In **Zero Trust → Access controls → Applications → (the `study.saneax.in` application) → Policies → the Allow policy**, add the address to the **Emails** selector. Receiving an OTP is not by itself permission: the Worker maps the verified email to a D1 role, and the demo row already exists with role `student` and `is_demo = 1`.
+Cloudflare Access should list only approved family addresses. The evaluation demo uses the application's separate credential path, and the Worker accepts that path only for D1 users marked `is_demo = 1`; no demo mailbox belongs in public documentation or fixtures.
 
-If the address is not on the policy, Access denies the request before the Worker ever sees it. That is by design — the allowlist is the outer boundary and should stay short.
+Family accounts continue to use Cloudflare Access email OTP. Demo cookie sessions are time-bounded, revocable, and ignored unless the matched user is active and marked `is_demo = 1`.
+
+A new demo password is established only through a high-entropy, single-use enrolment code. Store only its SHA-256 hash in D1, issue the link as `https://study.saneax.in/#demo-enrol=[ONE-TIME-CODE]`, and deliver it through a private channel. The fragment keeps the code out of HTTP request logs, and the page removes it from browser history immediately. Codes expire after 24 hours; passwords must contain 12–128 characters.
 
 ## API used by the interface
 

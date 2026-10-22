@@ -29,7 +29,7 @@ Product notes that contain family-specific information should stay outside the r
 - Parent-set study hours (weekday, weekend, rest days, horizon) with a generated assessment calendar per learner
 - A deterministic scheduler that rebuilds the calendar whenever hours, subjects, finished work, or missed days change, rotating fairly across subjects and never splitting a chapter across days
 - Parent exercise review: every chapter opens with the lesson, the answer key, rationales, and the learner's own answers and scores
-- Evaluation demo learner (`private-address@example.test`) that can act as a student in any class with reviewed content, work chapters like a child, and be reset between demonstrations — never touching a real learner's data (`docs/DEMO_USER.md`)
+- Evaluation demo learner with a repository-safe identifier that can act as a student in any class with reviewed content, work chapters like a child, and be reset between demonstrations — never touching a real learner's data (`docs/DEMO_USER.md`)
 - Parent evidence view scoped to explicitly linked learners
 - D1 schema for source provenance, reviewed content, assignment templates, responses, attempts, mastery, uploads, and delivery records
 - Private R2 binding contract for rough-work images

@@ -1,7 +1,34 @@
 import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
+async function sha256Source(source: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
+	return btoa(String.fromCharCode(...new Uint8Array(digest)));
+}
+
 describe('Access-protected application shell', () => {
+	it('sends restrictive browser security headers for the application shell', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+		const style = page.match(/<style>([\s\S]*?)<\/style>/)?.[1];
+		const script = page.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+
+		expect(style).toBeDefined();
+		expect(script).toBeDefined();
+		const policy = response.headers.get('content-security-policy') ?? '';
+		expect(policy).toContain(`style-src 'self' 'sha256-${await sha256Source(style!)}'`);
+		expect(policy).toContain(`script-src 'self' 'sha256-${await sha256Source(script!)}'`);
+		expect(policy).toContain("frame-ancestors 'none'");
+		const scriptPolicy = policy.match(/script-src[^;]*/)?.[0] ?? '';
+		expect(scriptPolicy).not.toContain("'unsafe-inline'");
+		expect(scriptPolicy).not.toContain("'unsafe-eval'");
+		expect(policy).toContain("style-src-attr 'unsafe-inline'");
+		expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+		expect(response.headers.get('x-frame-options')).toBe('DENY');
+		expect(response.headers.get('referrer-policy')).toBe('no-referrer');
+		expect(response.headers.get('cache-control')).toBe('no-store');
+	});
+
 	it('introduces the private family study workspace', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
@@ -10,6 +37,15 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('<title>Home Study</title>');
 		expect(page).toContain('Private family workspace');
 		expect(page).toContain('Checking secure access');
+	});
+
+	it('keeps one-time enrolment codes out of request URLs and browser history', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain("new URLSearchParams(location.hash.slice(1)).get('demo-enrol')");
+		expect(page).not.toContain("new URLSearchParams(location.search).get('demo-enrol')");
+		expect(page).toContain("history.replaceState(null, '', location.pathname)");
 	});
 
 	it('contains no family identities, and no password form outside the demo panel', async () => {

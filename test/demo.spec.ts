@@ -7,7 +7,7 @@ declare module 'cloudflare:test' {
 	}
 }
 
-const demoEmail = 'private-address@example.test';
+const demoEmail = 'demo-student@example.test';
 const studentEmail = 'student-demo@example.test';
 const parentEmail = 'parent-demo@example.test';
 

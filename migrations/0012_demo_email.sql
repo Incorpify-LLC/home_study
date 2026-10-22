@@ -1,4 +1,4 @@
--- The evaluation demo identity signs in from the private-address@example.test mailbox.
+-- Public fixtures use a reserved example.test address; production identity data is provisioned separately.
 UPDATE users
-SET email = 'private-address@example.test'
+SET email = 'demo-student@example.test'
 WHERE id = 'demo-student';
