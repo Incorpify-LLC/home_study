@@ -137,6 +137,16 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain("window.location.assign('/cdn-cgi/access/logout')");
 	});
 
+	it('never mistakes a failed family session check for a demo login', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="access-problem" class="panel" hidden');
+		expect(page).toContain("const familyAccessHost = location.hostname === 'study.saneax.in'");
+		expect(page).toContain('familyAccessHost ? showAccessProblem() : showDemoSignin()');
+		expect(page).toContain('Use another secure email');
+	});
+
 	it('contains separate parent and student shells without account-management controls', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

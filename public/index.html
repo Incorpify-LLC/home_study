@@ -1672,6 +1672,19 @@
 			</section>
 		</main>
 
+		<section id="access-problem" class="panel" hidden aria-labelledby="access-problem-title">
+			<span class="badge" data-tone="warn">Secure sign-in needs attention</span>
+			<h2 id="access-problem-title">We could not open this family account</h2>
+			<p class="muted">
+				The secure email session did not match an active Home Study account, or the session check was interrupted. No demo password is
+				needed for a family account.
+			</p>
+			<div class="actions">
+				<button id="access-retry" type="button">Try again</button>
+				<button id="access-switch" class="secondary" type="button">Use another secure email</button>
+			</div>
+		</section>
+
 		<section id="demo-signin" class="panel" hidden>
 			<h2 id="demo-signin-title">Evaluation demo sign-in</h2>
 			<p class="meta">
@@ -2855,6 +2868,8 @@
 			const demoSigninForm = document.querySelector('#demo-signin-form');
 			const demoEnrolForm = document.querySelector('#demo-enrol-form');
 			const demoStatus = document.querySelector('#demo-signin-status');
+			const accessProblem = document.querySelector('#access-problem');
+			const familyAccessHost = location.hostname === 'study.saneax.in';
 			const demoEnrolCode = new URLSearchParams(location.hash.slice(1)).get('demo-enrol');
 			if (demoEnrolCode) history.replaceState(null, '', location.pathname);
 
@@ -2871,6 +2886,15 @@
 				demoEnrolForm.hidden = !demoEnrolCode;
 				checking.hidden = true;
 			}
+
+			function showAccessProblem() {
+				checking.hidden = true;
+				demoSignin.hidden = true;
+				accessProblem.hidden = false;
+			}
+
+			document.querySelector('#access-retry').addEventListener('click', () => window.location.reload());
+			document.querySelector('#access-switch').addEventListener('click', () => window.location.assign('/cdn-cgi/access/logout'));
 
 			async function postDemo(path, payload) {
 				const response = await fetch(path, {
@@ -2923,7 +2947,7 @@
 				try {
 					const { ok, body } = await fetchJson('/api/session');
 					if (!ok || !body?.authenticated) {
-						showDemoSignin();
+						familyAccessHost ? showAccessProblem() : showDemoSignin();
 						return;
 					}
 					await showSession(body);
@@ -2931,7 +2955,7 @@
 					const status = checking.querySelector('.status-line');
 					if (status) status.textContent = 'The workspace could not be reached. Please reload.';
 					checking.querySelector('.spinner')?.remove();
-					showDemoSignin();
+					familyAccessHost ? showAccessProblem() : showDemoSignin();
 				}
 			})();
 		</script>
