@@ -1729,6 +1729,8 @@
 			const dashboardNote = document.querySelector('#dashboard-note');
 			const sessionBadge = document.querySelector('#session-badge');
 			const logout = document.querySelector('#logout');
+			const familyAccessHost = location.hostname === 'study.saneax.in';
+			if (familyAccessHost) logout.hidden = false;
 			const userChip = document.querySelector('#user-chip');
 			const userName = document.querySelector('#user-name');
 			const userAvatar = document.querySelector('#user-avatar');
@@ -2869,7 +2871,6 @@
 			const demoEnrolForm = document.querySelector('#demo-enrol-form');
 			const demoStatus = document.querySelector('#demo-signin-status');
 			const accessProblem = document.querySelector('#access-problem');
-			const familyAccessHost = location.hostname === 'study.saneax.in';
 			const demoEnrolCode = new URLSearchParams(location.hash.slice(1)).get('demo-enrol');
 			if (demoEnrolCode) history.replaceState(null, '', location.pathname);
 

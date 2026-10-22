@@ -128,13 +128,14 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('Your first reviewed learning plan will appear here.');
 	});
 
-	it('uses the Cloudflare Access session and logout flow', async () => {
+	it('uses the Cloudflare Access session and keeps sign-out available throughout the family shell', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
 
 		// The page routes its calls through one fetch wrapper, so the endpoint path is the contract.
 		expect(page).toContain("'/api/session'");
 		expect(page).toContain("window.location.assign('/cdn-cgi/access/logout')");
+		expect(page).toContain('if (familyAccessHost) logout.hidden = false');
 	});
 
 	it('never mistakes a failed family session check for a demo login', async () => {
