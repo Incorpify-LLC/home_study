@@ -79,11 +79,12 @@ describe('demo learner identity', () => {
 		expect(classes.map((entry) => entry.classLevel)).toEqual(['VIII', 'X', 'XII']);
 		const classTen = classes.find((entry) => entry.classLevel === 'X');
 		expect(classTen?.examYear).toBe(2027);
-		expect(classTen?.subjects.sort()).toEqual(['Mathematics', 'Physics']);
-		expect(classTen?.chapters).toBe(30);
+		expect(classTen?.subjects.sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
+		expect(classTen?.chapters).toBe(42);
 		const classEight = classes.find((entry) => entry.classLevel === 'VIII');
 		expect(classEight?.examYear).toBeNull();
-		expect(classEight?.chapters).toBe(19);
+		expect(classEight?.subjects.sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
+		expect(classEight?.chapters).toBe(28);
 	});
 
 	it('is refused to real students, parents and anonymous callers', async () => {
@@ -97,12 +98,13 @@ describe('demo learner identity', () => {
 });
 
 describe('demo learner works a chapter like a child', () => {
-	it('starts as a Class X learner with two subjects and no progress', async () => {
+	it('starts as a Class X learner with three subjects and no progress', async () => {
 		const tracks = await roadmapSubjects();
-		expect(tracks.map((track) => track.subject).sort()).toEqual(['Mathematics', 'Physics']);
+		expect(tracks.map((track) => track.subject).sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
 		expect(tracks.every((track) => track.completed === 0)).toBe(true);
 		const physics = tracks.find((track) => track.subject === 'Physics');
 		expect(physics?.total).toBe(12);
+		expect(tracks.find((track) => track.subject === 'Chemistry')?.total).toBe(12);
 	});
 
 	it('answers a whole chapter, submits it and reads the corrections', async () => {
@@ -159,13 +161,14 @@ describe('demo learner switches class and resets', () => {
 		expect(body.progress.completed).toBe(0);
 
 		const tracks = await roadmapSubjects();
-		expect(tracks.map((track) => track.subject).sort()).toEqual(['Mathematics', 'Physics']);
+		expect(tracks.map((track) => track.subject).sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
 		expect(tracks.find((track) => track.subject === 'Physics')?.total).toBe(8);
+		expect(tracks.find((track) => track.subject === 'Chemistry')?.total).toBe(9);
 		expect(tracks.every((track) => track.completed === 0)).toBe(true);
 
 		// The chapter served must belong to the class the learner is in now, never
 		// to the class they were switched out of.
-		for (const subject of ['Mathematics', 'Physics']) {
+		for (const subject of ['Chemistry', 'Mathematics', 'Physics']) {
 			const current = await SELF.fetch(`https://study.saneax.in/api/learning/current?subject=${encodeURIComponent(subject)}`, {
 				headers: accessHeaders(demoEmail),
 			});

@@ -116,13 +116,13 @@ describe('parent study-hours settings and calendar', () => {
 	it('sorts exercises from every subject the learner carries', async () => {
 		const { body } = await fetchPlan(parentEmail);
 		const subjects = new Set(body.plan.days.flatMap((day) => day.entries.map((entry) => entry.subject)));
-		expect([...subjects].sort()).toEqual(['Mathematics', 'Physics']);
+		expect([...subjects].sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
 
-		// Both subjects make progress inside the first active week instead of
+		// All three subjects make progress inside the first active week instead of
 		// one subject monopolising the calendar.
 		const activeDays = body.plan.days.filter((day) => day.entries.length > 0).slice(0, 4);
 		const firstWeekSubjects = new Set(activeDays.flatMap((day) => day.entries.map((entry) => entry.subject)));
-		expect([...firstWeekSubjects].sort()).toEqual(['Mathematics', 'Physics']);
+		expect([...firstWeekSubjects].sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
 	});
 
 	it('reschedules when the parent changes the daily hours', async () => {

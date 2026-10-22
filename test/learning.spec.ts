@@ -141,7 +141,7 @@ describe('sequential chapter progression', () => {
 
 describe('multi-subject tracks', () => {
 	it('serves independent per-subject roadmaps and progression for a learner with multiple subjects', async () => {
-		// student-d is a Class VIII learner: Mathematics (11) and Physics (8).
+		// student-d is a Class VIII learner: Chemistry (9), Mathematics (11) and Physics (8).
 		const roadmap = await SELF.fetch('https://study.saneax.in/api/learning/roadmaps', {
 			headers: accessHeaders('student-d@example.test'),
 		});
@@ -154,9 +154,13 @@ describe('multi-subject tracks', () => {
 				current: { sequence: number; title: string } | null;
 			}>;
 		};
-		expect(body.tracks.map((track) => track.subject).sort()).toEqual(['Mathematics', 'Physics']);
+		expect(body.tracks.map((track) => track.subject).sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
+		const chemistry = body.tracks.find((track) => track.subject === 'Chemistry');
 		const mathematics = body.tracks.find((track) => track.subject === 'Mathematics');
 		const physics = body.tracks.find((track) => track.subject === 'Physics');
+		expect(chemistry?.total).toBe(9);
+		expect(chemistry?.completed).toBe(0);
+		expect(chemistry?.current?.sequence).toBe(1);
 		expect(mathematics?.total).toBe(11);
 		expect(mathematics?.current?.sequence).toBe(2);
 		expect(mathematics?.completed).toBe(1);
@@ -284,7 +288,7 @@ describe('reviewed learning assignment', () => {
 	});
 
 	it('creates one reviewed class-appropriate diagnostic without exposing answers', async () => {
-		const first = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const first = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		expect(first.status).toBe(200);
@@ -316,7 +320,7 @@ describe('reviewed learning assignment', () => {
 			expect(question).not.toHaveProperty('rationale');
 		}
 
-		const second = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const second = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		const repeated = (await second.json()) as { assignment: { id: string } };
@@ -335,7 +339,7 @@ describe('reviewed learning assignment', () => {
 			},
 		];
 		for (const expected of cases) {
-			const response = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+			const response = await SELF.fetch(`https://study.saneax.in/api/learning/current?subject=${encodeURIComponent(expected.subject)}`, {
 				headers: accessHeaders(expected.email),
 			});
 			expect(response.status).toBe(200);
@@ -352,7 +356,7 @@ describe('reviewed learning assignment', () => {
 	});
 
 	it('saves and resumes a draft response', async () => {
-		const current = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const current = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		const currentBody = (await current.json()) as {
@@ -369,7 +373,7 @@ describe('reviewed learning assignment', () => {
 		expect(saved.status).toBe(200);
 		expect(await saved.json()).toEqual({ saved: true });
 
-		const resumed = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const resumed = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		const resumedBody = (await resumed.json()) as {
@@ -383,7 +387,7 @@ describe('reviewed learning assignment', () => {
 	});
 
 	it('validates response shape and prevents cross-student writes', async () => {
-		const current = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const current = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		const body = (await current.json()) as { assignment: { id: string; questions: Array<{ id: string; type: string }> } };
@@ -406,7 +410,7 @@ describe('reviewed learning assignment', () => {
 	});
 
 	it('requires every answer, scores once, and reveals corrections only after submission', async () => {
-		const current = await SELF.fetch('https://study.saneax.in/api/learning/current', {
+		const current = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Mathematics', {
 			headers: accessHeaders(studentEmail),
 		});
 		const body = (await current.json()) as {
