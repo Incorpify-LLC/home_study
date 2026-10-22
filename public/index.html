@@ -563,6 +563,28 @@
 				padding: var(--space-4);
 				background: var(--surface-sunken);
 			}
+			.learner-card[data-selected='true'] {
+				border-color: var(--brand);
+				box-shadow: 0 0 0 3px var(--brand-tint);
+				background: var(--surface);
+			}
+			.learner-context {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-4);
+				padding: var(--space-3) var(--space-4);
+				margin-bottom: var(--space-3);
+				border: 1px solid var(--brand);
+				border-radius: var(--radius);
+				background: var(--brand-tint);
+			}
+			.learner-context .learner-ident {
+				min-width: 0;
+			}
+			.learner-context .field {
+				min-width: min(260px, 100%);
+			}
 			.learner-ident {
 				display: flex;
 				gap: var(--space-3);
@@ -698,16 +720,33 @@
 			.progress-card {
 				border: 1px solid var(--line);
 				border-radius: var(--radius);
-				padding: var(--space-4);
 				background: var(--surface);
+				overflow: clip;
 			}
-			.progress-card header {
+			.progress-summary {
 				display: flex;
 				justify-content: space-between;
 				gap: var(--space-3);
-				align-items: baseline;
+				align-items: center;
 				flex-wrap: wrap;
-				margin-bottom: var(--space-2);
+				padding: var(--space-3) var(--space-4);
+				cursor: pointer;
+				list-style-position: inside;
+			}
+			.progress-summary > span:first-child {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+			}
+			.progress-card[open] .progress-summary {
+				border-bottom: 1px solid var(--line);
+				background: var(--surface-sunken);
+			}
+			.progress-detail {
+				padding: var(--space-4);
+			}
+			.progress-filters {
+				margin-bottom: var(--space-4);
 			}
 			.correction-list {
 				display: flex;
@@ -1244,9 +1283,15 @@
 					border-radius: var(--radius);
 				}
 				.question,
-				.exercise-question,
-				.progress-card {
+				.exercise-question {
 					padding: var(--space-3);
+				}
+				.learner-context {
+					align-items: stretch;
+					flex-direction: column;
+				}
+				.learner-context .field {
+					width: 100%;
 				}
 				.study-hero,
 				.study-toolbar {
@@ -1345,6 +1390,20 @@
 					</div>
 
 					<div data-role="parent" hidden>
+						<div id="parent-learner-context" class="learner-context" aria-live="polite" hidden>
+							<div class="learner-ident">
+								<span id="parent-learner-avatar" class="avatar" aria-hidden="true"></span>
+								<div>
+									<span class="eyebrow">Currently viewing</span>
+									<strong id="parent-learner-name">Choose a learner</strong>
+									<span id="parent-learner-meta" class="meta"></span>
+								</div>
+							</div>
+							<label class="field" for="parent-learner-select">
+								Switch learner
+								<select id="parent-learner-select" aria-label="Learner being viewed"></select>
+							</label>
+						</div>
 						<nav id="parent-workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Parent workspace">
 							<button
 								id="parent-tab-learners"
@@ -1739,6 +1798,11 @@
 			const studentList = document.querySelector('#student-list');
 			const progressView = document.querySelector('#progress-view');
 			const planView = document.querySelector('#plan-view');
+			const parentLearnerContext = document.querySelector('#parent-learner-context');
+			const parentLearnerSelect = document.querySelector('#parent-learner-select');
+			const parentLearnerName = document.querySelector('#parent-learner-name');
+			const parentLearnerMeta = document.querySelector('#parent-learner-meta');
+			const parentLearnerAvatar = document.querySelector('#parent-learner-avatar');
 			const exerciseView = document.querySelector('#exercise-view');
 			const exerciseBody = document.querySelector('#exercise-body');
 			const todayList = document.querySelector('#today-list');
@@ -1756,6 +1820,8 @@
 			let activeSubject = null;
 			let referenceVisible = true;
 			let sessionUser = null;
+			let activeParentLearner = null;
+			let parentLearners = [];
 
 			/* ---------- Utilities ---------- */
 			function element(tag, text, className) {
@@ -1854,7 +1920,10 @@
 				if (!tablist) return;
 				tablist.addEventListener('click', (event) => {
 					const tab = event.target.closest('[data-workspace-target]');
-					if (tab && !tab.disabled) setWorkspaceTab(scope, tab.dataset.workspaceTarget);
+					if (tab && !tab.disabled) {
+						if (scope === 'parent') routeParentWorkspaceTab(tab.dataset.workspaceTarget);
+						else setWorkspaceTab(scope, tab.dataset.workspaceTarget);
+					}
 				});
 				tablist.addEventListener('keydown', (event) => {
 					if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -1867,8 +1936,21 @@
 					if (event.key === 'ArrowLeft') next = (active - 1 + tabs.length) % tabs.length;
 					if (event.key === 'Home') next = 0;
 					if (event.key === 'End') next = tabs.length - 1;
-					setWorkspaceTab(scope, tabs[next].dataset.workspaceTarget, true);
+					if (scope === 'parent') routeParentWorkspaceTab(tabs[next].dataset.workspaceTarget, true);
+					else setWorkspaceTab(scope, tabs[next].dataset.workspaceTarget, true);
 				});
+			}
+
+			function routeParentWorkspaceTab(page, focus = false) {
+				if (page === 'progress' && activeParentLearner) {
+					loadProgress(activeParentLearner, focus);
+					return;
+				}
+				if (page === 'calendar' && activeParentLearner) {
+					loadLearnerPlan(activeParentLearner, focus);
+					return;
+				}
+				setWorkspaceTab('parent', page, focus);
 			}
 
 			prepareWorkspaceTabs('parent');
@@ -1876,8 +1958,28 @@
 			document.querySelector('#next-assignment').addEventListener('click', returnToToday);
 
 			/* ---------- Parent: learners ---------- */
+			function refreshLearnerSelection() {
+				for (const card of studentList.querySelectorAll('[data-learner-id]')) {
+					card.dataset.selected = String(card.dataset.learnerId === activeParentLearner?.id);
+				}
+			}
+
+			function setActiveParentLearner(student) {
+				const learnerChanged = activeParentLearner && activeParentLearner.id !== student.id;
+				activeParentLearner = student;
+				if (learnerChanged) document.querySelector('#parent-tab-exercise').disabled = true;
+				parentLearnerContext.hidden = false;
+				parentLearnerName.textContent = student.displayName;
+				parentLearnerAvatar.textContent = initial(student.displayName);
+				parentLearnerMeta.textContent = [student.board, `Class ${student.classLevel}`, student.examYear].filter(Boolean).join(' · ');
+				parentLearnerSelect.value = student.id;
+				refreshLearnerSelection();
+			}
+
 			function studentCard(student) {
 				const card = element('article', undefined, 'learner-card');
+				card.dataset.learnerId = student.id;
+				card.dataset.selected = String(activeParentLearner?.id === student.id);
 				const ident = element('div', undefined, 'learner-ident');
 				ident.append(element('span', initial(student.displayName), 'avatar'));
 				const text = element('div');
@@ -1888,10 +1990,16 @@
 				const actions = element('div', undefined, 'actions');
 				const progressButton = element('button', 'Progress', 'secondary small');
 				progressButton.type = 'button';
-				progressButton.addEventListener('click', () => loadProgress(student));
+				progressButton.addEventListener('click', () => {
+					setActiveParentLearner(student);
+					loadProgress(student);
+				});
 				const planButton = element('button', 'Calendar & exercises', 'secondary small');
 				planButton.type = 'button';
-				planButton.addEventListener('click', () => loadLearnerPlan(student));
+				planButton.addEventListener('click', () => {
+					setActiveParentLearner(student);
+					loadLearnerPlan(student);
+				});
 				actions.append(progressButton, planButton);
 
 				card.append(ident, actions);
@@ -1908,35 +2016,60 @@
 					);
 					return;
 				}
-				for (const student of body.students) studentList.append(studentCard(student));
+				parentLearners = body.students;
+				parentLearnerContext.hidden = false;
+				parentLearnerSelect.replaceChildren();
+				const prompt = document.createElement('option');
+				prompt.value = '';
+				prompt.textContent = 'Choose a learner';
+				prompt.disabled = true;
+				prompt.selected = !activeParentLearner;
+				parentLearnerSelect.append(prompt);
+				for (const student of parentLearners) {
+					const option = document.createElement('option');
+					option.value = student.id;
+					option.textContent = `${student.displayName} · Class ${student.classLevel}`;
+					parentLearnerSelect.append(option);
+					studentList.append(studentCard(student));
+				}
+				if (activeParentLearner) {
+					setActiveParentLearner(parentLearners.find((item) => item.id === activeParentLearner.id) ?? parentLearners[0]);
+				}
 			}
+
+			parentLearnerSelect.addEventListener('change', () => {
+				const learner = parentLearners.find((item) => item.id === parentLearnerSelect.value);
+				if (!learner) return;
+				setActiveParentLearner(learner);
+				const page = document.querySelector('#parent-workspace-tabs [aria-selected="true"]')?.dataset.workspaceTarget;
+				if (page === 'exercise') loadLearnerPlan(learner);
+				else if (page && page !== 'learners') routeParentWorkspaceTab(page);
+			});
 
 			/* ---------- Parent: progress evidence ---------- */
 			function renderProgressAssignment(assignment) {
-				const card = element('article', undefined, 'progress-card');
-				const header = element('header');
-				header.append(element('strong', assignment.title), element('span', assignment.subject, 'badge'));
-				card.append(header);
-
+				const card = element('details', undefined, 'progress-card');
+				card.dataset.subject = assignment.subject;
 				const submitted = assignment.status === 'submitted' || assignment.status === 'reviewed';
 				const score = assignment.possible > 0 ? assignment.percentage : null;
-				card.append(
-					element(
-						'p',
-						score === null
-							? submitted
-								? 'Submitted'
-								: 'Not yet submitted'
-							: `${submitted ? 'Submitted' : 'In progress'} · ${assignment.earned}/${assignment.possible} correct (${score}%)`,
-						'meta',
-					),
-				);
+				const status =
+					score === null
+						? submitted
+							? 'Submitted'
+							: 'Not yet submitted'
+						: `${submitted ? 'Submitted' : 'In progress'} · ${assignment.earned}/${assignment.possible} correct (${score}%)`;
+				const summary = element('summary', undefined, 'progress-summary');
+				const title = element('span');
+				title.append(element('strong', assignment.title), element('span', `${assignment.subject} · ${status}`, 'meta'));
+				summary.append(title, element('span', score === null ? 'Open' : `${score}%`, 'badge'));
+				const detail = element('div', undefined, 'progress-detail');
+				card.append(summary);
 				if (score !== null) {
 					const bar = element('div', undefined, 'progress-bar');
 					const fill = element('span');
 					fill.style.width = `${score}%`;
 					bar.append(fill);
-					card.append(bar);
+					detail.append(bar);
 				}
 
 				if (assignment.evidence.length > 0) {
@@ -1949,13 +2082,17 @@
 						evidence.append(element('p', item.rationale, 'muted'));
 						list.append(evidence);
 					}
-					card.append(list);
+					detail.append(list);
+				} else {
+					detail.append(element('p', 'Detailed evidence will appear after submission.', 'notice'));
 				}
+				card.append(detail);
 				return card;
 			}
 
-			async function loadProgress(student) {
-				setWorkspaceTab('parent', 'progress');
+			async function loadProgress(student, focus = false) {
+				setActiveParentLearner(student);
+				setWorkspaceTab('parent', 'progress', focus);
 				skeleton(progressView, 3, 'Loading evidence…');
 				const { ok, body } = await fetchJson(`/api/students/${encodeURIComponent(student.id)}/progress`);
 				const heading = element('h2', `${student.displayName} · progress evidence`);
@@ -1978,9 +2115,25 @@
 					progressView.append(element('p', 'No assignment has been opened yet.', 'notice'));
 					return;
 				}
+				const filters = element('div');
+				filters.className = 'progress-filters chip-row';
+				filters.setAttribute('aria-label', 'Filter progress by subject');
 				const list = element('div', undefined, 'card-list');
 				for (const assignment of assignments) list.append(renderProgressAssignment(assignment));
-				progressView.append(list);
+				const subjects = ['All subjects', ...new Set(assignments.map((assignment) => assignment.subject))];
+				for (const subject of subjects) {
+					const filter = element('button', subject, 'chip small');
+					filter.type = 'button';
+					filter.setAttribute('aria-pressed', String(subject === 'All subjects'));
+					filter.addEventListener('click', () => {
+						filters.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button === filter)));
+						for (const card of list.querySelectorAll('[data-subject]')) {
+							card.hidden = subject !== 'All subjects' && card.dataset.subject !== subject;
+						}
+					});
+					filters.append(filter);
+				}
+				progressView.append(filters, list);
 			}
 
 			/* ---------- Parent: study calendar ---------- */
@@ -2115,8 +2268,9 @@
 				return container;
 			}
 
-			async function loadLearnerPlan(student) {
-				setWorkspaceTab('parent', 'calendar');
+			async function loadLearnerPlan(student, focus = false) {
+				setActiveParentLearner(student);
+				setWorkspaceTab('parent', 'calendar', focus);
 				skeleton(planView, 3, 'Building the calendar…');
 				const { ok, body } = await fetchJson(`/api/parent/learners/${encodeURIComponent(student.id)}/plan`);
 				const heading = element('h2', `${student.displayName} · study calendar`);
@@ -2213,6 +2367,7 @@
 			}
 
 			async function loadExercise(student, entry) {
+				setActiveParentLearner(student);
 				const exerciseTab = document.querySelector('#parent-tab-exercise');
 				exerciseTab.disabled = false;
 				setWorkspaceTab('parent', 'exercise');

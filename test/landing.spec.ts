@@ -80,6 +80,7 @@ describe('Access-protected application shell', () => {
 			'article',
 			'b',
 			'button',
+			'details',
 			'div',
 			'fieldset',
 			'footer',
@@ -101,6 +102,7 @@ describe('Access-protected application shell', () => {
 			'small',
 			'span',
 			'strong',
+			'summary',
 			'time',
 			'ul',
 		]);
@@ -173,6 +175,30 @@ describe('Access-protected application shell', () => {
 		}
 		expect(page).toContain('data-workspace-panel="parent"');
 		expect(page).toContain("setWorkspaceTab('parent'");
+	});
+
+	it('keeps the selected learner visible and carries the selection across parent pages', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="parent-learner-context"');
+		expect(page).toContain('id="parent-learner-select"');
+		expect(page).toContain('id="parent-learner-name"');
+		expect(page).toContain('let activeParentLearner = null');
+		expect(page).toContain('routeParentWorkspaceTab(tab.dataset.workspaceTarget)');
+		expect(page).toContain('card.dataset.selected = String(activeParentLearner?.id === student.id)');
+		expect(page).toContain('const learnerChanged = activeParentLearner && activeParentLearner.id !== student.id');
+		expect(page).toContain("if (page === 'exercise') loadLearnerPlan(learner)");
+	});
+
+	it('keeps parent progress compact with subject filters and expandable chapter evidence', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain("element('details', undefined, 'progress-card')");
+		expect(page).toContain("filters.className = 'progress-filters chip-row'");
+		expect(page).toContain("element('summary', undefined, 'progress-summary')");
+		expect(page).toContain("'All subjects'");
 	});
 
 	it('presents a unified student study workspace', async () => {

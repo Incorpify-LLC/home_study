@@ -33,7 +33,7 @@ interface Env {
 
 const securityHeaders = {
 	'content-security-policy':
-		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-4uhW9RRygVlHPkms0Y7mgwhvU/bLl67O8c0nbG5Ebcg='; style-src 'self' 'sha256-6xp6Pn182pOkVpIbvhrvynpYMRbQppNYkyRuPp0uQcA='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-U19EKUDadNNAQ5lEn4PUc/1FIGGRlnt+Hy3K3aw7I7o='; style-src 'self' 'sha256-PaoouaTq8un8wvBAPQSvi+BrwR3NF/Nr1uKXIz6Aol0='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
 	'cross-origin-opener-policy': 'same-origin',
 	'cross-origin-resource-policy': 'same-origin',
 	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
