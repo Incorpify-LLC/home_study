@@ -8,8 +8,8 @@ declare module 'cloudflare:test' {
 }
 
 beforeAll(async () => {
-	const previous = env.TEST_MIGRATIONS.slice(0, -1);
-	const qualityRelease = env.TEST_MIGRATIONS.slice(-1);
+	const previous = env.TEST_MIGRATIONS.slice(0, -2);
+	const qualityReleases = env.TEST_MIGRATIONS.slice(-2);
 	await applyD1Migrations(env.DB, previous);
 	await env.DB.batch([
 		env.DB.prepare(
@@ -18,7 +18,7 @@ beforeAll(async () => {
 		env.DB.prepare(
 			`INSERT INTO users (id, role, display_name, email) VALUES ('migration-student-b', 'student', 'Student B', 'migration-b@example.test')`,
 		),
-		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('migration-student-a', 'CISCE', 'VIII')`),
+		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('migration-student-a', 'CISCE', 'X')`),
 		env.DB.prepare(`INSERT INTO student_profiles (user_id, board, class_level) VALUES ('migration-student-b', 'CISCE', 'VIII')`),
 		env.DB.prepare(
 			`INSERT INTO study_plans
@@ -39,6 +39,12 @@ beforeAll(async () => {
 		env.DB.prepare(
 			`INSERT INTO study_plan_entries
 			 (id, plan_id, student_id, scheduled_for, subject, sequence, template_id, allocated_minutes, position)
+			 VALUES ('migration-entry-a-math', 'migration-plan-a', 'migration-student-a', '2026-10-23', 'Mathematics', 1,
+			         'template-viii-rational-exponents', 40, 1)`,
+		),
+		env.DB.prepare(
+			`INSERT INTO study_plan_entries
+			 (id, plan_id, student_id, scheduled_for, subject, sequence, template_id, allocated_minutes, position)
 			 VALUES ('migration-entry-b', 'migration-plan-b', 'migration-student-b', '2026-10-23', 'Chemistry', 1,
 			         'template-viii-chem-matter', 40, 0)`,
 		),
@@ -48,7 +54,7 @@ beforeAll(async () => {
 			         'template-viii-chem-matter')`,
 		),
 	]);
-	await applyD1Migrations(env.DB, qualityRelease);
+	await applyD1Migrations(env.DB, qualityReleases);
 });
 
 describe('question quality migration', () => {

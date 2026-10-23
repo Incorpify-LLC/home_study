@@ -29,7 +29,7 @@ All 105 Chemistry questions used unrelated chapters as the source of their three
 - includes a worked explanation;
 - avoids the generic “Which statement correctly describes this chapter?” pattern;
 - preserves old questions and templates for historical assignments;
-- moves untouched planned calendar entries to v2 while leaving in-progress assignments on their original version.
+- moves untouched planned calendar entries to v2 using the plan's curriculum class, while leaving in-progress assignments on their original version.
 
 ### Mathematics
 
