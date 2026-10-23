@@ -45,7 +45,7 @@ describe('Chemistry curriculum release', () => {
 			const templates = await env.DB.prepare(
 				`SELECT title, sequence, estimated_minutes, review_status, active
 				 FROM assignment_templates
-				 WHERE class_level = ? AND subject = 'Chemistry'
+				 WHERE class_level = ? AND subject = 'Chemistry' AND active = 1
 				 ORDER BY sequence`,
 			)
 				.bind(classLevel)
@@ -70,6 +70,7 @@ describe('Chemistry curriculum release', () => {
 				 JOIN assignment_template_items ON assignment_template_items.template_id = assignment_templates.id
 				 JOIN questions ON questions.id = assignment_template_items.question_id
 				 WHERE assignment_templates.class_level = ? AND assignment_templates.subject = 'Chemistry'
+				   AND assignment_templates.active = 1
 				 GROUP BY assignment_templates.id, learning_modules.overview, learning_modules.key_points_json,
 				          learning_modules.worked_example_json
 				 ORDER BY assignment_templates.sequence`,

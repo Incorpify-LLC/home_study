@@ -8,6 +8,7 @@
 	},
 	"scripts": {
 		"audit:public-data": "node scripts/check-public-data.mjs",
+		"audit:questions": "vitest run test/question-quality.spec.ts",
 		"audit:secrets": "bash scripts/scan-secrets.sh",
 		"audit:security": "npm audit --audit-level=moderate && npm run audit:public-data && npm run audit:secrets",
 		"build": "wrangler deploy --dry-run --outdir .wrangler-dist",
