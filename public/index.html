@@ -547,6 +547,49 @@
 			}
 
 			/* ---------- Lists ---------- */
+			.hero-path-banner {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-4);
+				flex-wrap: wrap;
+				padding: var(--space-4);
+				margin-bottom: var(--space-4);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: linear-gradient(140deg, var(--brand-tint), var(--surface));
+			}
+			.hero-path-banner h2 {
+				margin: 0;
+			}
+			.hero-path-banner p {
+				margin: 2px 0 0;
+			}
+			.hero-xp {
+				font-size: 1.3rem;
+				font-variant-numeric: tabular-nums;
+				color: var(--brand-ink);
+			}
+			.quest-card {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-3);
+				flex-wrap: wrap;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				padding: var(--space-3) var(--space-4);
+				background: var(--surface);
+			}
+			.quest-card > div {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+			}
+			.reward-form input[type='number'] {
+				max-width: 120px;
+			}
 			.card-list {
 				display: flex;
 				flex-direction: column;
@@ -1429,6 +1472,18 @@
 								Progress
 							</button>
 							<button
+								id="parent-tab-hero"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="parent-hero-view"
+								data-workspace-target="hero"
+								tabindex="-1"
+							>
+								Hero Path
+							</button>
+							<button
 								id="parent-tab-calendar"
 								class="workspace-tab"
 								type="button"
@@ -1493,6 +1548,25 @@
 									</div>
 								</div>
 								<p class="notice">Select a learner to review completion, objective scores, and corrections.</p>
+							</section>
+
+							<section
+								id="parent-hero-view"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="parent-tab-hero"
+								aria-live="polite"
+								data-workspace-panel="parent"
+								data-workspace-page="hero"
+								hidden
+							>
+								<div class="panel-head">
+									<div>
+										<span class="eyebrow">Individual rewards</span>
+										<h2>Hero Path</h2>
+									</div>
+								</div>
+								<p class="notice">Select a learner to review their individual rank, Recovery Quests, and rewards.</p>
 							</section>
 
 							<section
@@ -1561,6 +1635,18 @@
 								Course
 							</button>
 							<button
+								id="student-tab-hero"
+								class="workspace-tab"
+								type="button"
+								role="tab"
+								aria-selected="false"
+								aria-controls="student-hero-page"
+								data-workspace-target="hero"
+								tabindex="-1"
+							>
+								Hero Path
+							</button>
+							<button
 								id="student-tab-study"
 								class="workspace-tab"
 								type="button"
@@ -1625,6 +1711,25 @@
 								<div id="roadmap-progress" class="progress-bar"><span style="width: 0%"></span></div>
 								<div class="subject-tabs" id="subject-tabs" role="tablist" aria-label="Subjects"></div>
 								<div id="roadmap-list" class="roadmap-list" aria-live="polite">Loading chapters…</div>
+							</section>
+
+							<section
+								id="student-hero-page"
+								class="panel workspace-page"
+								role="tabpanel"
+								aria-labelledby="student-tab-hero"
+								aria-live="polite"
+								data-workspace-panel="student"
+								data-workspace-page="hero"
+								hidden
+							>
+								<div class="panel-head">
+									<div>
+										<span class="eyebrow">Your individual journey</span>
+										<h2>Hero Path</h2>
+									</div>
+								</div>
+								<p class="notice">Loading your rank, streak, and Recovery Quests…</p>
 							</section>
 
 							<div id="learning-workspace" class="stack" aria-live="polite">
@@ -1797,6 +1902,8 @@
 			const studentShell = document.querySelector('[data-role="student"]');
 			const studentList = document.querySelector('#student-list');
 			const progressView = document.querySelector('#progress-view');
+			const parentHeroView = document.querySelector('#parent-hero-view');
+			const studentHeroPage = document.querySelector('#student-hero-page');
 			const planView = document.querySelector('#plan-view');
 			const parentLearnerContext = document.querySelector('#parent-learner-context');
 			const parentLearnerSelect = document.querySelector('#parent-learner-select');
@@ -1922,7 +2029,10 @@
 					const tab = event.target.closest('[data-workspace-target]');
 					if (tab && !tab.disabled) {
 						if (scope === 'parent') routeParentWorkspaceTab(tab.dataset.workspaceTarget);
-						else setWorkspaceTab(scope, tab.dataset.workspaceTarget);
+						else if (tab.dataset.workspaceTarget === 'hero') {
+							setWorkspaceTab(scope, 'hero');
+							loadStudentHero();
+						} else setWorkspaceTab(scope, tab.dataset.workspaceTarget);
 					}
 				});
 				tablist.addEventListener('keydown', (event) => {
@@ -1937,13 +2047,20 @@
 					if (event.key === 'Home') next = 0;
 					if (event.key === 'End') next = tabs.length - 1;
 					if (scope === 'parent') routeParentWorkspaceTab(tabs[next].dataset.workspaceTarget, true);
-					else setWorkspaceTab(scope, tabs[next].dataset.workspaceTarget, true);
+					else {
+						setWorkspaceTab(scope, tabs[next].dataset.workspaceTarget, true);
+						if (tabs[next].dataset.workspaceTarget === 'hero') loadStudentHero();
+					}
 				});
 			}
 
 			function routeParentWorkspaceTab(page, focus = false) {
 				if (page === 'progress' && activeParentLearner) {
 					loadProgress(activeParentLearner, focus);
+					return;
+				}
+				if (page === 'hero' && activeParentLearner) {
+					loadParentHero(activeParentLearner, focus);
 					return;
 				}
 				if (page === 'calendar' && activeParentLearner) {
@@ -1994,13 +2111,19 @@
 					setActiveParentLearner(student);
 					loadProgress(student);
 				});
+				const heroButton = element('button', 'Hero Path', 'secondary small');
+				heroButton.type = 'button';
+				heroButton.addEventListener('click', () => {
+					setActiveParentLearner(student);
+					loadParentHero(student);
+				});
 				const planButton = element('button', 'Calendar & exercises', 'secondary small');
 				planButton.type = 'button';
 				planButton.addEventListener('click', () => {
 					setActiveParentLearner(student);
 					loadLearnerPlan(student);
 				});
-				actions.append(progressButton, planButton);
+				actions.append(progressButton, heroButton, planButton);
 
 				card.append(ident, actions);
 				return card;
@@ -2134,6 +2257,171 @@
 					filters.append(filter);
 				}
 				progressView.append(filters, list);
+			}
+
+			/* ---------- Individual Hero Path ---------- */
+			function renderHeroPath(container, hero, displayName, student = null) {
+				const next = hero.rank.next;
+				const title = element('div', undefined, 'hero-path-banner');
+				const copy = element('div');
+				copy.append(element('span', 'Individual progress · never compared', 'eyebrow'));
+				copy.append(element('h2', `${hero.rank.name} ${displayName}`));
+				copy.append(
+					element(
+						'p',
+						next ? `${next.minimumXp - hero.totalXp} XP to ${next.name}` : 'Legend rank reached — keep building the habit.',
+						'muted',
+					),
+				);
+				title.append(copy, element('strong', `${hero.totalXp} XP`, 'hero-xp'));
+				container.replaceChildren(title);
+
+				const stats = element('div', undefined, 'stat-row');
+				stats.append(statTile(`${hero.currentStreak}/7`, 'Weekly streak'));
+				stats.append(statTile(String(hero.unresolvedMisses), 'Recovery Quests'));
+				stats.append(statTile(hero.cosmeticUnlockPaused ? 'Paused' : 'Active', 'Reward unlocks'));
+				container.append(stats);
+
+				if (next) {
+					const span = next.minimumXp - hero.rank.minimumXp;
+					const progress = span > 0 ? ((hero.totalXp - hero.rank.minimumXp) / span) * 100 : 100;
+					const bar = element('div', undefined, 'progress-bar');
+					const fill = element('span');
+					fill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+					bar.append(fill);
+					container.append(bar);
+				}
+				container.append(
+					element(
+						'p',
+						hero.streakBonusPaused
+							? 'Three unresolved Recovery Quests are pausing the next streak bonus and cosmetic unlock. Earned XP and ranks stay safe.'
+							: 'Mistakes, asking for help, and taking longer never reduce XP.',
+						hero.streakBonusPaused ? 'notice' : 'muted',
+					),
+				);
+
+				container.append(element('h3', 'Recovery Quests'));
+				const quests = element('div', undefined, 'card-list');
+				const openQuests = hero.recoveryQuests.filter((quest) => quest.status === 'open');
+				if (openQuests.length === 0) quests.append(element('p', 'No unresolved Recovery Quests.', 'notice'));
+				for (const quest of openQuests) {
+					const card = element('article', undefined, 'quest-card');
+					const text = element('div');
+					text.append(element('strong', `${quest.subject} · Chapter ${quest.sequence}`));
+					text.append(element('span', `${quest.title} · scheduled ${formatDay(quest.date)}`, 'meta'));
+					card.append(text, element('span', '+8 XP when completed', 'badge'));
+					if (student) {
+						const controls = element('div', undefined, 'form-row hero-excuse-controls');
+						const reason = document.createElement('select');
+						reason.setAttribute('aria-label', `Reason to excuse ${formatDay(quest.date)}`);
+						for (const [value, label] of [
+							['school_exam', 'School exam'],
+							['illness', 'Illness'],
+							['travel', 'Travel'],
+							['rest', 'Parent-approved rest'],
+							['other', 'Other'],
+						]) {
+							const option = document.createElement('option');
+							option.value = value;
+							option.textContent = label;
+							reason.append(option);
+						}
+						const excuse = element('button', 'Mark excused', 'secondary small');
+						excuse.type = 'button';
+						excuse.addEventListener('click', async () => {
+							excuse.disabled = true;
+							const result = await fetchJson(`/api/parent/learners/${encodeURIComponent(student.id)}/hero/days/${quest.date}`, {
+								method: 'PUT',
+								headers: { 'content-type': 'application/json' },
+								body: JSON.stringify({ reason: reason.value }),
+							});
+							if (!result.ok) window.alert(result.body?.message || 'The day could not be excused.');
+							else renderHeroPath(container, result.body.hero, student.displayName, student);
+							excuse.disabled = false;
+						});
+						controls.append(reason, excuse);
+						card.append(controls);
+					}
+					quests.append(card);
+				}
+				container.append(quests);
+
+				container.append(element('h3', 'Rewards'));
+				const rewards = element('div', undefined, 'card-list');
+				if (hero.rewards.length === 0) rewards.append(element('p', 'No parent-configured rewards yet.', 'notice'));
+				for (const reward of hero.rewards) {
+					const card = element('article', undefined, 'quest-card');
+					card.append(element('strong', reward.title));
+					const badge = element('span', reward.unlocked ? 'Unlocked' : `${reward.xpRequired} XP`, 'badge');
+					badge.dataset.tone = reward.unlocked ? 'good' : 'muted';
+					card.append(badge);
+					rewards.append(card);
+				}
+				container.append(rewards);
+
+				if (student) {
+					const form = element('form', undefined, 'form-row reward-form');
+					const titleInput = document.createElement('input');
+					titleInput.required = true;
+					titleInput.maxLength = 100;
+					titleInput.placeholder = 'Choose the weekend family activity';
+					titleInput.setAttribute('aria-label', 'Reward or privilege');
+					const xpInput = document.createElement('input');
+					xpInput.type = 'number';
+					xpInput.min = '0';
+					xpInput.max = '100000';
+					xpInput.value = String(Math.max(25, Math.ceil((hero.totalXp + 1) / 25) * 25));
+					xpInput.setAttribute('aria-label', 'XP needed');
+					const add = element('button', 'Add reward', 'secondary');
+					add.type = 'submit';
+					form.append(titleInput, xpInput, add);
+					form.addEventListener('submit', async (event) => {
+						event.preventDefault();
+						add.disabled = true;
+						const result = await fetchJson(`/api/parent/learners/${encodeURIComponent(student.id)}/hero/rewards`, {
+							method: 'POST',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ title: titleInput.value, xpRequired: Number(xpInput.value) }),
+						});
+						if (!result.ok) window.alert(result.body?.message || 'The reward could not be added.');
+						else renderHeroPath(container, result.body.hero, student.displayName, student);
+						add.disabled = false;
+					});
+					container.append(form);
+				}
+
+				container.append(element('h3', 'Recent XP'));
+				const events = element('div', undefined, 'card-list');
+				if (hero.events.length === 0) events.append(element('p', 'XP appears here after planned work is completed.', 'notice'));
+				for (const event of hero.events.slice(0, 8)) {
+					const row = element('div', undefined, 'quest-card');
+					row.append(element('span', `${event.detail} · ${formatDay(event.date)}`), element('strong', `+${event.points} XP`));
+					events.append(row);
+				}
+				container.append(events);
+			}
+
+			async function loadParentHero(student, focus = false) {
+				setActiveParentLearner(student);
+				setWorkspaceTab('parent', 'hero', focus);
+				skeleton(parentHeroView, 3, 'Loading Hero Path…');
+				const { ok, body } = await fetchJson(`/api/parent/learners/${encodeURIComponent(student.id)}/hero`);
+				if (!ok) {
+					parentHeroView.replaceChildren(element('p', body?.message || 'Hero Path could not be loaded.', 'notice'));
+					return;
+				}
+				renderHeroPath(parentHeroView, body.hero, student.displayName, student);
+			}
+
+			async function loadStudentHero() {
+				skeleton(studentHeroPage, 3, 'Loading Hero Path…');
+				const { ok, body } = await fetchJson('/api/learning/hero');
+				if (!ok) {
+					studentHeroPage.replaceChildren(element('p', body?.message || 'Hero Path could not be loaded.', 'notice'));
+					return;
+				}
+				renderHeroPath(studentHeroPage, body.hero, sessionUser.displayName);
 			}
 
 			/* ---------- Parent: study calendar ---------- */
@@ -2718,6 +3006,29 @@
 					list.append(card);
 				}
 				historyDetail.replaceChildren(heading, intro, guidance, list);
+				const needsCorrection = result.corrections.some((item) => item.score !== 1);
+				if (needsCorrection && sessionUser) {
+					const complete = element('button', 'Complete corrections', 'secondary');
+					complete.type = 'button';
+					complete.addEventListener('click', async () => {
+						complete.disabled = true;
+						const { ok, body } = await fetchJson(`/api/learning/assignments/${assignment.id}/corrections`, {
+							method: 'POST',
+						});
+						if (!ok) {
+							window.alert(body?.message || 'Corrections could not be recorded.');
+							complete.disabled = false;
+							return;
+						}
+						showMessage(complete.parentElement, `Corrections reviewed · +${body.awardedXp} XP`, 'success');
+						complete.replaceWith(element('span', 'Corrections reviewed', 'badge'));
+						await loadStudentHero();
+					});
+					const wrap = element('div', undefined, 'actions');
+					wrap.style.marginTop = '14px';
+					wrap.append(complete);
+					historyDetail.append(wrap);
+				}
 				if (assignment.courseComplete) historyDetail.append(element('p', 'All reviewed chapters in this subject are complete.', 'notice'));
 			}
 

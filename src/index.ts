@@ -9,6 +9,7 @@ import {
 	type PlanEnv,
 } from './plan';
 import { demoState, switchDemoClass, resetDemoProgress } from './demo';
+import { addHeroReward, awardSubmissionXp, completeCorrections, heroSummary, markExcusedDay, type HeroEnv } from './hero';
 import {
 	checkThrottle,
 	clearFailures,
@@ -33,7 +34,7 @@ interface Env {
 
 const securityHeaders = {
 	'content-security-policy':
-		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-U19EKUDadNNAQ5lEn4PUc/1FIGGRlnt+Hy3K3aw7I7o='; style-src 'self' 'sha256-PaoouaTq8un8wvBAPQSvi+BrwR3NF/Nr1uKXIz6Aol0='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-UtkZCv6vsyUZ60tMuIyMwEbexbhO4978rflB6sQ+FCQ='; style-src 'self' 'sha256-jDDKSmtAyTWonfNmgQboZVzE+id1qhyFZmDG+Pa8n9c='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
 	'cross-origin-opener-policy': 'same-origin',
 	'cross-origin-resource-policy': 'same-origin',
 	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
@@ -933,6 +934,7 @@ async function submitAssignment(request: Request, env: Env, assignmentId: string
 		).bind(crypto.randomUUID(), user.id, attempted[0].topicId, masteryState, attempted[0].attemptId),
 	);
 	await env.DB.batch(statements);
+	await awardSubmissionXp(env as HeroEnv, user.id, assignment.id);
 	// Finishing a chapter changes the outstanding work, so the calendar is rebuilt
 	// around what is left. A failure here must not lose the submission.
 	let rescheduled = false;
@@ -1021,6 +1023,58 @@ async function linkedLearner(env: Env, parentId: string, learnerId: string): Pro
 	)
 		.bind(parentId, learnerId)
 		.first<StudentSummary>();
+}
+
+async function parentLearnerHero(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = parentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+	return json({ learner, hero: await heroSummary(env as HeroEnv, learnerId) });
+}
+
+async function parentAddHeroReward(request: Request, env: Env, learnerId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = parentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+	const body = await requestObject(request);
+	const title = typeof body?.title === 'string' ? body.title.trim() : '';
+	const xpRequired = body?.xpRequired;
+	if (title.length < 3 || title.length > 100) {
+		return json({ error: 'invalid_title', message: 'Use a reward title between 3 and 100 characters.' }, 400);
+	}
+	if (!Number.isInteger(xpRequired) || (xpRequired as number) < 0 || (xpRequired as number) > 100000) {
+		return json({ error: 'invalid_xp', message: 'XP required must be a whole number from 0 to 100000.' }, 400);
+	}
+	await addHeroReward(env as HeroEnv, learnerId, user.id, title, xpRequired as number);
+	return json({ learner, hero: await heroSummary(env as HeroEnv, learnerId) }, 201);
+}
+
+async function parentExcuseHeroDay(request: Request, env: Env, learnerId: string, date: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = parentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	const learner = await linkedLearner(env, user.id, learnerId);
+	if (!learner) return json({ error: 'forbidden', message: 'This learner is not linked to your account.' }, 403);
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00.000Z`))) {
+		return json({ error: 'invalid_date', message: 'Use a valid calendar date.' }, 400);
+	}
+	const body = await requestObject(request);
+	const reasons = ['school_exam', 'illness', 'travel', 'rest', 'other'] as const;
+	const reason = body?.reason;
+	if (typeof reason !== 'string' || !reasons.includes(reason as (typeof reasons)[number])) {
+		return json({ error: 'invalid_reason', message: 'Choose school exam, illness, travel, rest, or other.' }, 400);
+	}
+	const note = typeof body?.note === 'string' ? body.note.trim() : '';
+	if (note.length > 200) return json({ error: 'invalid_note', message: 'Keep the note to 200 characters or fewer.' }, 400);
+	await markExcusedDay(env as HeroEnv, learnerId, user.id, date, reason as (typeof reasons)[number], note || null);
+	return json({ learner, hero: await heroSummary(env as HeroEnv, learnerId) });
 }
 
 function planDenied(user: SessionUser | null): Response | null {
@@ -1120,6 +1174,26 @@ async function learnerPlan(request: Request, env: Env): Promise<Response> {
 		},
 		today: day ?? { date: today, capacityMinutes: 0, allocatedMinutes: 0, entries: [] },
 	});
+}
+
+async function learnerHero(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	return json({ hero: await heroSummary(env as HeroEnv, user.id) });
+}
+
+async function completeLearnerCorrections(request: Request, env: Env, assignmentId: string): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	const denied = studentOnly(user);
+	if (denied || !user)
+		return denied ?? json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	const awardedXp = await completeCorrections(env as HeroEnv, user.id, assignmentId);
+	if (awardedXp === null) {
+		return json({ error: 'not_found', message: 'No submitted corrections were found for this assignment.' }, 404);
+	}
+	return json({ awardedXp, hero: await heroSummary(env as HeroEnv, user.id) });
 }
 
 function demoOnly(user: SessionUser | null): Response | null {
@@ -1402,6 +1476,10 @@ export default {
 			return learnerPlan(request, env);
 		}
 
+		if (pathname === '/api/learning/hero' && request.method === 'GET') {
+			return learnerHero(request, env);
+		}
+
 		if (pathname === '/api/demo/classes' && request.method === 'GET') {
 			return demoClassesRoute(request, env);
 		}
@@ -1412,6 +1490,21 @@ export default {
 
 		if (pathname === '/api/demo/reset' && request.method === 'POST') {
 			return demoReset(request, env);
+		}
+
+		const parentHeroMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/hero$/);
+		if (parentHeroMatch && request.method === 'GET') {
+			return parentLearnerHero(request, env, parentHeroMatch[1]);
+		}
+
+		const heroRewardMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/hero\/rewards$/);
+		if (heroRewardMatch && request.method === 'POST') {
+			return parentAddHeroReward(request, env, heroRewardMatch[1]);
+		}
+
+		const heroDayMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/hero\/days\/(\d{4}-\d{2}-\d{2})$/);
+		if (heroDayMatch && request.method === 'PUT') {
+			return parentExcuseHeroDay(request, env, heroDayMatch[1], heroDayMatch[2]);
 		}
 
 		const parentPlanMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/plan$/);
@@ -1447,6 +1540,11 @@ export default {
 		const submitMatch = pathname.match(/^\/api\/learning\/assignments\/([A-Za-z0-9-]+)\/submit$/);
 		if (submitMatch && request.method === 'POST') {
 			return submitAssignment(request, env, submitMatch[1]);
+		}
+
+		const correctionsMatch = pathname.match(/^\/api\/learning\/assignments\/([A-Za-z0-9-]+)\/corrections$/);
+		if (correctionsMatch && request.method === 'POST') {
+			return completeLearnerCorrections(request, env, correctionsMatch[1]);
 		}
 
 		const progressMatch = pathname.match(/^\/api\/students\/([A-Za-z0-9-]+)\/progress$/);

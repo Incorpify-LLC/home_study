@@ -285,6 +285,22 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain('/exercises');
 	});
 
+	it('provides individual Hero Path views and correction rewards without a leaderboard', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="parent-tab-hero"');
+		expect(page).toContain('id="parent-hero-view"');
+		expect(page).toContain('id="student-tab-hero"');
+		expect(page).toContain('id="student-hero-page"');
+		expect(page).toContain('Hero Path');
+		expect(page).toContain('/api/learning/hero');
+		expect(page).toContain('/hero/days/');
+		expect(page).toContain('/corrections');
+		expect(page).toContain('Complete corrections');
+		expect(page).not.toContain('Sibling leaderboard');
+	});
+
 	it('supports the evaluation demo learner and the reviewed interface', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
