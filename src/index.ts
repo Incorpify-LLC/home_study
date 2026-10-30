@@ -10,6 +10,8 @@ import {
 } from './plan';
 import { demoState, switchDemoClass, resetDemoProgress } from './demo';
 import { addHeroReward, awardSubmissionXp, completeCorrections, heroSummary, markExcusedDay, type HeroEnv } from './hero';
+import { scoreMatching, scoreMultipleSelect, scoreNumeric } from './board/grade';
+import { boardParitySnapshot } from './board/assemble';
 import {
 	checkThrottle,
 	clearFailures,
@@ -34,7 +36,7 @@ interface Env {
 
 const securityHeaders = {
 	'content-security-policy':
-		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-QH3nqATehOYnp1srZvxI83dVVHC7t8LKU6YgGpOMbEQ='; style-src 'self' 'sha256-tmgchNk0PMIpRWNOrcP6XaRUJ6sHR0GHScV3y8/BYiE='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-hNPvko2wbT2lIq9wPJwP4e6UyXjJue9rO3rTAqCQS7A='; style-src 'self' 'sha256-tmgchNk0PMIpRWNOrcP6XaRUJ6sHR0GHScV3y8/BYiE='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
 	'cross-origin-opener-policy': 'same-origin',
 	'cross-origin-resource-policy': 'same-origin',
 	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
@@ -470,34 +472,36 @@ async function resultForAssignment(env: Env, assignmentId: string): Promise<Reco
 		`SELECT questions.id,
 		        questions.prompt,
 		        curriculum_topics.topic,
+		        questions.marks,
 		        attempts.answer_json AS answerJson,
 		        questions.answer_json AS correctAnswerJson,
 		        questions.rationale,
 		        COALESCE(attempts.final_score, attempts.objective_score, 0) AS score,
 		        attempts.confidence
-		 FROM assignment_items
-		 JOIN questions ON questions.id = assignment_items.question_id
-		 JOIN curriculum_topics ON curriculum_topics.id = questions.topic_id
-		 JOIN attempts
-		   ON attempts.assignment_id = assignment_items.assignment_id
-		  AND attempts.question_id = assignment_items.question_id
-		 WHERE assignment_items.assignment_id = ?
-		 ORDER BY assignment_items.position`,
+		   FROM assignment_items
+		   JOIN questions ON questions.id = assignment_items.question_id
+		   JOIN curriculum_topics ON curriculum_topics.id = questions.topic_id
+		   JOIN attempts
+		     ON attempts.assignment_id = assignment_items.assignment_id
+		    AND attempts.question_id = assignment_items.question_id
+		  WHERE assignment_items.assignment_id = ?
+		  ORDER BY assignment_items.position`,
 	)
 		.bind(assignmentId)
-		.all<CorrectionRecord>();
+		.all<CorrectionRecord & { marks: number }>();
 	const corrections = result.results.map((row) => ({
 		questionId: row.id,
 		prompt: row.prompt,
 		topic: row.topic,
+		marks: row.marks,
 		answer: parseStoredJson<unknown>(row.answerJson),
 		correctAnswer: parseStoredJson<unknown>(row.correctAnswerJson),
 		rationale: row.rationale,
 		score: row.score,
 		confidence: row.confidence,
 	}));
-	const earned = corrections.reduce((sum, correction) => sum + correction.score, 0);
-	const possible = corrections.length;
+	const earned = corrections.reduce((sum, correction) => sum + correction.score * correction.marks, 0);
+	const possible = corrections.reduce((sum, correction) => sum + correction.marks, 0);
 	const confidenceCalibration = {
 		confidentCorrect: 0,
 		confidentIncorrect: 0,
@@ -823,11 +827,23 @@ async function requestObject(request: Request): Promise<Record<string, unknown> 
 
 function validAnswer(type: string, answer: unknown, optionsJson: string | null): answer is Record<string, unknown> {
 	if (!isObject(answer)) return false;
-	if (type === 'numeric') return typeof answer.value === 'number' && Number.isFinite(answer.value);
+	if (type === 'numeric')
+		return (
+			typeof answer.value === 'number' && Number.isFinite(answer.value) && (answer.unit === undefined || typeof answer.unit === 'string')
+		);
 	if (type === 'single_choice') {
 		if (typeof answer.choice !== 'string') return false;
 		const options = optionsJson ? parseStoredJson<Array<{ id: string }>>(optionsJson) : [];
 		return options.some((option) => option.id === answer.choice);
+	}
+	if (type === 'multiple_select') {
+		if (!Array.isArray(answer.choices) || answer.choices.length === 0) return false;
+		const options = optionsJson ? parseStoredJson<Array<{ id: string }>>(optionsJson) : [];
+		return answer.choices.every((choice) => typeof choice === 'string' && options.some((option) => option.id === choice));
+	}
+	if (type === 'matching') {
+		if (!isObject(answer.pairs)) return false;
+		return Object.values(answer.pairs).every((value) => typeof value === 'string');
 	}
 	return false;
 }
@@ -897,10 +913,11 @@ function scoreAnswer(type: string, expectedJson: string, actualJson: string): nu
 	const expected = parseStoredJson<Record<string, unknown>>(expectedJson);
 	const actual = parseStoredJson<Record<string, unknown>>(actualJson);
 	if (type === 'single_choice') return expected.choice === actual.choice ? 1 : 0;
-	if (type === 'numeric' && typeof expected.value === 'number' && typeof actual.value === 'number') {
-		const tolerance = typeof expected.tolerance === 'number' ? expected.tolerance : 0;
-		return Math.abs(expected.value - actual.value) <= tolerance ? 1 : 0;
-	}
+	if (type === 'numeric') return scoreNumeric(expected as Parameters<typeof scoreNumeric>[0], actual as Parameters<typeof scoreNumeric>[1]);
+	if (type === 'multiple_select')
+		return scoreMultipleSelect(expected as Parameters<typeof scoreMultipleSelect>[0], actual as Parameters<typeof scoreMultipleSelect>[1]);
+	if (type === 'matching')
+		return scoreMatching(expected as Parameters<typeof scoreMatching>[0], actual as Parameters<typeof scoreMatching>[1]);
 	return 0;
 }
 
@@ -920,21 +937,22 @@ async function submitAssignment(request: Request, env: Env, assignmentId: string
 		`SELECT questions.id,
 		        questions.question_type AS type,
 		        questions.answer_json AS answerJson,
+		        questions.marks AS marks,
 		        assignment_responses.answer_json AS responseJson,
 		        assignment_responses.confidence,
 		        assignment_responses.elapsed_seconds AS elapsedSeconds,
 		        questions.topic_id AS topicId
-		 FROM assignment_items
-		 JOIN questions ON questions.id = assignment_items.question_id
-		 LEFT JOIN assignment_responses
-		   ON assignment_responses.assignment_id = assignment_items.assignment_id
-		  AND assignment_responses.question_id = assignment_items.question_id
-		 WHERE assignment_items.assignment_id = ?
-		   AND questions.review_status = 'reviewed'
-		 ORDER BY assignment_items.position`,
+		   FROM assignment_items
+		   JOIN questions ON questions.id = assignment_items.question_id
+		   LEFT JOIN assignment_responses
+		     ON assignment_responses.assignment_id = assignment_items.assignment_id
+		    AND assignment_responses.question_id = assignment_items.question_id
+		  WHERE assignment_items.assignment_id = ?
+		    AND questions.review_status = 'reviewed'
+		  ORDER BY assignment_items.position`,
 	)
 		.bind(assignment.id)
-		.all<SubmissionQuestion>();
+		.all<SubmissionQuestion & { marks: number }>();
 	if (questions.results.length === 0 || questions.results.some((question) => question.responseJson === null)) {
 		return json({ error: 'incomplete_assignment', message: 'Answer every question before submitting.' }, 409);
 	}
@@ -960,8 +978,10 @@ async function submitAssignment(request: Request, env: Env, assignmentId: string
 			question.elapsedSeconds,
 		),
 	);
-	const earned = attempted.reduce((sum, question) => sum + question.score, 0);
-	const masteryState = earned / attempted.length >= 0.8 ? 'practised' : earned / attempted.length >= 0.5 ? 'developing' : 'needs_review';
+	const earned = attempted.reduce((sum, question) => sum + question.score * question.marks, 0);
+	const possibleMarks = attempted.reduce((sum, question) => sum + question.marks, 0);
+	const ratio = possibleMarks === 0 ? 0 : earned / possibleMarks;
+	const masteryState = ratio >= 0.8 ? 'practised' : ratio >= 0.5 ? 'developing' : 'needs_review';
 	statements.push(
 		env.DB.prepare(
 			`UPDATE assignments
@@ -1459,6 +1479,25 @@ function json(body: unknown, status = 200): Response {
 	});
 }
 
+async function boardParity(request: Request, env: Env): Promise<Response> {
+	const user = await authenticatedUser(request, env);
+	if (!user) return json({ error: 'not_authenticated', message: 'A valid Cloudflare Access session is required.' }, 401);
+	if (user.role !== 'parent') return json({ error: 'forbidden', message: 'Parents only.' }, 403);
+	const url = new URL(request.url);
+	const board = url.searchParams.get('board') ?? 'ICSE';
+	const classLevel = url.searchParams.get('class_level') ?? 'X';
+	const snapshot = await boardParitySnapshot({ DB: env.DB });
+	const topics = snapshot
+		.filter((report) => report.board === board)
+		.map((report) => ({
+			topicId: report.topicId,
+			percentage: report.percentage,
+			shortfallArchetypes: report.shortfallArchetypes,
+			coverage: report.coverage,
+		}));
+	return json({ board, classLevel, topics });
+}
+
 function rejectUnknownLearningQuery(url: URL): Response | null {
 	if (!url.pathname.startsWith('/api/learning/')) return null;
 	const allowed =
@@ -1544,6 +1583,10 @@ export default {
 
 		if (pathname === '/api/demo/reset' && request.method === 'POST') {
 			return demoReset(request, env);
+		}
+
+		if (pathname === '/api/board/parity' && request.method === 'GET') {
+			return boardParity(request, env);
 		}
 
 		const parentHeroMatch = pathname.match(/^\/api\/parent\/learners\/([A-Za-z0-9-]+)\/hero$/);

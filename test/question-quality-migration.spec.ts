@@ -8,8 +8,10 @@ declare module 'cloudflare:test' {
 }
 
 beforeAll(async () => {
-	const previous = env.TEST_MIGRATIONS.slice(0, -2);
-	const qualityReleases = env.TEST_MIGRATIONS.slice(-2);
+	const qualityIndex = env.TEST_MIGRATIONS.findIndex((migration) => migration.name === '0015_question_quality_release.sql');
+	if (qualityIndex < 0) throw new Error('0015_question_quality_release.sql not found in TEST_MIGRATIONS');
+	const previous = env.TEST_MIGRATIONS.slice(0, qualityIndex);
+	const qualityReleases = env.TEST_MIGRATIONS.slice(qualityIndex);
 	await applyD1Migrations(env.DB, previous);
 	await env.DB.batch([
 		env.DB.prepare(

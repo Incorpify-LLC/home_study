@@ -248,6 +248,23 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('AI cheating detected');
 	});
 
+	it('renders board-style question formats: numeric with unit, multi-select, and matching', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		// Numeric questions offer a unit field next to the value.
+		expect(page).toContain("unitInput.setAttribute('aria-label', `Unit for question ${index + 1}`)");
+		expect(page).toContain("question.type === 'numeric'");
+		expect(page).toContain('readNumericAnswer');
+		// Multiple-select renders checkboxes and returns a choices array.
+		expect(page).toContain("checkbox.type = 'checkbox'");
+		expect(page).toContain("question.type === 'multiple_select'");
+		expect(page).toContain('{ choices: checked }');
+		// Matching renders one select per left item and returns a pairs map.
+		expect(page).toContain("question.type === 'matching'");
+		expect(page).toContain('{ pairs }');
+	});
+
 	it('gives the learner an always-available past-exercise review page', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

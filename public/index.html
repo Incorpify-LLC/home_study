@@ -2851,14 +2851,28 @@
 			function readAnswerFromForm(question) {
 				const fieldset = document.querySelector(`[data-question-id="${question.id}"]`);
 				if (!fieldset) return null;
-				if (question.type === 'numeric') {
-					const input = fieldset.querySelector('input[type="number"]');
-					if (!input || input.value.trim() === '') return null;
-					const value = Number(input.value);
-					return Number.isFinite(value) ? { value } : null;
+				if (question.type === 'numeric') return readNumericAnswer(fieldset);
+				if (question.type === 'multiple_select') {
+					const checked = Array.from(fieldset.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
+					return checked.length > 0 ? { choices: checked } : null;
+				}
+				if (question.type === 'matching') {
+					const pairs = {};
+					for (const select of fieldset.querySelectorAll('select[data-pair-left]')) pairs[select.dataset.pairLeft] = select.value;
+					return Object.keys(pairs).length > 0 ? { pairs } : null;
 				}
 				const checked = fieldset.querySelector('input[type="radio"]:checked');
 				return checked ? { choice: checked.value } : null;
+			}
+
+			function readNumericAnswer(fieldset) {
+				const input = fieldset.querySelector('input[type="number"]');
+				if (!input || input.value.trim() === '') return null;
+				const value = Number(input.value);
+				if (!Number.isFinite(value)) return null;
+				const unitInput = fieldset.querySelector('input[data-field="unit"]');
+				const unit = unitInput && unitInput.value.trim() !== '' ? unitInput.value.trim() : undefined;
+				return unit === undefined ? { value } : { value, unit };
 			}
 
 			function updateAnswerCount() {
@@ -2961,7 +2975,63 @@
 						if (input.value.trim()) saveQuestion(question);
 					});
 					row.append(input);
+					// Board numericals state the unit with the value; the unit is
+					// graded separately from the number.
+					const unitInput = document.createElement('input');
+					unitInput.type = 'text';
+					unitInput.dataset.field = 'unit';
+					unitInput.disabled = submitted;
+					unitInput.setAttribute('aria-label', `Unit for question ${index + 1}`);
+					unitInput.placeholder = 'unit (e.g. N m)';
+					if (saved && typeof saved.unit === 'string') unitInput.value = saved.unit;
+					unitInput.addEventListener('input', () => updateQuestionState(question));
+					unitInput.addEventListener('blur', () => {
+						if (input.value.trim()) saveQuestion(question);
+					});
+					row.append(unitInput);
 					fieldset.append(label, row);
+				} else if (question.type === 'multiple_select') {
+					for (const option of question.options ?? []) {
+						const label = element('label', undefined, 'choice');
+						const checkbox = document.createElement('input');
+						checkbox.type = 'checkbox';
+						checkbox.name = `question-${question.id}`;
+						checkbox.value = option.id;
+						checkbox.disabled = submitted;
+						if (saved && Array.isArray(saved.choices) && saved.choices.includes(option.id)) checkbox.checked = true;
+						checkbox.addEventListener('change', () => {
+							updateQuestionState(question);
+							saveQuestion(question);
+						});
+						label.append(checkbox, element('span', option.id.toUpperCase(), 'choice-letter'), element('span', option.label));
+						fieldset.append(label);
+					}
+				} else if (question.type === 'matching') {
+					const rightOptions = question.options?.right ?? [];
+					for (const left of question.options?.left ?? []) {
+						const label = element('label', left.label, 'field');
+						const select = document.createElement('select');
+						select.dataset.pairLeft = left.id;
+						select.disabled = submitted;
+						select.setAttribute('aria-label', `Match for ${left.label}`);
+						const blank = document.createElement('option');
+						blank.value = '';
+						blank.textContent = 'Choose…';
+						select.append(blank);
+						for (const right of rightOptions) {
+							const option = document.createElement('option');
+							option.value = right.id;
+							option.textContent = right.label;
+							if (saved?.pairs?.[left.id] === right.id) option.selected = true;
+							select.append(option);
+						}
+						select.addEventListener('change', () => {
+							updateQuestionState(question);
+							saveQuestion(question);
+						});
+						label.append(select);
+						fieldset.append(label);
+					}
 				} else {
 					for (const option of question.options ?? []) {
 						const label = element('label', undefined, 'choice');
