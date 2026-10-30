@@ -34,7 +34,7 @@ interface Env {
 
 const securityHeaders = {
 	'content-security-policy':
-		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-dGdoiKgC7SA8y9AIs5gFoq7zBVeXmDLO+gOnStvJV1Y='; style-src 'self' 'sha256-jDDKSmtAyTWonfNmgQboZVzE+id1qhyFZmDG+Pa8n9c='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-qWPpCMR9WgzsyM9P2bUdoNm9pfBGc2AHP5CDrxtz5OA='; style-src 'self' 'sha256-jDDKSmtAyTWonfNmgQboZVzE+id1qhyFZmDG+Pa8n9c='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
 	'cross-origin-opener-policy': 'same-origin',
 	'cross-origin-resource-policy': 'same-origin',
 	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
@@ -700,7 +700,9 @@ async function learningRoadmaps(request: Request, env: Env): Promise<Response> {
 		        assignment_templates.subject,
 		        assignment_templates.title,
 		        assignments.id AS assignmentId,
-		        COALESCE(assignments.status, 'not_started') AS status
+		        COALESCE(assignments.status, 'not_started') AS status,
+		        COALESCE(scores.possible, 0) AS possible,
+		        COALESCE(scores.earned, 0) AS earned
 		 FROM student_profiles
 		 JOIN assignment_templates ON assignment_templates.class_level = student_profiles.class_level
 		 JOIN learning_modules ON learning_modules.id = assignment_templates.module_id
@@ -708,6 +710,13 @@ async function learningRoadmaps(request: Request, env: Env): Promise<Response> {
 		 LEFT JOIN assignments
 		   ON assignments.template_id = assignment_templates.id
 		  AND assignments.student_id = student_profiles.user_id
+		 LEFT JOIN (
+		   SELECT assignment_id,
+		          COUNT(*) AS possible,
+		          SUM(COALESCE(final_score, objective_score, 0)) AS earned
+		   FROM attempts
+		   GROUP BY assignment_id
+		 ) scores ON scores.assignment_id = assignments.id
 		 WHERE student_profiles.user_id = ?
 		   AND assignment_templates.active = 1
 		   AND assignment_templates.review_status = 'reviewed'
@@ -724,6 +733,8 @@ async function learningRoadmaps(request: Request, env: Env): Promise<Response> {
 			title: string;
 			assignmentId: string | null;
 			status: string;
+			possible: number;
+			earned: number;
 		}>();
 	if (result.results.length === 0) return json({ error: 'not_found', message: 'No reviewed learning roadmap is available.' }, 404);
 
@@ -734,15 +745,25 @@ async function learningRoadmaps(request: Request, env: Env): Promise<Response> {
 		grouped.set(row.subject, modules);
 	}
 	const tracks = [...grouped.entries()].map(([subject, modules]) => {
-		const completed = modules.filter((module) => module.status === 'submitted' || module.status === 'reviewed').length;
+		const submitted = modules.filter((module) => module.status === 'submitted' || module.status === 'reviewed');
+		const attempted = submitted.length;
+		const mastered = submitted.filter((module) => module.possible > 0 && module.earned / module.possible >= 0.8).length;
 		const current = modules.find((module) => module.status === 'assigned' || module.status === 'in_progress');
 		const firstPending = current ?? modules.find((module) => module.status === 'not_started');
 		return {
 			subject,
 			total: modules.length,
-			completed,
+			completed: attempted,
+			attempted,
+			mastered,
 			current: firstPending ? { sequence: firstPending.sequence, title: firstPending.title } : null,
-			modules: modules.map(({ sequence, title, status }) => ({ sequence, title, status })),
+			modules: modules.map(({ sequence, title, status, possible, earned }) => ({
+				sequence,
+				title,
+				status,
+				percentage: possible === 0 ? null : Math.round((earned / possible) * 100),
+				mastered: possible > 0 && earned / possible >= 0.8,
+			})),
 		};
 	});
 	return json({ tracks });

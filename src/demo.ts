@@ -19,13 +19,13 @@ export type DemoClass = {
 	chapters: number;
 };
 
-export type DemoProgress = { completed: number; total: number };
+export type DemoProgress = { attempted: number; mastered: number; total: number };
 
 export type DemoState = {
 	current: { classLevel: string; examYear: number | null };
 	classes: DemoClass[];
 	progress: DemoProgress;
-	progressByClass: Array<{ classLevel: string; completed: number }>;
+	progressByClass: Array<{ classLevel: string; attempted: number; mastered: number }>;
 };
 
 const CLASS_ORDER: Record<string, number> = { VIII: 8, X: 10, XII: 12 };
@@ -71,29 +71,50 @@ export async function demoState(env: DemoEnv, studentId: string): Promise<DemoSt
 		.first<{ classLevel: string; examYear: number | null }>();
 	if (!profile) throw new Error('Demo learner has no student profile.');
 
-	// Progress is reported per class, so a reviewer can see what each class keeps.
-	const completedRows = await env.DB.prepare(
-		`SELECT assignment_templates.class_level AS classLevel, COUNT(*) AS completed
+	// Submitted work and demonstrated mastery are separate signals. The same
+	// 80% threshold is used when submission records the topic's mastery event.
+	const progressRows = await env.DB.prepare(
+		`SELECT assignment_templates.class_level AS classLevel,
+		        COUNT(*) AS attempted,
+		        SUM(CASE
+		              WHEN scores.possible > 0 AND scores.earned * 1.0 / scores.possible >= 0.8 THEN 1
+		              ELSE 0
+		            END) AS mastered
 		 FROM assignments
 		 JOIN assignment_templates ON assignment_templates.id = assignments.template_id
+		 LEFT JOIN (
+		   SELECT assignment_id,
+		          COUNT(*) AS possible,
+		          SUM(COALESCE(final_score, objective_score, 0)) AS earned
+		   FROM attempts
+		   GROUP BY assignment_id
+		 ) scores ON scores.assignment_id = assignments.id
 		 WHERE assignments.student_id = ?
 		   AND assignments.status IN ('submitted', 'reviewed')
 		 GROUP BY assignment_templates.class_level`,
 	)
 		.bind(studentId)
-		.all<{ classLevel: string; completed: number }>();
+		.all<{ classLevel: string; attempted: number; mastered: number }>();
 
-	const progressByClass = classes.map((entry) => ({
-		classLevel: entry.classLevel,
-		completed: completedRows.results.find((row) => row.classLevel === entry.classLevel)?.completed ?? 0,
-	}));
+	const progressByClass = classes.map((entry) => {
+		const progress = progressRows.results.find((row) => row.classLevel === entry.classLevel);
+		return {
+			classLevel: entry.classLevel,
+			attempted: progress?.attempted ?? 0,
+			mastered: progress?.mastered ?? 0,
+		};
+	});
 	const current = classes.find((entry) => entry.classLevel === profile.classLevel);
-	const completed = progressByClass.find((entry) => entry.classLevel === profile.classLevel)?.completed ?? 0;
+	const progress = progressByClass.find((entry) => entry.classLevel === profile.classLevel) ?? {
+		classLevel: profile.classLevel,
+		attempted: 0,
+		mastered: 0,
+	};
 
 	return {
 		current: { classLevel: profile.classLevel, examYear: profile.examYear },
 		classes,
-		progress: { completed, total: current?.chapters ?? 0 },
+		progress: { attempted: progress.attempted, mastered: progress.mastered, total: current?.chapters ?? 0 },
 		progressByClass,
 	};
 }

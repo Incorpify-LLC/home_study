@@ -220,9 +220,11 @@ describe('multi-subject tracks', () => {
 			headers: accessHeaders('student-d@example.test'),
 		});
 		const updatedBody = (await updatedRoadmap.json()) as {
-			tracks: Array<{ subject: string; completed: number; current: { sequence: number } | null }>;
+			tracks: Array<{ subject: string; attempted: number; mastered: number; current: { sequence: number } | null }>;
 		};
-		expect(updatedBody.tracks.find((track) => track.subject === 'Physics')?.completed).toBe(1);
+		const physicsProgress = updatedBody.tracks.find((track) => track.subject === 'Physics');
+		expect(physicsProgress?.attempted).toBe(1);
+		expect(physicsProgress?.mastered).toBe(0);
 		expect(updatedBody.tracks.find((track) => track.subject === 'Mathematics')?.completed).toBe(1);
 	});
 

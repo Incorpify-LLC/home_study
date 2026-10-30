@@ -309,6 +309,20 @@ describe('Access-protected application shell', () => {
 		expect(submitHandler?.[1]).toContain('await loadDemoBar();');
 	});
 
+	it('distinguishes attempted chapters from demonstrated mastery', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('body.progress.mastered');
+		expect(page).toContain('body.progress.attempted');
+		expect(page).toContain('roadmap.mastered');
+		expect(page).toContain('roadmap.attempted');
+		expect(page).toContain("submitted: 'Needs another pass'");
+		expect(page).toContain("module.mastered ? '✓'");
+		expect(page).toContain('item.earned / item.possible >= 0.8');
+		expect(page).not.toContain('chapters done');
+	});
+
 	it('supports the evaluation demo learner and the reviewed interface', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

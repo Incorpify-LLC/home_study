@@ -2224,13 +2224,16 @@
 					return;
 				}
 				const assignments = body.assignments ?? [];
-				const submittedCount = assignments.filter((item) => item.status === 'submitted' || item.status === 'reviewed').length;
+				const attemptedCount = assignments.filter((item) => item.status === 'submitted' || item.status === 'reviewed').length;
+				const masteredCount = assignments.filter(
+					(item) => (item.status === 'submitted' || item.status === 'reviewed') && item.possible > 0 && item.earned / item.possible >= 0.8,
+				).length;
 				const scored = assignments.filter((item) => item.possible > 0);
 				const average = scored.length ? Math.round(scored.reduce((sum, item) => sum + item.percentage, 0) / scored.length) : null;
 
 				const stats = element('div', undefined, 'stat-row');
-				stats.append(statTile(String(submittedCount), 'Chapters submitted'));
-				stats.append(statTile(String(assignments.length - submittedCount), 'Chapters open'));
+				stats.append(statTile(String(masteredCount), 'Chapters mastered'));
+				stats.append(statTile(String(attemptedCount), 'Chapters attempted'));
 				stats.append(statTile(average === null ? '–' : `${average}%`, 'Average score'));
 
 				progressView.replaceChildren(heading, stats);
@@ -2722,22 +2725,25 @@
 					return;
 				}
 				activeSubject = roadmap.subject;
-				summary.textContent = `${roadmap.subject} · ${roadmap.completed} of ${roadmap.total} chapters completed`;
-				setProgress(roadmapProgress, roadmap.total ? (roadmap.completed / roadmap.total) * 100 : 0);
+				summary.textContent = `${roadmap.subject} · ${roadmap.mastered} mastered · ${roadmap.attempted} attempted of ${roadmap.total}`;
+				setProgress(roadmapProgress, roadmap.total ? (roadmap.mastered / roadmap.total) * 100 : 0);
 				list.replaceChildren();
 				const labels = {
 					not_started: 'Not started',
 					assigned: 'Current chapter',
 					in_progress: 'In progress',
-					submitted: 'Completed',
+					submitted: 'Needs another pass',
 					reviewed: 'Reviewed',
 				};
 				for (const module of roadmap.modules) {
 					const card = element('article', undefined, 'roadmap-item');
 					card.dataset.status = module.status;
-					card.append(element('span', String(module.sequence), 'roadmap-number'));
+					card.append(element('span', module.mastered ? '✓' : String(module.sequence), 'roadmap-number'));
 					const details = element('div');
-					details.append(element('strong', module.title), element('small', labels[module.status] || module.status));
+					details.append(
+						element('strong', module.title),
+						element('small', module.mastered ? 'Mastered' : labels[module.status] || module.status),
+					);
 					card.append(details);
 					list.append(card);
 				}
@@ -2776,7 +2782,7 @@
 					tabs.replaceChildren();
 					if (tracks.length < 2) continue;
 					for (const track of tracks) {
-						const tab = element('button', `${track.subject} · ${track.completed}/${track.total}`, 'chip');
+						const tab = element('button', `${track.subject} · ${track.mastered}/${track.total} mastered`, 'chip');
 						tab.type = 'button';
 						tab.dataset.studySubject = track.subject;
 						tab.dataset.active = String(track.subject === activeSubject);
@@ -3228,15 +3234,17 @@
 				label.append(
 					element(
 						'span',
-						`acting as Class ${body.current.classLevel} · ${body.progress.completed} of ${body.progress.total} chapters done`,
+						`acting as Class ${body.current.classLevel} · ${body.progress.mastered} mastered · ${body.progress.attempted} attempted of ${body.progress.total}`,
 						'meta',
 					),
 				);
 
 				const classes = element('div', undefined, 'chip-row');
 				for (const entry of body.classes) {
-					const done = body.progressByClass?.find((row) => row.classLevel === entry.classLevel)?.completed ?? 0;
-					const chip = element('button', `Class ${entry.classLevel} · ${done}/${entry.chapters}`, 'chip small');
+					const progress = body.progressByClass?.find((row) => row.classLevel === entry.classLevel);
+					const mastered = progress?.mastered ?? 0;
+					const attempted = progress?.attempted ?? 0;
+					const chip = element('button', `Class ${entry.classLevel} · ${mastered} mastered · ${attempted} attempted`, 'chip small');
 					chip.type = 'button';
 					chip.setAttribute('aria-pressed', String(entry.classLevel === body.current.classLevel));
 					chip.addEventListener('click', async () => {

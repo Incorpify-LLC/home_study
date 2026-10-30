@@ -143,6 +143,11 @@ describe('demo learner works a chapter like a child', () => {
 		expect(result.result.corrections.length).toBe(assignment.assignment.questions.length);
 		expect(result.rescheduled).toBe(true);
 
+		const stateResponse = await SELF.fetch('https://study.saneax.in/api/demo/classes', { headers: accessHeaders(demoEmail) });
+		const state = (await stateResponse.json()) as { progress: { attempted: number; mastered: number } };
+		expect(state.progress.attempted).toBe(1);
+		expect(state.progress.mastered).toBe(result.result.earned / result.result.possible >= 0.8 ? 1 : 0);
+
 		const tracks = await roadmapSubjects();
 		expect(tracks.find((track) => track.subject === 'Physics')?.completed).toBe(1);
 	});
@@ -156,9 +161,13 @@ describe('demo learner switches class and resets', () => {
 			body: JSON.stringify({ classLevel: 'VIII' }),
 		});
 		expect(response.status).toBe(200);
-		const body = (await response.json()) as { current: { classLevel: string; examYear: number | null }; progress: { completed: number } };
+		const body = (await response.json()) as {
+			current: { classLevel: string; examYear: number | null };
+			progress: { attempted: number; mastered: number };
+		};
 		expect(body.current).toEqual({ classLevel: 'VIII', examYear: null });
-		expect(body.progress.completed).toBe(0);
+		expect(body.progress.attempted).toBe(0);
+		expect(body.progress.mastered).toBe(0);
 
 		const tracks = await roadmapSubjects();
 		expect(tracks.map((track) => track.subject).sort()).toEqual(['Chemistry', 'Mathematics', 'Physics']);
@@ -220,9 +229,10 @@ describe('demo learner switches class and resets', () => {
 			headers: accessHeaders(demoEmail),
 		});
 		expect(reset.status).toBe(200);
-		const body = (await reset.json()) as { current: { classLevel: string }; progress: { completed: number } };
+		const body = (await reset.json()) as { current: { classLevel: string }; progress: { attempted: number; mastered: number } };
 		expect(body.current.classLevel).toBe('VIII');
-		expect(body.progress.completed).toBe(0);
+		expect(body.progress.attempted).toBe(0);
+		expect(body.progress.mastered).toBe(0);
 
 		const tracks = await roadmapSubjects();
 		expect(tracks.every((track) => track.completed === 0)).toBe(true);
@@ -295,21 +305,23 @@ describe('demo learner switches class and resets', () => {
 		expect(switched.status).toBe(200);
 		const switchedBody = (await switched.json()) as {
 			current: { classLevel: string };
-			progress: { completed: number; total: number };
-			progressByClass: Array<{ classLevel: string; completed: number }>;
+			progress: { attempted: number; mastered: number; total: number };
+			progressByClass: Array<{ classLevel: string; attempted: number; mastered: number }>;
 		};
 		expect(switchedBody.current.classLevel).toBe('VIII');
-		expect(switchedBody.progressByClass.find((entry) => entry.classLevel === 'X')?.completed).toBe(1);
-		expect(switchedBody.progress.completed).toBe(0);
+		expect(switchedBody.progressByClass.find((entry) => entry.classLevel === 'X')?.attempted).toBe(1);
+		expect(switchedBody.progress.attempted).toBe(0);
+		expect(switchedBody.progress.mastered).toBe(0);
 
-		// Coming back to Class X shows the earlier chapter still done.
+		// Coming back to Class X shows the earlier attempt and its independent mastery result.
 		const back = await SELF.fetch('https://study.saneax.in/api/demo/class', {
 			method: 'POST',
 			headers: accessHeaders(demoEmail, true),
 			body: JSON.stringify({ classLevel: 'X' }),
 		});
-		const backBody = (await back.json()) as { current: { classLevel: string }; progress: { completed: number } };
-		expect(backBody.progress.completed).toBe(1);
+		const backBody = (await back.json()) as { current: { classLevel: string }; progress: { attempted: number; mastered: number } };
+		expect(backBody.progress.attempted).toBe(1);
+		expect(backBody.progress.mastered).toBeLessThanOrEqual(backBody.progress.attempted);
 
 		// Starting fresh is a choice: it clears only the class being entered.
 		const fresh = await SELF.fetch('https://study.saneax.in/api/demo/class', {
@@ -318,11 +330,12 @@ describe('demo learner switches class and resets', () => {
 			body: JSON.stringify({ classLevel: 'X', startFresh: true }),
 		});
 		const freshBody = (await fresh.json()) as {
-			progress: { completed: number };
-			progressByClass: Array<{ classLevel: string; completed: number }>;
+			progress: { attempted: number; mastered: number };
+			progressByClass: Array<{ classLevel: string; attempted: number; mastered: number }>;
 		};
-		expect(freshBody.progress.completed).toBe(0);
-		expect(freshBody.progressByClass.find((entry) => entry.classLevel === 'X')?.completed).toBe(0);
+		expect(freshBody.progress.attempted).toBe(0);
+		expect(freshBody.progress.mastered).toBe(0);
+		expect(freshBody.progressByClass.find((entry) => entry.classLevel === 'X')?.attempted).toBe(0);
 	});
 
 	it("appears in the linked parent's learner list", async () => {
