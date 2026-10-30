@@ -220,6 +220,34 @@ describe('Access-protected application shell', () => {
 		expect(page).toContain("prepareWorkspaceTabs('student')");
 	});
 
+	it('frames practice as learning and asks for a privacy-safe session promise', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('id="practice-promise"');
+		expect(page).toContain('Learning, not scoring');
+		expect(page).toContain('Try each question yourself first');
+		expect(page).toContain("sessionStorage.getItem('home-study-practice-promise')");
+		expect(page).toContain('practicePromise.showModal()');
+		expect(page).toContain("sessionStorage.setItem('home-study-practice-promise', 'accepted')");
+	});
+
+	it('turns confidence and correctness into learner-facing review guidance without accusations', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('function renderConfidenceCalibration(result)');
+		expect(page).toContain('Confidence check');
+		expect(page).toContain('felt sure about');
+		expect(page).toContain('while guessing');
+		expect(page).toContain('without a confidence choice');
+		expect(page).toContain('const savedConfidence = question.response?.confidence;');
+		expect(page).toContain("options.dataset.confidence = selectedConfidence ? String(selectedConfidence) : '';");
+		expect(page).not.toContain('question.response?.confidence || 3');
+		expect(page).toContain('This is reflection for your next practice, not a judgement or an AI-use detector.');
+		expect(page).not.toContain('AI cheating detected');
+	});
+
 	it('gives the learner an always-available past-exercise review page', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();

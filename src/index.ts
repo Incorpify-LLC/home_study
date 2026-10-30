@@ -34,7 +34,7 @@ interface Env {
 
 const securityHeaders = {
 	'content-security-policy':
-		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-yWIHjeOsbAo8t+I+DBmCx3BrqweLmddO1hJ6LHAZjWQ='; style-src 'self' 'sha256-jDDKSmtAyTWonfNmgQboZVzE+id1qhyFZmDG+Pa8n9c='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
+		"default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'sha256-QH3nqATehOYnp1srZvxI83dVVHC7t8LKU6YgGpOMbEQ='; style-src 'self' 'sha256-tmgchNk0PMIpRWNOrcP6XaRUJ6sHR0GHScV3y8/BYiE='; style-src-attr 'unsafe-inline'; upgrade-insecure-requests",
 	'cross-origin-opener-policy': 'same-origin',
 	'cross-origin-resource-policy': 'same-origin',
 	'permissions-policy': 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',
@@ -498,10 +498,29 @@ async function resultForAssignment(env: Env, assignmentId: string): Promise<Reco
 	}));
 	const earned = corrections.reduce((sum, correction) => sum + correction.score, 0);
 	const possible = corrections.length;
+	const confidenceCalibration = {
+		confidentCorrect: 0,
+		confidentIncorrect: 0,
+		cautiousCorrect: 0,
+		cautiousIncorrect: 0,
+		uncertain: 0,
+		unrated: 0,
+	};
+	for (const correction of corrections) {
+		if (correction.confidence === null) confidenceCalibration.unrated += 1;
+		else if (correction.confidence >= 4) {
+			if (correction.score === 1) confidenceCalibration.confidentCorrect += 1;
+			else confidenceCalibration.confidentIncorrect += 1;
+		} else if (correction.confidence <= 2) {
+			if (correction.score === 1) confidenceCalibration.cautiousCorrect += 1;
+			else confidenceCalibration.cautiousIncorrect += 1;
+		} else confidenceCalibration.uncertain += 1;
+	}
 	return {
 		earned,
 		possible,
 		percentage: possible === 0 ? 0 : Math.round((earned / possible) * 100),
+		confidenceCalibration,
 		corrections,
 	};
 }

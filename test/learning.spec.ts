@@ -435,11 +435,12 @@ describe('reviewed learning assignment', () => {
 		};
 		answers['viii-rational-word'] = { value: 0.5 };
 
-		for (const question of body.assignment.questions) {
+		for (const [index, question] of body.assignment.questions.entries()) {
+			const confidence = [5, 1, 3, 5, 3, 5][index];
 			const response = await SELF.fetch(`https://study.saneax.in/api/learning/assignments/${body.assignment.id}/responses`, {
 				method: 'PUT',
 				headers: accessHeaders(studentEmail, true),
-				body: JSON.stringify({ questionId: question.id, answer: answers[question.id], confidence: 3 }),
+				body: JSON.stringify({ questionId: question.id, answer: answers[question.id], confidence }),
 			});
 			expect(response.status).toBe(200);
 		}
@@ -450,12 +451,33 @@ describe('reviewed learning assignment', () => {
 		});
 		expect(submitted.status).toBe(200);
 		const result = (await submitted.json()) as {
-			result: { earned: number; possible: number; percentage: number; corrections: Array<Record<string, unknown>> };
+			result: {
+				earned: number;
+				possible: number;
+				percentage: number;
+				corrections: Array<Record<string, unknown>>;
+				confidenceCalibration: {
+					confidentCorrect: number;
+					confidentIncorrect: number;
+					cautiousCorrect: number;
+					cautiousIncorrect: number;
+					uncertain: number;
+					unrated: number;
+				};
+			};
 		};
 		expect(result.result.earned).toBe(5);
 		expect(result.result.possible).toBe(6);
 		expect(result.result.percentage).toBe(83);
 		expect(result.result.corrections).toHaveLength(6);
+		expect(result.result.confidenceCalibration).toEqual({
+			confidentCorrect: 2,
+			confidentIncorrect: 1,
+			cautiousCorrect: 1,
+			cautiousIncorrect: 0,
+			uncertain: 2,
+			unrated: 0,
+		});
 		for (const correction of result.result.corrections) {
 			expect(correction).toHaveProperty('rationale');
 			expect(correction).toHaveProperty('correctAnswer');

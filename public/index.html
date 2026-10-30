@@ -437,6 +437,22 @@
 			.spacer {
 				flex: 1 1 auto;
 			}
+			dialog.practice-promise {
+				width: min(520px, calc(100% - 32px));
+				padding: var(--space-6);
+				border: 1px solid var(--line);
+				border-radius: var(--radius-lg);
+				background: var(--surface);
+				color: var(--ink);
+				box-shadow: var(--shadow);
+			}
+			dialog.practice-promise::backdrop {
+				background: rgb(11 17 32 / 62%);
+				backdrop-filter: blur(3px);
+			}
+			dialog.practice-promise .actions {
+				margin-top: var(--space-5);
+			}
 
 			/* ---------- Workspace navigation ---------- */
 			.workspace-tabs {
@@ -1789,6 +1805,10 @@
 												</div>
 												<span class="answer-count" data-field="answer-count"></span>
 											</div>
+											<p class="callout">
+												<strong>Learning, not scoring.</strong> Try each question yourself first. If you use AI, notes, or another person,
+												use the help to understand, then return and solve it yourself.
+											</p>
 											<p class="muted" data-field="instructions"></p>
 											<div id="assignment-feedback" class="feedback" role="status" hidden></div>
 											<form id="question-form" novalidate></form>
@@ -1835,6 +1855,20 @@
 				</div>
 			</section>
 		</main>
+
+		<dialog id="practice-promise" class="practice-promise" aria-labelledby="practice-promise-title">
+			<span class="eyebrow">A fresh practice session</span>
+			<h2 id="practice-promise-title">Learning, not scoring</h2>
+			<p>
+				Try each question yourself first. If you use AI, notes, or another person, use the help to understand the idea, then return and
+				solve the question yourself.
+			</p>
+			<p class="muted">Your honest confidence choice helps you decide what to review. It is never used to accuse or punish you.</p>
+			<div class="actions">
+				<button id="practice-promise-accept" type="button">Start my practice</button>
+			</div>
+			<p class="meta">This promise stays in this browser session. Home Study does not store a pledge response.</p>
+		</dialog>
 
 		<section id="access-problem" class="panel" hidden aria-labelledby="access-problem-title">
 			<span class="badge" data-tone="warn">Secure sign-in needs attention</span>
@@ -2874,11 +2908,12 @@
 					return false;
 				}
 				const confidenceInput = fieldset.querySelector('[data-field="confidence"]');
-				const confidence = confidenceInput ? Number(confidenceInput.dataset.confidence) : undefined;
+				const confidenceValue = confidenceInput?.dataset.confidence;
+				const confidence = confidenceValue ? Number(confidenceValue) : undefined;
 				const { ok, body } = await fetchJson(`/api/learning/assignments/${currentAssignment.id}/responses`, {
 					method: 'PUT',
 					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ questionId: question.id, answer, confidence: confidence || undefined }),
+					body: JSON.stringify({ questionId: question.id, answer, confidence }),
 				});
 				if (!ok) {
 					statusChip.textContent = body?.message || 'Sync failed';
@@ -2955,9 +2990,9 @@
 					options.dataset.field = 'confidence';
 					options.setAttribute('role', 'group');
 					options.setAttribute('aria-label', `Confidence for question ${index + 1}`);
-					const savedConfidence = question.response?.confidence || 3;
-					const selectedConfidence = savedConfidence <= 2 ? 1 : savedConfidence >= 4 ? 5 : 3;
-					options.dataset.confidence = String(selectedConfidence);
+					const savedConfidence = question.response?.confidence;
+					const selectedConfidence = savedConfidence ? (savedConfidence <= 2 ? 1 : savedConfidence >= 4 ? 5 : 3) : null;
+					options.dataset.confidence = selectedConfidence ? String(selectedConfidence) : '';
 					for (const [value, label] of [
 						[1, 'Guessing'],
 						[3, 'Unsure'],
@@ -2977,6 +3012,49 @@
 					fieldset.append(confidence);
 				}
 				return fieldset;
+			}
+
+			function renderConfidenceCalibration(result) {
+				const summary = result.confidenceCalibration;
+				if (!summary) return null;
+				const review = element('section', undefined, 'callout confidence-review');
+				review.append(element('h4', 'Confidence check'));
+				const notes = element('ul');
+				if (summary.confidentIncorrect > 0) {
+					notes.append(
+						element(
+							'li',
+							`${summary.confidentIncorrect} answer${summary.confidentIncorrect === 1 ? '' : 's'} you felt sure about need${summary.confidentIncorrect === 1 ? 's' : ''} another look.`,
+						),
+					);
+				}
+				if (summary.cautiousCorrect > 0) {
+					notes.append(
+						element(
+							'li',
+							`You got ${summary.cautiousCorrect} right while guessing. Try a similar question to make that understanding secure.`,
+						),
+					);
+				}
+				if (summary.uncertain > 0) {
+					notes.append(
+						element(
+							'li',
+							`You marked ${summary.uncertain} answer${summary.uncertain === 1 ? '' : 's'} unsure. Review the reasons, even when the answer was correct.`,
+						),
+					);
+				}
+				if (summary.unrated > 0) {
+					notes.append(
+						element(
+							'li',
+							`${summary.unrated} answer${summary.unrated === 1 ? ' was' : 's were'} submitted without a confidence choice. That is okay; choose one next time if it helps your reflection.`,
+						),
+					);
+				}
+				if (!notes.children.length) notes.append(element('li', 'Your confidence and results were consistent in this chapter.'));
+				review.append(notes, element('p', 'This is reflection for your next practice, not a judgement or an AI-use detector.', 'meta'));
+				return review;
 			}
 
 			function renderCorrections(assignment) {
@@ -3013,7 +3091,10 @@
 					card.append(element('p', item.rationale, 'muted'));
 					list.append(card);
 				}
-				historyDetail.replaceChildren(heading, intro, guidance, list);
+				historyDetail.replaceChildren(heading, intro, guidance);
+				const confidenceReview = renderConfidenceCalibration(result);
+				if (confidenceReview) historyDetail.append(confidenceReview);
+				historyDetail.append(list);
 				const needsCorrection = result.corrections.some((item) => item.score !== 1);
 				if (needsCorrection && sessionUser) {
 					const complete = element('button', 'Complete corrections', 'secondary');
@@ -3302,6 +3383,25 @@
 				await loadHistory();
 			}
 
+			const practicePromise = document.querySelector('#practice-promise');
+			function showPracticePromise() {
+				try {
+					if (sessionStorage.getItem('home-study-practice-promise') === 'accepted') return;
+				} catch {
+					// The promise still works when browser storage is unavailable.
+				}
+				if (typeof practicePromise.showModal === 'function' && !practicePromise.open) practicePromise.showModal();
+			}
+			document.querySelector('#practice-promise-accept').addEventListener('click', () => {
+				try {
+					sessionStorage.setItem('home-study-practice-promise', 'accepted');
+				} catch {
+					// No pledge response is sent to the server or required for learning.
+				}
+				practicePromise.close();
+			});
+			practicePromise.addEventListener('cancel', (event) => event.preventDefault());
+
 			/* ---------- Session ---------- */
 			async function showSession(result) {
 				checking.hidden = true;
@@ -3326,6 +3426,7 @@
 						dashboardNote.textContent = 'Read the lesson, answer the questions, and submit once when ready.';
 					}
 					await refreshStudentWorkspace();
+					showPracticePromise();
 				}
 			}
 
