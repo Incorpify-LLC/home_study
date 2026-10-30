@@ -1984,10 +1984,10 @@
 				return { ok: response.ok, status: response.status, body };
 			}
 
-			function setProgress(bar, percent) {
+			function setProgress(bar, percent, ariaDescription) {
 				const clamped = Math.max(0, Math.min(100, Math.round(percent)));
 				bar.style.width = `${clamped}%`;
-				bar.parentElement?.setAttribute('aria-label', `${clamped}% complete`);
+				bar.parentElement?.setAttribute('aria-label', `${clamped}% ${ariaDescription}`);
 			}
 
 			function statTile(value, label) {
@@ -2686,7 +2686,8 @@
 					return;
 				}
 				todaySummary.textContent = `${body.today.allocatedMinutes} of ${body.today.capacityMinutes} planned minutes today`;
-				setProgress(todayProgress, body.today.capacityMinutes ? (body.today.allocatedMinutes / body.today.capacityMinutes) * 100 : 0);
+				const scheduledPercent = body.today.capacityMinutes ? (body.today.allocatedMinutes / body.today.capacityMinutes) * 100 : 0;
+				setProgress(todayProgress, scheduledPercent, "of today's minutes scheduled");
 				todayList.replaceChildren();
 				if (body.today.entries.length === 0) {
 					const upcoming = body.plan.days.find((day) => day.entries.length > 0);
@@ -2726,7 +2727,8 @@
 				}
 				activeSubject = roadmap.subject;
 				summary.textContent = `${roadmap.subject} · ${roadmap.mastered} mastered · ${roadmap.attempted} attempted of ${roadmap.total}`;
-				setProgress(roadmapProgress, roadmap.total ? (roadmap.mastered / roadmap.total) * 100 : 0);
+				const masteryPercent = roadmap.total ? (roadmap.mastered / roadmap.total) * 100 : 0;
+				setProgress(roadmapProgress, masteryPercent, 'of course mastered');
 				list.replaceChildren();
 				const labels = {
 					not_started: 'Not started',

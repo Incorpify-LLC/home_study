@@ -323,6 +323,15 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('chapters done');
 	});
 
+	it('labels scheduled minutes without claiming work is complete', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+
+		expect(page).toContain('setProgress(todayProgress, scheduledPercent, "of today\'s minutes scheduled")');
+		expect(page).toContain("setProgress(roadmapProgress, masteryPercent, 'of course mastered')");
+		expect(page).not.toContain('`${clamped}% complete`');
+	});
+
 	it('supports the evaluation demo learner and the reviewed interface', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
