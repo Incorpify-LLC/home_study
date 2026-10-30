@@ -3136,6 +3136,7 @@
 				await loadHistory(currentAssignment.id);
 				setWorkspaceTab('student', 'history', true);
 				await loadRoadmap();
+				await loadDemoBar();
 				// The remaining calendar changed the moment this chapter was submitted.
 				await loadTodaysPlan();
 			}

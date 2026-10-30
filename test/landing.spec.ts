@@ -301,6 +301,14 @@ describe('Access-protected application shell', () => {
 		expect(page).not.toContain('Sibling leaderboard');
 	});
 
+	it('refreshes demo class progress immediately after a successful chapter submission', async () => {
+		const response = await SELF.fetch('https://study.saneax.in/');
+		const page = await response.text();
+		const submitHandler = page.match(/async function submitCurrentAssignment\(\) \{([\s\S]*?)\n\s*function renderLearning/);
+
+		expect(submitHandler?.[1]).toContain('await loadDemoBar();');
+	});
+
 	it('supports the evaluation demo learner and the reviewed interface', async () => {
 		const response = await SELF.fetch('https://study.saneax.in/');
 		const page = await response.text();
