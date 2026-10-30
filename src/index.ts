@@ -1440,6 +1440,18 @@ function json(body: unknown, status = 200): Response {
 	});
 }
 
+function rejectUnknownLearningQuery(url: URL): Response | null {
+	if (!url.pathname.startsWith('/api/learning/')) return null;
+	const allowed =
+		url.pathname === '/api/learning/current' || url.pathname === '/api/learning/next' ? new Set(['subject']) : new Set<string>();
+	for (const key of url.searchParams.keys()) {
+		if (!allowed.has(key)) {
+			return json({ error: 'unknown_query_parameter', message: 'Unsupported query parameter.' }, 400);
+		}
+	}
+	return null;
+}
+
 export default {
 	async fetch(request, env): Promise<Response> {
 		const requestUrl = new URL(request.url);
@@ -1448,6 +1460,8 @@ export default {
 		if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && origin && origin !== requestUrl.origin) {
 			return json({ error: 'forbidden_origin', message: 'Cross-origin state changes are not allowed.' }, 403);
 		}
+		const invalidLearningQuery = rejectUnknownLearningQuery(requestUrl);
+		if (invalidLearningQuery) return invalidLearningQuery;
 
 		if (pathname === '/api/health') {
 			return json({

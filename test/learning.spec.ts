@@ -520,6 +520,27 @@ describe('reviewed learning assignment', () => {
 	});
 });
 
+describe('learning query hardening', () => {
+	it('rejects request-supplied learner selectors while preserving the allowed subject filter', async () => {
+		for (const url of [
+			'https://study.saneax.in/api/learning/plan?learner=student-b',
+			'https://study.saneax.in/api/learning/current?subject=Physics&user=student-b',
+		]) {
+			const response = await SELF.fetch(url, { headers: accessHeaders(studentEmail) });
+			expect(response.status).toBe(400);
+			expect(await response.json()).toEqual({
+				error: 'unknown_query_parameter',
+				message: 'Unsupported query parameter.',
+			});
+		}
+
+		const allowed = await SELF.fetch('https://study.saneax.in/api/learning/current?subject=Unknown', {
+			headers: accessHeaders(studentEmail),
+		});
+		expect(allowed.status).toBe(404);
+	});
+});
+
 describe('parent evidence view', () => {
 	it('returns evidence only for a linked learner', async () => {
 		const allowed = await SELF.fetch('https://study.saneax.in/api/students/student-a/progress', {
